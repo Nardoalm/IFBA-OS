@@ -1,10 +1,11 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Primeiros passos do IFBA OS
-Comment=Conheça os aplicativos e serviços do protótipo
-Exec=netsurf-gtk file:///usr/share/ifba-os/app/index.html
-Icon=applications-education
+Name=Início do IFBA OS
+Comment=Abra os aplicativos e portais acadêmicos
+Exec=ifba-os-welcome
+Icon=ifba-os-menu
 Terminal=false
 Categories=Education;Utility;
 StartupNotify=true
+OnlyShowIn=XFCE;

@@ -8,23 +8,26 @@ Check that the live desktop boots, the wallpaper renders, the welcome-page short
 
 ### VM result
 
-- UTM is installed; the existing VM named `Linux` booted the build containing the Xorg/`xinit` fix into an XFCE desktop as the `ubuntu` live user. This confirms the boot menu, kernel/live startup, LightDM autologin, and graphical session work with that build. The desktop panel, Home icon, and “Primeiros passos do I...” desktop shortcut were visible. The current ISO was rebuilt afterward to add a system wallpaper default and has not been booted again yet.
+- UTM is installed. The build with SHA-256 `9002e2f38530c1a99da7beb6475d9f62aa4f77d2efe1e43f52ee543c222f8418` reached XFCE and showed the welcome page, supplied wallpaper, and bottom panel. Its SUAP and AVA PNGs appeared as broken images. The final build with re-encoded JPEG portal marks reached GRUB and showed Casper console messages, but a usable desktop was not verified during that run. Do not treat the earlier build as proof that the final ISO works.
 - The previous terminal-only failure was explained by the built root filesystem: `startxfce4` was present, but `xinit` and the Xorg server were missing. `--no-install-recommends` had omitted them. The build now explicitly installs `xserver-xorg`, `xinit`, and `lightdm-gtk-greeter`, and pins the LightDM XFCE session and greeter.
-- The wallpaper did **not** render in the observed desktop; it showed the default solid background. The build now provides the XFCE wallpaper channel both as the live user's configuration and as the system XDG default. This latest adjustment still needs a fresh boot confirmation.
-- The shortcut was visible but could not be opened in this run. A CUA click failed at the UTM window boundary, so the local welcome page, its CSS/assets, and SUAP/AVA links were not verified in the guest.
+- In the booted prior build, the exact user-supplied wallpaper appeared behind the welcome page and the native bottom panel was visible. The final build's wallpaper and panel still need confirmation.
+- The updated welcome page and both re-encoded portal logos were visually inspected in the host Electron preview. The final guest shortcut and JPEG logos were not verified. The Whisker menu was visible on the earlier build but could not be opened in the guest; the Super/Windows-key shortcut, SUAP/AVA links, networking, shutdown, and reboot remain unverified.
 - Guest networking and `apt update` were not verified; the exact guest error was not captured. The build now removes the container-specific systemd-resolved stub file before creating the SquashFS, because the old rootfs stub contained the Docker host resolver address. This addresses a concrete image contamination risk, but NAT/DNS still needs a guest check.
-- Shutdown and reboot were not checked. The wallpaper, launcher, network, and power checks remain open; SUAP/AVA were not opened and no account or credentials were entered.
+- Casper printed a missing `/usr/bin/plymouth` message during boot. The `plymouth` package is included in the rootfs, but this console message still appears and needs investigation. Shutdown and reboot remain unchecked. SUAP/AVA were not opened and no account or credentials were entered.
 
 ### Offline image/build checks
 
-- Current ISO: `output/ifba-os-ubuntu-24.04-amd64.iso`; SHA-256: `510ebd2499a7bcfcef93d249fde36bae66ef803247503d81a1009746e6b9f6b5`. The image was rebuilt after adding the system XDG wallpaper default, but that change has not yet been confirmed by a fresh VM boot.
+- Current ISO: `output/ifba-os-ubuntu-24.04-amd64.iso`; SHA-256: `17e9f8b8c6fafb3b77d20822ec36e229558da48cb36cff9c9963b63646723b72`. It is an ISO 9660 image with boot metadata and volume label `IFBA_OS_24_04`. The SquashFS build cache confirms Plymouth, the Whisker plugin, Electron, the wallpaper, the original PNGs, and their re-encoded JPEG display copies are present. The final ISO has not been confirmed to boot to its desktop.
 - Previous image metadata checks identified an ISO 9660 image with boot metadata and volume label `IFBA_OS_24_04`; the embedded SquashFS contained NetSurf, the welcome-page HTML, launcher, and wallpaper files.
 - The welcome page links only to `https://suap.ifba.edu.br/` and `https://ava.ifba.edu.br/`. Neither service was opened or logged into.
-- `node --check app/renderer.js`, `bash -n scripts/build-iso.sh scripts/build-iso-container.sh`, `git diff --check`, and the complete ISO rebuild succeeded after the wallpaper-default adjustment. `file` identifies the result as a bootable ISO 9660 image with volume label `IFBA_OS_24_04`.
+- Host preview: updated Electron UI rendered the supplied wallpaper with its embedded wordmark, the top-left identity and greeting, separate app/activity columns, the SUAP/AVA marks, assistant orb, and honest empty state. The activities block was shifted to leave the central wallpaper mark visible. The host preview does not contain XFCE's native hotbar.
+- `node --check` for the app, `bash -n scripts/build-iso.sh scripts/build-iso-container.sh`, XML parsing of XFCE configs, `npm audit --prefix app`, `git diff --check`, and a full ISO rebuild succeeded. The earlier boot confirmed XFCE and the page; the final ISO is awaiting a successful graphical boot.
 
 ### Remaining VM checklist
 
-- [ ] Boot the rebuilt ISO again and confirm the wallpaper is visible.
+- [ ] Boot the final ISO to an actual desktop and check the Casper Plymouth warning.
+- [ ] Confirm that the XFCE bottom panel, IFBA Whisker menu, and Super/Windows-key shortcut appear and work.
+- [ ] Confirm the JPEG SUAP/AVA marks load in the guest and the wallpaper remains clear behind the activities panel.
 - [ ] Open “Primeiros passos do IFBA OS”; inspect CSS, icon images, and layout.
 - [ ] Confirm SUAP/AVA links target their expected HTTPS domains without signing in.
 - [ ] Verify NAT networking and DNS from inside the guest.

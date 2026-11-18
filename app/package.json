@@ -1,1 +1,13 @@
-{"name":"ifba-os-welcome","version":"0.1.0","private":true,"description":"IFBA OS first-run welcome and educational app selector prototype","main":"main.js","scripts":{"start":"electron ."},"devDependencies":{"electron":"^38.0.0"}}
+{
+  "name": "ifba-os-welcome",
+  "version": "0.2.0",
+  "private": true,
+  "description": "IFBA OS desktop home and educational app launcher",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "45.3.4"
+  }
+}

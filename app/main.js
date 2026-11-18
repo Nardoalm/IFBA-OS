@@ -1,18 +1,68 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const os = require('node:os');
 const path = require('node:path');
 
+const academicHosts = new Set(['suap.ifba.edu.br', 'ava.ifba.edu.br']);
+
+ipcMain.handle('ifba-os:profile', () => {
+  try {
+    const username = os.userInfo().username;
+    if (!username || username === 'ubuntu') return { displayName: 'Estudante' };
+    return { displayName: username.charAt(0).toLocaleUpperCase('pt-BR') + username.slice(1) };
+  } catch {
+    return { displayName: 'Estudante' };
+  }
+});
+
+function openAcademicPortal(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== 'https:' || !academicHosts.has(url.hostname)) return;
+    shell.openExternal(url.href).catch(error => {
+      dialog.showErrorBox('Não foi possível abrir o portal', error.message);
+    });
+  } catch {
+    // Invalid or non-HTTPS URLs are ignored.
+  }
+}
+
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 1100, height: 760, minWidth: 820, minHeight: 620,
-    backgroundColor: '#111418',
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
+  const window = new BrowserWindow({
+    width: 1480,
+    height: 840,
+    minWidth: 640,
+    minHeight: 500,
+    show: false,
+    frame: false,
+    autoHideMenuBar: true,
+    backgroundColor: '#121414',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    }
   });
-  win.loadFile(path.join(__dirname, 'index.html'));
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (['https://suap.ifba.edu.br/', 'https://ava.ifba.edu.br/'].includes(url)) shell.openExternal(url);
+
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    openAcademicPortal(url);
     return { action: 'deny' };
+  });
+  window.webContents.on('will-navigate', event => event.preventDefault());
+  window.loadFile(path.join(__dirname, 'index.html'));
+  window.once('ready-to-show', () => {
+    window.maximize();
+    window.show();
   });
 }
 
-app.whenReady().then(createWindow);
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.whenReady().then(() => {
+  createWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
