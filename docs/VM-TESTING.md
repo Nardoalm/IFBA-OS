@@ -8,7 +8,7 @@ Check that the live desktop boots, the wallpaper renders, the welcome-page short
 
 ### VM result
 
-- UTM is installed; the existing VM named `Linux` booted the current IFBA OS ISO into an XFCE desktop as the `ubuntu` live user. This confirms the boot menu, kernel/live startup, LightDM autologin, and graphical session now work. The desktop panel, Home icon, and “Primeiros passos do I...” desktop shortcut were visible.
+- UTM is installed; the existing VM named `Linux` booted the build containing the Xorg/`xinit` fix into an XFCE desktop as the `ubuntu` live user. This confirms the boot menu, kernel/live startup, LightDM autologin, and graphical session work with that build. The desktop panel, Home icon, and “Primeiros passos do I...” desktop shortcut were visible. The current ISO was rebuilt afterward to add a system wallpaper default and has not been booted again yet.
 - The previous terminal-only failure was explained by the built root filesystem: `startxfce4` was present, but `xinit` and the Xorg server were missing. `--no-install-recommends` had omitted them. The build now explicitly installs `xserver-xorg`, `xinit`, and `lightdm-gtk-greeter`, and pins the LightDM XFCE session and greeter.
 - The wallpaper did **not** render in the observed desktop; it showed the default solid background. The build now provides the XFCE wallpaper channel both as the live user's configuration and as the system XDG default. This latest adjustment still needs a fresh boot confirmation.
 - The shortcut was visible but could not be opened in this run. A CUA click failed at the UTM window boundary, so the local welcome page, its CSS/assets, and SUAP/AVA links were not verified in the guest.
