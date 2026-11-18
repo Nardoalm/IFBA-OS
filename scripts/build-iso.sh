@@ -3,15 +3,20 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/output/ifba-os-ubuntu-24.04-amd64.iso"
 mkdir -p "$ROOT/output"
+mkdir -p "$ROOT/.cache/ifba-rootfs"
 docker run --rm --privileged --platform linux/amd64 \
-  -v "$ROOT:/work" -w /work \
+  -v "$ROOT:/work" -v "$ROOT/.cache/ifba-rootfs:/var/cache/ifba-rootfs" -w /work \
   ubuntu:24.04 bash -lc '
     set -euo pipefail
     export DEBIAN_FRONTEND=noninteractive
     apt-get update && apt-get install -y --no-install-recommends debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools
-    ROOTFS=/tmp/ifba-rootfs
+    ROOTFS=/var/cache/ifba-rootfs/rootfs
     ISO=/tmp/ifba-iso
-    debootstrap --arch=amd64 noble "$ROOTFS" http://archive.ubuntu.com/ubuntu
+    if [ ! -e "$ROOTFS/etc/os-release" ]; then
+      mkdir -p "$ROOTFS"
+      debootstrap --arch=amd64 noble "$ROOTFS" http://archive.ubuntu.com/ubuntu
+    fi
+    printf 'deb http://archive.ubuntu.com/ubuntu noble main universe multiverse\ndeb http://archive.ubuntu.com/ubuntu noble-updates main universe multiverse\ndeb http://security.ubuntu.com/ubuntu noble-security main universe multiverse\n' > "$ROOTFS/etc/apt/sources.list"
     mount --bind /dev "$ROOTFS/dev"
     mount -t proc proc "$ROOTFS/proc"
     mount --rbind /sys "$ROOTFS/sys"
