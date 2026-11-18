@@ -129,6 +129,59 @@ class AssistantObject(dbus.service.Object):
                                              str(image_data_url), str(context))
         return dbus.Boolean(True)
 
+    @dbus.service.method(INTERFACE, out_signature="s")
+    def ListMemories(self):
+        return json.dumps(self.service.storage.list_memories(), ensure_ascii=False)
+
+    @dbus.service.method(INTERFACE, in_signature="ssb", out_signature="u")
+    def AddMemory(self, category, content, inferred):
+        return dbus.UInt32(self.service.storage.add_memory(str(category), str(content), bool(inferred)))
+
+    @dbus.service.method(INTERFACE, in_signature="ussb", out_signature="b")
+    def UpdateMemory(self, memory_id, category, content, inferred):
+        return dbus.Boolean(self.service.storage.update_memory(int(memory_id), str(category),
+                                                                str(content), bool(inferred)))
+
+    @dbus.service.method(INTERFACE, in_signature="u", out_signature="b")
+    def DeleteMemory(self, memory_id):
+        return dbus.Boolean(self.service.storage.delete_memory(int(memory_id)))
+
+    @dbus.service.method(INTERFACE, out_signature="u")
+    def ClearMemories(self):
+        return dbus.UInt32(self.service.storage.clear_memories())
+
+    @dbus.service.method(INTERFACE, out_signature="u")
+    def ClearHistory(self):
+        return dbus.UInt32(self.service.storage.clear_history())
+
+    @dbus.service.method(INTERFACE, out_signature="s")
+    def ExportData(self):
+        return self.service.storage.export_json()
+
+    @dbus.service.method(INTERFACE, in_signature="uu", out_signature="s")
+    def PruneData(self, history_days, memory_days):
+        return json.dumps(self.service.storage.prune(int(history_days), int(memory_days)))
+
+    @dbus.service.method(INTERFACE, out_signature="s")
+    def ListInstalledApps(self):
+        return json.dumps(self.service.tools.list_installed_apps(), ensure_ascii=False)
+
+    @dbus.service.method(INTERFACE, in_signature="s", out_signature="s")
+    def OpenApp(self, app_id):
+        return json.dumps(self.service.tools.open_app(str(app_id)), ensure_ascii=False)
+
+    @dbus.service.method(INTERFACE, out_signature="s")
+    def GetSystemInfo(self):
+        return json.dumps(self.service.tools.system_info(), ensure_ascii=False)
+
+    @dbus.service.method(INTERFACE, in_signature="s", out_signature="s")
+    def OpenURL(self, url):
+        return json.dumps(self.service.tools.open_url(str(url)), ensure_ascii=False)
+
+    @dbus.service.method(INTERFACE, in_signature="s", out_signature="s")
+    def OpenXfceSetting(self, setting):
+        return json.dumps(self.service.tools.open_xfce_settings(str(setting)), ensure_ascii=False)
+
 
 def main():
     DBusGMainLoop(set_as_default=True)

@@ -40,7 +40,7 @@ class FoundationTests(unittest.TestCase):
         reopened = ConversationStore(paths)
         self.assertEqual(reopened.list_conversations()[0]["id"], identifier)
         self.assertEqual(reopened.list_messages(identifier)[0]["role"], "user")
-        self.assertEqual(SCHEMA_VERSION, 1)
+        self.assertEqual(SCHEMA_VERSION, 2)
 
     def test_separate_linux_users_get_separate_databases_and_settings(self):
         first = self.paths_for("matricula-1")

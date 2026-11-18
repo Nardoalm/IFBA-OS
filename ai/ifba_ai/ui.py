@@ -2,6 +2,7 @@
 
 import json
 import base64
+import os
 import sys
 
 try:
@@ -19,6 +20,8 @@ BUS_NAME = "org.ifba.OS.AI"
 OBJECT_PATH = "/org/ifba/OS/AI"
 INTERFACE = "org.ifba.OS.AI1"
 
+from .tools import SystemTools
+
 
 class AssistantWindow(Gtk.ApplicationWindow):
     def __init__(self, application):
@@ -33,6 +36,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.guide_target_id = None
         self.highlight_overlay = None
         self.highlight_restore_source = None
+        self.local_tools = SystemTools()
         self._build()
         self._connect_service()
 
@@ -105,6 +109,12 @@ class AssistantWindow(Gtk.ApplicationWindow):
         settings_button = Gtk.Button(label="Configurações")
         settings_button.connect("clicked", lambda *_: self.stack.set_visible_child_name("settings"))
         header.pack_end(settings_button)
+        data_button = Gtk.Button(label="Memórias e dados")
+        data_button.connect("clicked", self._manage_data)
+        header.pack_end(data_button)
+        tools_button = Gtk.Button(label="Ferramentas")
+        tools_button.connect("clicked", self._open_tools)
+        header.pack_end(tools_button)
         self.visual_button = Gtk.Button(label="Orientação visual")
         self.visual_button.set_tooltip_text("Capturar a janela ativa, revisar a prévia e decidir se deseja enviá-la à NVIDIA")
         self.visual_button.set_sensitive(False)
@@ -152,6 +162,17 @@ class AssistantWindow(Gtk.ApplicationWindow):
         page.pack_start(Gtk.Label(label="Limite máximo de tokens por resposta", xalign=0), False, False, 0)
         page.pack_start(self.tokens, False, False, 0)
 
+        self.context_messages = Gtk.SpinButton.new_with_range(2, 100, 1)
+        self.context_chars = Gtk.SpinButton.new_with_range(1000, 100000, 1000)
+        self.history_retention = Gtk.SpinButton.new_with_range(0, 3650, 30)
+        self.memory_retention = Gtk.SpinButton.new_with_range(0, 3650, 30)
+        for label, widget in (("Mensagens recentes por conversa", self.context_messages),
+                              ("Limite de caracteres enviados", self.context_chars),
+                              ("Retenção do histórico (dias; 0 = apagar ao salvar)", self.history_retention),
+                              ("Retenção das memórias (dias; 0 = apagar ao salvar)", self.memory_retention)):
+            page.pack_start(Gtk.Label(label=label, xalign=0), False, False, 0)
+            page.pack_start(widget, False, False, 0)
+
         self.memory = Gtk.CheckButton(label="Ativar memória educacional nesta conta")
         self.memory.set_active(False)
         page.pack_start(self.memory, False, False, 0)
@@ -170,7 +191,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         page.pack_start(Gtk.Label(label="Nível de aprendizagem", xalign=0), False, False, 0)
         page.pack_start(self.level, False, False, 0)
 
-        privacy = Gtk.Label(label="Não enviamos capturas de tela ou arquivos automaticamente. Você pode continuar usando o sistema sem configurar IA.")
+        privacy = Gtk.Label(label="A memória começa desligada e só guarda registros que você criar. Com ela ligada, memórias relevantes e o resumo local desta conversa podem ser enviados à NVIDIA junto das mensagens recentes. Capturas e arquivos nunca são enviados automaticamente.")
         privacy.set_xalign(0)
         privacy.set_line_wrap(True)
         page.pack_start(privacy, False, False, 8)
@@ -219,6 +240,10 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.model.get_child().set_text(values["model_id"])
         self.tokens.set_value(values["max_tokens"])
         self.memory.set_active(values["memory_enabled"])
+        self.context_messages.set_value(values["context_max_messages"])
+        self.context_chars.set_value(values["context_max_chars"])
+        self.history_retention.set_value(values["history_retention_days"])
+        self.memory_retention.set_value(values["memory_retention_days"])
         self.share_app.set_active(values["share_active_application"])
         self.share_system.set_active(values["share_system_profile"])
         self.level.set_active_id(values["education_level"])
@@ -568,6 +593,10 @@ class AssistantWindow(Gtk.ApplicationWindow):
             "share_active_application": self.share_app.get_active(),
             "share_system_profile": self.share_system.get_active(),
             "education_level": self.level.get_active_id() or "iniciante",
+            "context_max_messages": self.context_messages.get_value_as_int(),
+            "context_max_chars": self.context_chars.get_value_as_int(),
+            "history_retention_days": self.history_retention.get_value_as_int(),
+            "memory_retention_days": self.memory_retention.get_value_as_int(),
         }
         try:
             key = self.key_entry.get_text().strip()
@@ -575,6 +604,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
                 self.proxy.StoreApiKey(key)
                 self.key_entry.set_text("")
             self.proxy.SaveSettings(json.dumps(values, ensure_ascii=False))
+            self.proxy.PruneData(values["history_retention_days"], values["memory_retention_days"])
             configured, store_available, _ = self.proxy.GetStatus()
             if not store_available:
                 self.status.set_text("Configurações salvas, mas o cofre está indisponível; a chave não foi armazenada.")
@@ -584,6 +614,264 @@ class AssistantWindow(Gtk.ApplicationWindow):
             self.stack.set_visible_child_name("chat")
         except Exception:
             self.status.set_text("Não foi possível salvar. Confirme se o cofre está disponível e desbloqueado.")
+
+    def _confirm_data_action(self, question):
+        dialog = Gtk.MessageDialog(transient_for=self, modal=True,
+                                   message_type=Gtk.MessageType.WARNING,
+                                   buttons=Gtk.ButtonsType.CANCEL, text=question)
+        dialog.add_button("Confirmar", Gtk.ResponseType.ACCEPT)
+        response = dialog.run()
+        dialog.destroy()
+        return response == Gtk.ResponseType.ACCEPT
+
+    def _manage_data(self, *_):
+        if not self.proxy:
+            return
+        dialog = Gtk.Dialog(title="Memórias e dados deste usuário", transient_for=self, modal=True)
+        dialog.set_default_size(700, 500)
+        dialog.add_button("Fechar", Gtk.ResponseType.CLOSE)
+        box = dialog.get_content_area()
+        box.set_spacing(10)
+        intro = Gtk.Label(label="Esses dados ficam no perfil local deste usuário. Memórias inferidas são identificadas e editáveis. A exportação contém conversas e memórias; escolha um local privado.")
+        intro.set_line_wrap(True)
+        intro.set_margin_start(14)
+        intro.set_margin_end(14)
+        intro.set_margin_top(12)
+        box.pack_start(intro, False, False, 0)
+        listing = Gtk.ListBox()
+        listing.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_min_content_height(270)
+        scroll.add(listing)
+        box.pack_start(scroll, True, True, 0)
+
+        def refresh():
+            for child in listing.get_children():
+                listing.remove(child)
+            for item in json.loads(str(self.proxy.ListMemories())):
+                row = Gtk.ListBoxRow()
+                row.memory_record = item
+                inferred = " · inferida (revise)" if item["inferred"] else " · informada por você"
+                label = Gtk.Label(label="{} · {}{}\n{}".format(item["category"], item["content"], inferred, item["updated_at"]), xalign=0)
+                label.set_line_wrap(True)
+                label.set_margin_start(10)
+                label.set_margin_end(10)
+                label.set_margin_top(8)
+                label.set_margin_bottom(8)
+                row.add(label)
+                listing.add(row)
+            listing.show_all()
+
+        actions = Gtk.ButtonBox(orientation=Gtk.Orientation.HORIZONTAL)
+        actions.set_layout(Gtk.ButtonBoxStyle.START)
+        box.pack_start(actions, False, False, 8)
+        add = Gtk.Button(label="Adicionar")
+        edit = Gtk.Button(label="Editar selecionada")
+        remove = Gtk.Button(label="Excluir selecionada")
+        export = Gtk.Button(label="Exportar dados")
+        clear_history = Gtk.Button(label="Apagar histórico")
+        clear_memories = Gtk.Button(label="Apagar memórias")
+        for button in (add, edit, remove, export, clear_history, clear_memories):
+            actions.add(button)
+
+        def form(item=None):
+            form_dialog = Gtk.Dialog(title="Editar memória" if item else "Nova memória", transient_for=dialog, modal=True)
+            form_dialog.add_button("Cancelar", Gtk.ResponseType.CANCEL)
+            form_dialog.add_button("Salvar", Gtk.ResponseType.ACCEPT)
+            fields = form_dialog.get_content_area()
+            fields.set_spacing(8)
+            category = Gtk.ComboBoxText()
+            categories = (("learning_preference", "Preferência de aprendizagem"), ("language", "Linguagem"),
+                          ("application", "Aplicativo"), ("learned_topic", "Assunto aprendido"),
+                          ("difficulty", "Dificuldade relatada"), ("goal", "Objetivo"),
+                          ("project", "Projeto de estudo"), ("other", "Outro"))
+            for key, label in categories:
+                category.append(key, label)
+            category.set_active_id(item["category"] if item else "learning_preference")
+            fields.pack_start(Gtk.Label(label="Tipo de memória", xalign=0), False, False, 0)
+            fields.pack_start(category, False, False, 0)
+            content = Gtk.TextView()
+            content.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+            content.get_buffer().set_text(item["content"] if item else "")
+            content.set_size_request(480, 120)
+            fields.pack_start(content, True, True, 0)
+            inferred = Gtk.CheckButton(label="Marcar como inferida (deve ser revisada)")
+            inferred.set_active(bool(item and item["inferred"]))
+            fields.pack_start(inferred, False, False, 0)
+            form_dialog.show_all()
+            response = form_dialog.run()
+            start, end = content.get_buffer().get_bounds()
+            text = content.get_buffer().get_text(start, end, True)
+            selected_category = category.get_active_id()
+            is_inferred = inferred.get_active()
+            form_dialog.destroy()
+            if response != Gtk.ResponseType.ACCEPT:
+                return
+            try:
+                if item:
+                    self.proxy.UpdateMemory(item["id"], selected_category, text, is_inferred)
+                else:
+                    self.proxy.AddMemory(selected_category, text, is_inferred)
+                refresh()
+            except Exception:
+                self.status.set_text("A memória não pôde ser salva. Evite dados identificadores ou credenciais.")
+
+        add.connect("clicked", lambda *_: form())
+        edit.connect("clicked", lambda *_: form(getattr(listing.get_selected_row(), "memory_record", None))
+                     if listing.get_selected_row() else None)
+        def delete_selected(*_):
+            row = listing.get_selected_row()
+            item = getattr(row, "memory_record", None) if row else None
+            if item and self._confirm_data_action("Excluir esta memória permanentemente?"):
+                self.proxy.DeleteMemory(item["id"])
+                refresh()
+        remove.connect("clicked", delete_selected)
+        def export_data(*_):
+            chooser = Gtk.FileChooserDialog(title="Exportar dados do assistente", transient_for=dialog,
+                                            action=Gtk.FileChooserAction.SAVE)
+            chooser.add_button("Cancelar", Gtk.ResponseType.CANCEL)
+            chooser.add_button("Salvar", Gtk.ResponseType.ACCEPT)
+            chooser.set_current_name("ifba-ai-export.json")
+            if chooser.run() == Gtk.ResponseType.ACCEPT:
+                try:
+                    export_content = str(self.proxy.ExportData())
+                    descriptor = os.open(chooser.get_filename(), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                        handle.write(export_content)
+                    self.status.set_text("Exportação criada no local escolhido.")
+                except FileExistsError:
+                    self.status.set_text("O arquivo já existe; escolha outro nome para não sobrescrevê-lo.")
+                except Exception:
+                    self.status.set_text("A exportação não pôde ser salva.")
+            chooser.destroy()
+        export.connect("clicked", export_data)
+        def clear_history(*_):
+            if self._confirm_data_action("Apagar todas as conversas deste usuário? Essa ação não pode ser desfeita."):
+                self.proxy.ClearHistory()
+                self.current_conversation = None
+                self._load_conversations()
+                self._display_history()
+        clear_history.connect("clicked", clear_history)
+        def clear_memories(*_):
+            if self._confirm_data_action("Apagar todas as memórias deste usuário? Essa ação não pode ser desfeita."):
+                self.proxy.ClearMemories()
+                refresh()
+        clear_memories.connect("clicked", clear_memories)
+        refresh()
+        dialog.show_all()
+        dialog.run()
+        dialog.destroy()
+
+    def _open_tools(self, *_):
+        if not self.proxy:
+            return
+        dialog = Gtk.Dialog(title="Ferramentas locais autorizadas", transient_for=self, modal=True)
+        dialog.set_default_size(620, 520)
+        dialog.add_button("Fechar", Gtk.ResponseType.CLOSE)
+        box = dialog.get_content_area()
+        box.set_spacing(10)
+        info = Gtk.Label(label="As ferramentas são iniciadas por você. Conteúdo de páginas ou documentos não autoriza ações. O assistente não pode executar comandos de terminal nem instalar pacotes.")
+        info.set_line_wrap(True)
+        info.set_margin_start(14)
+        info.set_margin_end(14)
+        info.set_margin_top(12)
+        box.pack_start(info, False, False, 0)
+        result = Gtk.TextView()
+        result.set_editable(False)
+        result.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_min_content_height(170)
+        scroll.add(result)
+        box.pack_start(scroll, True, True, 0)
+        def show(value):
+            result.get_buffer().set_text(json.dumps(value, ensure_ascii=False, indent=2))
+        def safe(callback):
+            try:
+                value = callback()
+                if value is not None:
+                    show(value)
+            except Exception:
+                show({"erro": "A ação não pôde ser concluída. Revise a seleção e tente novamente."})
+        controls = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.pack_start(controls, False, False, 8)
+        def action(label, callback):
+            button = Gtk.Button(label=label)
+            button.connect("clicked", lambda *_args: safe(lambda: callback(button)))
+            controls.pack_start(button, False, False, 0)
+        apps = Gtk.ComboBoxText()
+        controls.pack_start(apps, False, False, 0)
+        def load_apps(*_):
+            def load():
+                apps.remove_all()
+                for item in json.loads(str(self.proxy.ListInstalledApps())):
+                    apps.append(item["id"], item["name"])
+                if apps.get_model() and apps.get_model().iter_n_children(None):
+                    apps.set_active(0)
+                show({"aplicativos": apps.get_model().iter_n_children(None) if apps.get_model() else 0})
+            safe(load)
+        def open_app(*_):
+            app_id = apps.get_active_id()
+            if app_id:
+                safe(lambda: json.loads(str(self.proxy.OpenApp(app_id))))
+        action("Listar aplicativos instalados", lambda *_: load_apps())
+        action("Abrir aplicativo selecionado", open_app)
+        action("Consultar informações básicas do sistema", lambda *_: safe(lambda: json.loads(str(self.proxy.GetSystemInfo()))))
+        url_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        url = Gtk.Entry()
+        url.set_placeholder_text("https://…")
+        url_row.pack_start(url, True, True, 0)
+        open_url = Gtk.Button(label="Abrir URL")
+        open_url.connect("clicked", lambda *_: safe(lambda: json.loads(str(self.proxy.OpenURL(url.get_text().strip())))))
+        url_row.pack_start(open_url, False, False, 0)
+        controls.pack_start(url_row, False, False, 0)
+        choose = Gtk.Button(label="Escolher pasta para esta sessão")
+        controls.pack_start(choose, False, False, 0)
+        directory = Gtk.Entry()
+        directory.set_placeholder_text("Caminho relativo (vazio = pasta selecionada)")
+        controls.pack_start(directory, False, False, 0)
+        query = Gtk.Entry()
+        query.set_placeholder_text("Nome para localizar dentro da pasta selecionada")
+        controls.pack_start(query, False, False, 0)
+        action("Listar itens da pasta selecionada", lambda *_: safe(lambda: self.local_tools.list_directory(
+            directory.get_text().strip() or ".")))
+        action("Localizar arquivos por nome", lambda *_: safe(lambda: self.local_tools.find_files(
+            query.get_text().strip())))
+        def choose_directory(*_):
+            chooser = Gtk.FileChooserDialog(title="Autorizar pasta nesta sessão", transient_for=dialog,
+                                            action=Gtk.FileChooserAction.SELECT_FOLDER)
+            chooser.add_button("Cancelar", Gtk.ResponseType.CANCEL)
+            chooser.add_button("Selecionar", Gtk.ResponseType.ACCEPT)
+            if chooser.run() == Gtk.ResponseType.ACCEPT:
+                show({"pasta_autorizada": self.local_tools.grant_directory(chooser.get_filename())})
+            chooser.destroy()
+        choose.connect("clicked", lambda *_args: safe(choose_directory))
+        rel = Gtk.Entry()
+        rel.set_placeholder_text("nome-do-arquivo.txt (somente na pasta autorizada)")
+        content = Gtk.Entry()
+        content.set_placeholder_text("Conteúdo para novo arquivo de texto (até 512 KiB)")
+        controls.pack_start(rel, False, False, 0)
+        controls.pack_start(content, False, False, 0)
+        def create_file(*_):
+            plan = self.local_tools.prepare_create_file(rel.get_text(), content.get_text())
+            if self._confirm_data_action("Criar um novo arquivo em {} ({} bytes)? Arquivos existentes não serão sobrescritos.".format(plan["path"], plan["bytes"])):
+                show(self.local_tools.confirm_create_file(plan["confirmation_token"]))
+            else:
+                show({"cancelled": True, "plan": plan["path"]})
+        action("Planejar e confirmar criação de arquivo", create_file)
+        setting = Gtk.ComboBoxText()
+        for key, label in (("display", "Tela"), ("appearance", "Aparência"), ("keyboard", "Teclado"),
+                           ("network", "Rede"), ("sound", "Áudio")):
+            setting.append(key, label)
+        setting.set_active(0)
+        controls.pack_start(setting, False, False, 0)
+        action("Abrir configuração selecionada", lambda *_: safe(lambda: json.loads(str(
+            self.proxy.OpenXfceSetting(setting.get_active_id())))))
+        dialog.show_all()
+        try:
+            dialog.run()
+        except Exception:
+            self.status.set_text("A operação local não pôde ser concluída. Confira a pasta autorizada e os parâmetros.")
+        dialog.destroy()
 
     def _remove_key(self, *_):
         if not self.proxy:

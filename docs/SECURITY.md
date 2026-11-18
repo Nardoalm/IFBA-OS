@@ -20,6 +20,8 @@ The requested common first-login password `12345` must not be packaged: knowing 
 - D-Bus calls use a per-user session bus.
 - Data/config/cache directories are created with mode `0700`; the database and settings file use mode `0600`.
 - SQLite uses foreign keys, parameterized queries, explicit schema versioning, and a private data path. Credentials do not belong in SQLite.
+- Schema v2 makes bounded local extractive conversation summaries; fragments matching obvious sensitive terms are omitted. Summaries are sent as untrusted context, not instructions.
+- Long-term memory is off by default and requires a student-initiated add/edit operation. The UI supports review, correction, deletion, export, clearing, and retention. Obvious password/API-key/token/CPF/RG/matrícula/contact strings are rejected; this heuristic cannot identify every sensitive fact.
 - Tests use fake keys and a mocked subprocess; no real key is part of the test suite.
 
 ## Data sent to NVIDIA
@@ -32,5 +34,5 @@ HTTP requests are not logged; user-facing errors omit response bodies and creden
 
 - The D-Bus service exposes only typed configuration and conversation methods. It has no shell command, system package, user-management, or arbitrary file-operation method.
 - The user service uses `NoNewPrivileges`, `ProtectSystem=strict`, `ProtectHome=read-only`, a restrictive umask, private tmp, restricted address families, and narrowly writable XDG app directories.
-- Future system tools require explicit allowlists and confirmation before file modifications or privileged actions. Content from websites, documents, or screenshots is never authorization.
+- Current system tools are not callable by the model. They are invoked from GTK and run as the logged-in user. The daemon remains read-only with respect to home directories; file listing/search/create runs in the GTK client and a folder is granted only for that UI session. Listing/search does not follow symlinks and has result/depth limits. File creation targets a new immediate child, uses `O_EXCL`, `O_NOFOLLOW` where available, mode `0600`, and an expiring one-use token bound to the exact plan. No tool can run a shell, install packages, or perform privileged changes.
 - Screen capture and AT-SPI access are not implemented in Stage 1.

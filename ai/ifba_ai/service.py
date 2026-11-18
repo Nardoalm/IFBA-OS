@@ -19,6 +19,8 @@ class AssistantService:
         self.storage = ConversationStore(self.paths)
         self.secrets = secret_store or SecretStore()
         self.client = nvidia_client or NvidiaClient()
+        from .tools import SystemTools
+        self.tools = SystemTools()
         self.emit = emit or (lambda *_args: None)
         self._generation_lock = threading.Lock()
         self._generation = None
@@ -105,7 +107,11 @@ class AssistantService:
                 raise ValueError("Selecione o modelo multimodal documentado para enviar uma captura.")
             api_key = self.secrets.get()
             self.storage.add_message(conversation_id, "user", prompt.strip())
-            history = self.storage.list_messages(conversation_id, limit=24)
+            history = self.storage.build_bounded_context(
+                conversation_id,
+                max_messages=settings["context_max_messages"],
+                max_chars=settings["context_max_chars"],
+            )
         except Exception:
             self._generation = None
             self._generation_lock.release()
@@ -118,6 +124,8 @@ class AssistantService:
                     api_key, settings["model_id"], history, settings["max_tokens"], token,
                     settings["education_level"], image_data_url=image_data_url,
                     visual_context=visual_context,
+                    educational_context=self._educational_context(
+                        prompt, conversation_id, include_memories=settings["memory_enabled"]),
                 ):
                     answer.append(chunk)
                     if visual_context is None:
@@ -156,3 +164,19 @@ class AssistantService:
             return False
         token.cancel()
         return True
+
+    def _educational_context(self, query, conversation_id, include_memories):
+        payload = {}
+        summary = self.storage.conversation_summary(conversation_id)
+        if summary:
+            payload["conversation_summary"] = summary
+        memories = self.storage.search_memories(query, limit=8) if include_memories else []
+        if memories:
+            payload["memories"] = [
+                {"category": item["category"], "content": item["content"],
+                 "inferred": bool(item["inferred"])} for item in memories
+            ]
+        if not payload:
+            return ""
+        return "Memórias que o estudante pode revisar/corrigir: " + json.dumps(payload,
+            ensure_ascii=False, separators=(",", ":"))

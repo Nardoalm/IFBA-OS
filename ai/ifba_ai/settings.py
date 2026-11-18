@@ -12,6 +12,10 @@ DEFAULTS = {
     "share_active_application": False,
     "share_system_profile": False,
     "education_level": "iniciante",
+    "context_max_messages": 24,
+    "context_max_chars": 24000,
+    "history_retention_days": 365,
+    "memory_retention_days": 365,
 }
 
 
@@ -41,6 +45,15 @@ def validate_settings(values):
             raise SettingsError("Uma preferência contém um tipo inválido.")
     if result["education_level"] not in ("iniciante", "intermediario", "avancado"):
         raise SettingsError("Escolha um nível de aprendizagem válido.")
+    for key, lower, upper in (("context_max_messages", 2, 100), ("context_max_chars", 1000, 100000),
+                              ("history_retention_days", 0, 3650), ("memory_retention_days", 0, 3650)):
+        try:
+            value = int(result[key])
+        except (TypeError, ValueError):
+            raise SettingsError("Um limite de contexto ou retenção é inválido.")
+        if value < lower or value > upper:
+            raise SettingsError("Um limite de contexto ou retenção está fora da faixa permitida.")
+        result[key] = value
     result["model_id"] = model.strip()
     result["max_tokens"] = limit
     return result
