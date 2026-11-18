@@ -38,7 +38,7 @@ cleanup_mounts() {
 trap cleanup_mounts EXIT
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get update
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-  linux-image-generic casper plymouth systemd-sysv xfce4 lightdm lightdm-gtk-greeter \
+  linux-image-generic casper plymouth plymouth-themes systemd-sysv xfce4 lightdm lightdm-gtk-greeter \
   xserver-xorg xinit network-manager network-manager-gnome xdg-utils \
   yaru-theme-gtk yaru-theme-icon fonts-inter \
   xfce4-power-manager xfce4-pulseaudio-plugin xfce4-whiskermenu-plugin xfce4-genmon-plugin \
@@ -85,6 +85,7 @@ cp "$ROOTFS/boot/vmlinuz-"* "$ISO/casper/vmlinuz"
 cp "$ROOTFS/boot/initrd.img-"* "$ISO/casper/initrd"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/backgrounds/ifba-os/wallpaper.png"
 mkdir -p \
+  "$ROOTFS/usr/share/plymouth/themes/ifba-os" \
   "$ROOTFS/usr/share/ifba-os/assets" \
   "$ROOTFS/usr/share/ifba-os/assets/wallpapers" \
   "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml" \
@@ -111,6 +112,9 @@ mkdir -p \
   "$ROOTFS/usr/lib/systemd/user/default.target.wants" \
   "$ROOTFS/usr/share/dbus-1/services" \
   "$ROOTFS/usr/lib/python3/dist-packages"
+cp /work/assets/plymouth/ifba-os-startup.png "$ROOTFS/usr/share/plymouth/themes/ifba-os/ifba-os-startup.png"
+cp /work/packaging/plymouth/ifba-os.plymouth "$ROOTFS/usr/share/plymouth/themes/ifba-os/ifba-os.plymouth"
+cp /work/packaging/plymouth/ifba-os.script "$ROOTFS/usr/share/plymouth/themes/ifba-os/ifba-os.script"
 cp -R /work/ai/ifba_ai "$ROOTFS/usr/lib/python3/dist-packages/"
 cp /work/packaging/ifba-ai-ui "$ROOTFS/usr/bin/ifba-ai-ui"
 cp /work/packaging/ifba-ai-daemon "$ROOTFS/usr/bin/ifba-ai-daemon"
@@ -199,16 +203,23 @@ cp "$ROOTFS/etc/xdg/autostart/ifba-os-session-setup.desktop" \
 chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu/Desktop /home/ubuntu/.config \
   /home/ubuntu/.local/share/ifba-ai /home/ubuntu/.cache/ifba-ai
 chmod +x "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop" "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
+chroot "$ROOTFS" update-alternatives --install \
+  /usr/share/plymouth/themes/default.plymouth default.plymouth \
+  /usr/share/plymouth/themes/ifba-os/ifba-os.plymouth 120
+chroot "$ROOTFS" update-alternatives --set default.plymouth \
+  /usr/share/plymouth/themes/ifba-os/ifba-os.plymouth
+chroot "$ROOTFS" update-initramfs -u -k all
+cp "$ROOTFS/boot/initrd.img-"* "$ISO/casper/initrd"
 cleanup_mounts
 rm -f "$RESOLV_TARGET"
 
-mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -e boot
+mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -processors 2 -e boot
 du -sx --block-size=1 "$ROOTFS" | cut -f1 > "$ISO/casper/filesystem.size"
 cat > "$ISO/boot/grub/grub.cfg" <<'GRUB'
 set timeout=5
 set default=0
 menuentry "IFBA OS prototype (live)" {
-  linux /casper/vmlinuz boot=casper quiet ---
+  linux /casper/vmlinuz boot=casper splash ---
   initrd /casper/initrd
 }
 GRUB

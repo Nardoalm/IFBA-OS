@@ -7,11 +7,11 @@
 - [x] **DONE · P1** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, NetSurf, and an automatic live-session user.
 - [x] **DONE · P1** Native XFCE desktop configuration for Yaru Dark, Yaru icons, Inter, restrained green GTK3 accent, Xfwm4 built-in compositing, top greeting/date panel, bottom launcher/task/tray panel, workspace pager, and Super-key menu/window controls.
 - [x] **DONE · P1** Native SUAP and AVA desktop links and application-menu launchers using public HTTPS URLs, with NetSurf configured as the browser helper and default.
-- [ ] **IN_PROGRESS · P0** Verify the new native desktop in UTM: the prior ISO dropped to a tty because its root filesystem had no `default.target`; the build now sets `graphical.target`, but the rebuilt image still needs a fresh VM boot before wallpaper, panels, menu/search, launchers, workspace switching, settings, notifications, network/audio, or shutdown can be considered validated.
+- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. The build now selects `graphical.target` and embeds the exact user-selected wallpaper. A prior corrected image reached XFCE; on the newest image, UTM remains at the splash while `NetworkManager.service` is still starting. Confirm that boot completes and the selected wallpaper, panels, launchers, settings, notifications, network/audio, and shutdown work.
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
-- [ ] **IN_PROGRESS · P1** Add a native GTK assistant, user-session D-Bus service, systemd user unit, private XDG settings/SQLite storage, Secret Service key adapter, NVIDIA text streaming chat, bounded context, and cancellation. Twenty-five automated tests pass; runtime UI/keyring integration and a live API request remain unverified.
+- [ ] **IN_PROGRESS · P1** Native GTK assistant, per-user D-Bus service, private XDG/SQLite storage, Secret Service, NVIDIA text streaming, bounded context, cancellation, visual guidance, schema-v2 educational memory controls, retention/export, and typed user-initiated tools are implemented in source; 36 automated tests pass. Runtime UI/keyring/API and VM checks remain unverified.
 - [ ] **IN_PROGRESS · P0** Replace the time-of-day phrase in the top panel with `Olá, [nome]!` and fall back to `Olá, estudante!`; a real matrícula login remains blocked by the shared passwordless live account and the lack of an installer or authorized account-provisioning service.
 
 ## What comes from Linux Educacional
@@ -34,6 +34,7 @@
 ### Desktop and applications
 
 - [ ] **IN_PROGRESS · P0** Boot the rebuilt image after setting the graphical systemd default and confirm the supplied wallpaper, native top greeting/date panel, bottom panel, and SUAP/AVA links render together without an Electron dashboard.
+- [ ] **IN_PROGRESS · P1** Package the exact user-provided image as both desktop wallpaper and custom Plymouth artwork; rebuild initramfs and verify the boot-to-desktop transition in UTM. The ISO embeds the correct bytes, but the latest boot remains at the splash during NetworkManager startup.
 - [ ] **TODO · P1** Confirm the IFBA-icon Whisker menu opens by click and Super/Windows key; verify launchers at 1366×768 and 1920×1080, task switching, workspace pager, and keyboard-only access.
 - [ ] **TODO · P1** Inspect Thunar, terminal, NetSurf, XFCE Settings Manager, notification dialogs, LightDM greeter, and system dialogs for theme consistency and functional controls.
 - [ ] **TODO · P2** Evaluate XFWM4's built-in compositor on software-rendered and accelerated VM/physical hardware; keep a user-accessible off switch. Do not add Picom alongside XFWM4.
@@ -50,11 +51,12 @@
 
 ### Optional AI assistant
 
-- [ ] **IN_PROGRESS · P1** Verify the assistant settings window, service startup, Secret Service behavior, and per-user paths inside the rebuilt live ISO. The current live account is shared and passwordless, so do not enter real student credentials.
+- [ ] **IN_PROGRESS · P1** Verify assistant chat, settings/data-management windows, service startup, Secret Service behavior, tools, and per-user paths inside a rebuilt live ISO. The current live account is shared and passwordless, so do not enter real student credentials.
 - [x] **DONE · P1** Implement a Secret Service adapter and fail-closed behavior for missing/locked keyrings; no key is stored in plaintext.
 - [x] **DONE · P1** Implement restrictive XDG directories, schema-versioned SQLite conversations/messages/memory, validated settings, and automated isolation/permission tests.
 - [x] **DONE · P1** Implement a text-only NVIDIA NIM client and GTK conversation workflow, streaming, cancellation, syntax validation, bounded retries/context, and network error handling. API availability and credentials remain unverified.
 - [ ] **IN_PROGRESS · P1** Add selectable X11 windows, bounded AT-SPI context, explicit capture consent and preview, a documented image-capable NVIDIA route, strict structured-response validation, and a temporary click-through outline. Tests use mocks; desktop runtime is unverified.
+- [ ] **IN_PROGRESS · P1** Add local conversation summaries, bounded context controls, opt-in editable learning memories, lexical retrieval, retention, export/deletion, and typed local tools requiring GTK initiation and one-shot file-creation confirmation. Automated tests pass; XFCE/D-Bus runtime is unverified.
 - [ ] **TODO · P1** Watch focus/move/resize changes, offer selected-region capture, track tutorial state changes, and exercise the full guided workflow in Eclipse or a GTK test application.
 - [ ] **TODO · P1** Define operation-specific consent, visible screen sharing, confirmation before system changes, model/provider errors, rate/cost controls, and privacy retention.
 - [ ] **TODO · P2** Implement chat and educational walkthroughs only after the threat model and provider terms are reviewed. No AI is currently connected and no agent has unrestricted system control.
@@ -72,6 +74,6 @@
 - The OS is a prototype live ISO based on Ubuntu 24.04 amd64, not a finished installable distribution.
 - The app-selection catalogue does not install software. Shared installation across accounts is not implemented.
 - SUAP and AVA open public HTTPS sites; academic data is not integrated.
-- The native GTK assistant, per-user credential/data foundation, NVIDIA text streaming, and source-level consent-based visual guidance are present. No authenticated live model request or visual desktop integration has been tested. Educational memory controls and safe system tools are not implemented yet.
+- The native GTK assistant, per-user credential/data foundation, NVIDIA text streaming, consent-based visual guidance, educational memory controls, and safe user-initiated system tools are present in source. No authenticated live model request or visual desktop integration has been tested.
 - The current live ISO's single passwordless `ubuntu` account is not suitable for multiple students; matrícula login and user isolation require a proper installer/provisioning policy.
 - The IFBA-branded artwork is provisional, and institutional endorsement has not been established.

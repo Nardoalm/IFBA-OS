@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=IFBA OS
+Description=IFBA OS startup image
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/ifba-os
+ScriptFile=/usr/share/plymouth/themes/ifba-os/ifba-os.script

@@ -1,0 +1,18 @@
+Window.SetBackgroundTopColor (0.0, 0.0, 0.0);
+Window.SetBackgroundBottomColor (0.0, 0.0, 0.0);
+
+startup_image = Image ("ifba-os-startup.png");
+scale_x = Window.GetWidth () / startup_image.GetWidth ();
+scale_y = Window.GetHeight () / startup_image.GetHeight ();
+
+# Fit the supplied 16:9 artwork without changing its aspect ratio.
+if (scale_x < scale_y)
+  scale = scale_x;
+else
+  scale = scale_y;
+scaled_image = startup_image.Scale (startup_image.GetWidth () * scale,
+                                    startup_image.GetHeight () * scale);
+startup_sprite = Sprite (scaled_image);
+startup_sprite.SetX (Window.GetWidth () / 2 - scaled_image.GetWidth () / 2);
+startup_sprite.SetY (Window.GetHeight () / 2 - scaled_image.GetHeight () / 2);
+startup_sprite.SetZ (0);
