@@ -8,22 +8,7 @@ OUT=/work/output/ifba-os-ubuntu-24.04-amd64.iso
 
 apt-get update
 apt-get install -y --no-install-recommends \
-  debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools ca-certificates wget xz-utils
-
-NODE_VERSION=22.23.5
-NODE_ARCHIVE="node-v${NODE_VERSION}-linux-x64.tar.xz"
-NODE_SHA256=cdeb8670a0c81f51b4dc4ac61919f9b1ad917b304bf8221eb939570663d240f8
-wget -nv "https://nodejs.org/dist/v${NODE_VERSION}/${NODE_ARCHIVE}" -O "/tmp/${NODE_ARCHIVE}"
-echo "${NODE_SHA256}  /tmp/${NODE_ARCHIVE}" | sha256sum --check
-mkdir -p /opt/node-v22
-tar -xJf "/tmp/${NODE_ARCHIVE}" --strip-components=1 -C /opt/node-v22
-export PATH="/opt/node-v22/bin:$PATH"
-node --version
-npm --version
-
-npm ci --prefix /work/app --omit=dev --no-audit --no-fund
-ELECTRON_INSTALL_PLATFORM=linux ELECTRON_INSTALL_ARCH=x64 \
-  node /work/app/node_modules/electron/install.js
+  debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools
 
 if [[ ! -e "$ROOTFS/etc/os-release" ]]; then
   rm -rf "$ROOTFS"
@@ -55,21 +40,37 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get update
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   linux-image-generic casper plymouth systemd-sysv xfce4 lightdm lightdm-gtk-greeter \
   xserver-xorg xinit network-manager network-manager-gnome xdg-utils \
-  greybird-gtk-theme xfce4-power-manager xfce4-pulseaudio-plugin xfce4-whiskermenu-plugin \
+  yaru-theme-gtk yaru-theme-icon fonts-inter \
+  xfce4-power-manager xfce4-pulseaudio-plugin xfce4-whiskermenu-plugin xfce4-genmon-plugin \
+  xfce4-terminal thunar xfce4-appfinder xfce4-settings xfce4-notifyd \
   libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libasound2t64 \
   libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libdrm2 \
   libxkbcommon0 libpango-1.0-0 \
   netsurf-gtk sudo dbus-x11 policykit-1
+
+# The root filesystem is cached between builds; remove the older fullscreen dashboard.
+rm -f "$ROOTFS/etc/xdg/autostart/ifba-os-welcome.desktop" \
+  "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Welcome.desktop" \
+  "$ROOTFS/etc/skel/Desktop/IFBA-OS-Welcome.desktop" \
+  "$ROOTFS/usr/share/applications/ifba-os-welcome.desktop" \
+  "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-welcome.desktop" \
+  "$ROOTFS/usr/bin/ifba-os-welcome"
+rm -rf "$ROOTFS/usr/share/ifba-os/app" "$ROOTFS/usr/lib/ifba-os/electron"
 
 chroot "$ROOTFS" /bin/bash -euxc '
   id ubuntu >/dev/null 2>&1 || useradd -m -s /bin/bash -G sudo ubuntu
   passwd -d ubuntu
   mkdir -p /var/crash /etc/lightdm/lightdm.conf.d /usr/share/backgrounds/ifba-os \
     /usr/share/xfce4/helpers /usr/share/icons/hicolor/128x128/apps \
-    /usr/lib/ifba-os/electron /usr/local/bin /etc/xdg/autostart \
+    /usr/lib/ifba-os /usr/local/bin /etc/xdg/autostart \
     /etc/xdg/xfce4/xfconf/xfce-perchannel-xml /etc/xdg/xfce4/panel \
-    /etc/xdg/xfce4
+    /etc/xdg/xfce4 /etc/skel/Desktop /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml \
+    /etc/skel/.config/autostart \
+    /etc/skel/.config/gtk-3.0 /etc/gtk-3.0
   printf "[Seat:*]\nuser-session=xfce\ngreeter-session=lightdm-gtk-greeter\nautologin-user=ubuntu\nautologin-user-timeout=0\n" > /etc/lightdm/lightdm.conf.d/50-ifba-autologin.conf
+  printf "[greeter]\nbackground=/usr/share/backgrounds/ifba-os/wallpaper.png\ntheme-name=Yaru-dark\nicon-theme-name=Yaru\nfont-name=Inter 10\n" > /etc/lightdm/lightdm-gtk-greeter.conf
+  # debootstrap defaults to multi-user.target; start LightDM and XFCE in the live image.
+  ln -sfn /lib/systemd/system/graphical.target /etc/systemd/system/default.target
   update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/netsurf-gtk 50
   apt-get clean
     rm -rf /var/lib/apt/lists/* /tmp/*
@@ -81,7 +82,6 @@ cp "$ROOTFS/boot/vmlinuz-"* "$ISO/casper/vmlinuz"
 cp "$ROOTFS/boot/initrd.img-"* "$ISO/casper/initrd"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/backgrounds/ifba-os/wallpaper.png"
 mkdir -p \
-  "$ROOTFS/usr/share/ifba-os/app" \
   "$ROOTFS/usr/share/ifba-os/assets" \
   "$ROOTFS/usr/share/ifba-os/assets/wallpapers" \
   "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml" \
@@ -90,28 +90,54 @@ mkdir -p \
   "$ROOTFS/etc/xdg/autostart" \
   "$ROOTFS/usr/share/xfce4/helpers" \
   "$ROOTFS/usr/share/icons/hicolor/128x128/apps" \
-  "$ROOTFS/usr/lib/ifba-os/electron" \
+  "$ROOTFS/usr/lib/ifba-os" \
   "$ROOTFS/usr/local/bin" \
   "$ROOTFS/home/ubuntu/Desktop" \
   "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml" \
   "$ROOTFS/home/ubuntu/.config/xfce4" \
+  "$ROOTFS/home/ubuntu/.config/xfce4/panel" \
+  "$ROOTFS/home/ubuntu/.config/autostart" \
+  "$ROOTFS/etc/skel/.config/xfce4/panel" \
+  "$ROOTFS/home/ubuntu/.config/gtk-3.0" \
   "$ROOTFS/home/ubuntu/.config"
-cp /work/app/package.json /work/app/package-lock.json /work/app/main.js \
-  /work/app/preload.js /work/app/index.html /work/app/renderer.js \
-  /work/app/style.css "$ROOTFS/usr/share/ifba-os/app/"
-cp -R /work/app/node_modules/electron/dist/. "$ROOTFS/usr/lib/ifba-os/electron/"
 cp -R /work/assets/icons "$ROOTFS/usr/share/ifba-os/assets/"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/ifba-os/assets/wallpapers/"
-cp /work/packaging/ifba-os-welcome.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Welcome.desktop"
-cp /work/packaging/ifba-os-welcome.desktop "$ROOTFS/etc/xdg/autostart/ifba-os-welcome.desktop"
-cp /work/packaging/netsurf.desktop "$ROOTFS/home/ubuntu/Desktop/Navegador-Web.desktop"
 cp /work/packaging/netsurf.desktop "$ROOTFS/usr/share/applications/netsurf.desktop"
+cp /work/packaging/suap-ifba.desktop "$ROOTFS/usr/share/applications/suap-ifba.desktop"
+cp /work/packaging/ava-ifba.desktop "$ROOTFS/usr/share/applications/ava-ifba.desktop"
+cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop"
+cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
+cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/etc/skel/Desktop/SUAP.desktop"
+cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/etc/skel/Desktop/AVA-IFBA.desktop"
 cp /work/packaging/xfce4-desktop.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
 cp /work/packaging/xfce4-desktop.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
+cp /work/packaging/xfce4-desktop.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
 cp /work/packaging/xfce4-panel.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
 cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
-cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/xdg/xfce4/panel/default.xml"
+cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
+sed 's/<property name="panels" type="uint" value="2">/<property name="panels" type="array">\n      <value type="int" value="1"\/>\n      <value type="int" value="2"\/>/' \
+  /work/packaging/xfce4-panel.xml > "$ROOTFS/etc/xdg/xfce4/panel/default.xml"
+cat > "$ROOTFS/home/ubuntu/.config/xfce4/panel/genmon-13.rc" <<'GENMON'
+Command=/usr/lib/ifba-os/ifba-os-greeting.sh
+UseLabel=0
+UpdatePeriod=60000
+GENMON
+cp "$ROOTFS/home/ubuntu/.config/xfce4/panel/genmon-13.rc" "$ROOTFS/etc/skel/.config/xfce4/panel/genmon-13.rc"
 cp /work/packaging/xfce4-keyboard-shortcuts.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml"
+cp /work/packaging/xfce4-keyboard-shortcuts.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml"
+cp /work/packaging/xfce4-xsettings.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+cp /work/packaging/xfce4-xsettings.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+cp /work/packaging/xfce4-xsettings.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+cp /work/packaging/xfwm4.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+cp /work/packaging/xfwm4.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+cp /work/packaging/xfwm4.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+cp /work/packaging/gtk.css "$ROOTFS/etc/gtk-3.0/gtk.css"
+cp /work/packaging/gtk.css "$ROOTFS/home/ubuntu/.config/gtk-3.0/gtk.css"
+cp /work/packaging/gtk.css "$ROOTFS/etc/skel/.config/gtk-3.0/gtk.css"
+cp /work/packaging/ifba-os-greeting.sh "$ROOTFS/usr/lib/ifba-os/ifba-os-greeting.sh"
+chmod +x "$ROOTFS/usr/lib/ifba-os/ifba-os-greeting.sh"
+cp /work/packaging/ifba-os-session-setup.sh "$ROOTFS/usr/local/bin/ifba-os-session-setup"
+chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-session-setup"
 cp /work/packaging/xfce4-netsurf-helper.desktop "$ROOTFS/usr/share/xfce4/helpers/netsurf.desktop"
 cp /work/packaging/xfce4-helpers.rc "$ROOTFS/etc/xdg/xfce4/helpers.rc"
 cp /work/packaging/xfce4-helpers.rc "$ROOTFS/home/ubuntu/.config/xfce4/helpers.rc"
@@ -126,10 +152,6 @@ application/xhtml+xml=netsurf.desktop
 MIME
 cp "$ROOTFS/usr/share/ifba-os/mimeapps.list" "$ROOTFS/etc/xdg/mimeapps.list"
 cp "$ROOTFS/usr/share/ifba-os/mimeapps.list" "$ROOTFS/home/ubuntu/.config/mimeapps.list"
-cat > "$ROOTFS/usr/bin/ifba-os-welcome" <<'LAUNCHER'
-#!/bin/sh
-exec /usr/lib/ifba-os/electron/electron /usr/share/ifba-os/app "$@"
-LAUNCHER
 cat > "$ROOTFS/etc/xdg/autostart/ifba-network-indicator.desktop" <<'NETWORK'
 [Desktop Entry]
 Type=Application
@@ -138,9 +160,22 @@ Exec=nm-applet
 OnlyShowIn=XFCE;
 Terminal=false
 NETWORK
-chmod +x "$ROOTFS/usr/bin/ifba-os-welcome"
+cat > "$ROOTFS/etc/xdg/autostart/ifba-os-session-setup.desktop" <<'SESSION'
+[Desktop Entry]
+Type=Application
+Name=IFBA OS Session Setup
+Comment=Apply desktop defaults for the active display
+Exec=/usr/local/bin/ifba-os-session-setup
+OnlyShowIn=XFCE;
+Terminal=false
+StartupNotify=false
+SESSION
+cp "$ROOTFS/etc/xdg/autostart/ifba-os-session-setup.desktop" \
+  "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-session-setup.desktop"
+cp "$ROOTFS/etc/xdg/autostart/ifba-os-session-setup.desktop" \
+  "$ROOTFS/etc/skel/.config/autostart/ifba-os-session-setup.desktop"
 chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu/Desktop /home/ubuntu/.config
-chmod +x "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Welcome.desktop" "$ROOTFS/home/ubuntu/Desktop/Navegador-Web.desktop"
+chmod +x "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop" "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
 cleanup_mounts
 rm -f "$RESOLV_TARGET"
 

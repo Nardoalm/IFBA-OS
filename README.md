@@ -1,6 +1,6 @@
 # IFBA OS
 
-An early, independent Linux distribution prototype for academic use. This repository currently contains an Electron welcome-app prototype, visual assets, package-selection data, and a custom Ubuntu live-image build. It is not an official IFBA system and is not suitable for production deployment.
+An early, independent Linux distribution prototype for academic use. The live image is being built around a native XFCE desktop, visual assets, package-selection data, and a custom Ubuntu image build. An Electron welcome-screen prototype remains in `app/` for design exploration and is not part of the native desktop session. This is not an official IFBA system and is not suitable for production deployment.
 
 ## Current direction
 
@@ -12,7 +12,7 @@ An early, independent Linux distribution prototype for academic use. This reposi
 
 ## Prototype
 
-The welcome screen source is in `app/`. The ISO currently opens that static page with NetSurf; the Electron shell is a separate source prototype and is not installed as the native desktop app yet. The package catalogue is `config/educational-apps.json`. Visual assets are in `assets/`; generated IFBA marks are placeholders and must not be treated as official institutional artwork.
+The native session uses XFCE panels, Xfwm4, Xfdesktop, GTK settings, Thunar, NetSurf, and LightDM. The Electron welcome-screen source is kept in `app/` as a separate design prototype and is not launched by the ISO. The package catalogue is `config/educational-apps.json`. Visual assets are in `assets/`; generated IFBA marks are placeholders and must not be treated as official institutional artwork.
 
 ## Build an ISO
 

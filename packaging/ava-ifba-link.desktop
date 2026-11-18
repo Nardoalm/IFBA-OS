@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AVA IFBA
+Comment=Acesse o ambiente virtual público do IFBA
+Exec=xdg-open https://ava.ifba.edu.br/
+TryExec=xdg-open
+Icon=/usr/share/ifba-os/assets/icons/ava-ifba.png
+Terminal=false
+StartupNotify=true

@@ -1,10 +1,12 @@
 # Building the prototype ISO
 
-The current build targets Ubuntu 24.04 LTS amd64 with Casper, XFCE, LightDM, Xorg, NetworkManager, NetSurf, and an Electron desktop home. It is a live-session prototype, not an installer or release build.
+The current build targets Ubuntu 24.04 LTS amd64 with Casper, XFCE, LightDM, Xorg, NetworkManager, and NetSurf. It is a live-session prototype, not an installer or release build.
 
 Requirements: Docker Desktop with at least 8 GB RAM, 30 GB free disk, and network access. From the repository root run `./scripts/build-iso.sh`. The host script invokes `scripts/build-iso-container.sh` and writes `output/ifba-os-ubuntu-24.04-amd64.iso`. Docker volume `ifba-os-build-cache` holds the Linux root filesystem because the macOS host filesystem is case-insensitive. On Apple Silicon, the build uses amd64 emulation. Removing that volume discards the cached root filesystem.
 
-The image configures an automatic `ubuntu` live user, XFCE bottom panel with the Whisker application menu, its IFBA icon, Super/Windows-key shortcut, NetworkManager tray applet, NetSurf browser helper/default, desktop shortcuts, and an Electron home application launched at session start. The desktop background is the supplied full wallpaper with the 3D IFBA OS mark embedded in the image; the home page places portal shortcuts and activities around it without drawing a second central mark. Electron is installed into the guest from the pinned npm dependency and Linux amd64 package downloaded inside the Linux build container. SUAP and AVA links open only the allowlisted public HTTPS domains using the guest default browser.
+The image configures an automatic `ubuntu` live user, a Yaru Dark GTK/Xfwm theme, Yaru icons, Inter font, a GTK3 green accent, Xfwm4's built-in compositor, a top greeting/date panel, and a bottom XFCE panel with the Whisker application menu, IFBA mark, Super/Windows-key shortcut, app launchers, window list, workspace pager, network/audio indicators, clock, and session actions. SUAP/AVA appear as native desktop links and menu launchers, opening only their public HTTPS domains in the configured browser. The supplied full wallpaper with its embedded 3D wordmark loads directly in Xfdesktop. Theme and session defaults are also placed in `/etc/skel` for future users. The build explicitly sets systemd's default target to `graphical.target`, so LightDM starts in the live session.
+
+The Electron source under `app/` is a separate design prototype; the ISO does not include or autostart it. Window shadows and opacity use Xfwm4's compositor. Picom is not installed, and the desktop does not claim to provide window animations or background blur.
 
 The educational package catalogue is not installed by this image. The AI assistant is not connected. The current live image has no installer or disk persistence. The generated IFBA identity is provisional. Do not boot this image on real hardware or present it as an official IFBA release.
 

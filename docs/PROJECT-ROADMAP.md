@@ -5,9 +5,10 @@
 ## Current implementation
 
 - [x] **DONE · P1** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, NetSurf, and an automatic live-session user.
-- [x] **DONE · P1** Electron desktop home prototype with wallpaper, greeting/date, SUAP and AVA public HTTPS shortcuts, campus identity, truthful empty activities state, and an AI orb explaining that AI is not connected.
-- [x] **DONE · P1** Electron security baseline: sandbox, context isolation, no Node integration in the renderer, blocked in-app navigation, and allowlisted SUAP/AVA external links.
-- [ ] **IN_PROGRESS · P0** Deliver the Electron home, working default-browser path, panel/dock, and wallpaper together in the booted live desktop. See `docs/VM-TESTING.md`; current changes still require a fresh VM boot.
+- [x] **DONE · P1** Native XFCE desktop configuration for Yaru Dark, Yaru icons, Inter, restrained green GTK3 accent, Xfwm4 built-in compositing, top greeting/date panel, bottom launcher/task/tray panel, workspace pager, and Super-key menu/window controls.
+- [x] **DONE · P1** Native SUAP and AVA desktop links and application-menu launchers using public HTTPS URLs, with NetSurf configured as the browser helper and default.
+- [ ] **IN_PROGRESS · P0** Verify the new native desktop in UTM: the prior ISO dropped to a tty because its root filesystem had no `default.target`; the build now sets `graphical.target`, but the rebuilt image still needs a fresh VM boot before wallpaper, panels, menu/search, launchers, workspace switching, settings, notifications, network/audio, or shutdown can be considered validated.
+- [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
 
@@ -30,8 +31,11 @@
 
 ### Desktop and applications
 
-- [ ] **TODO · P0** Boot the current build and confirm the Electron page, CSS, supplied portal logos, exact supplied wallpaper (with embedded 3D wordmark), and bottom panel render together.
-- [ ] **TODO · P1** Confirm the IFBA-icon Whisker menu opens by click and Super/Windows key; verify dock launchers at 1280×720 and 1920×1080, task switching, and keyboard-only access.
+- [ ] **IN_PROGRESS · P0** Boot the rebuilt image after setting the graphical systemd default and confirm the supplied wallpaper, native top greeting/date panel, bottom panel, and SUAP/AVA links render together without an Electron dashboard.
+- [ ] **TODO · P1** Confirm the IFBA-icon Whisker menu opens by click and Super/Windows key; verify launchers at 1366×768 and 1920×1080, task switching, workspace pager, and keyboard-only access.
+- [ ] **TODO · P1** Inspect Thunar, terminal, NetSurf, XFCE Settings Manager, notification dialogs, LightDM greeter, and system dialogs for theme consistency and functional controls.
+- [ ] **TODO · P2** Evaluate XFWM4's built-in compositor on software-rendered and accelerated VM/physical hardware; keep a user-accessible off switch. Do not add Picom alongside XFWM4.
+- [ ] **TODO · P2** Document unavailable effects (window open/minimize animations and background blur) unless a stable, accessible, low-resource solution is proven.
 - [ ] **TODO · P1** Add genuine first-start onboarding and optional app checkboxes; communicate disk use, availability, and licensing.
 - [ ] **TODO · P1** Implement shared system package installation once for all local users, with explicit confirmation, progress/errors, privilege separation, and rollback.
 - [ ] **TODO · P2** Add localization, accessibility/screen-reader checks, settings, and user preference management.

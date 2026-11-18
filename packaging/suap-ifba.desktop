@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=SUAP IFBA
+Comment=Acesse o Sistema Unificado de Administração Pública do IFBA
+Exec=xdg-open https://suap.ifba.edu.br/
+TryExec=xdg-open
+Icon=/usr/share/ifba-os/assets/icons/suap.png
+Terminal=false
+Categories=Education;Network;
+StartupNotify=true

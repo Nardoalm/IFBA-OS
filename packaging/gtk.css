@@ -1,0 +1,22 @@
+/* IFBA OS's green focus accent on top of the upstream Yaru Dark theme. */
+@define-color theme_selected_bg_color #2f9e44;
+@define-color theme_selected_fg_color #ffffff;
+@define-color accent_color #2f9e44;
+@define-color accent_bg_color #2f9e44;
+@define-color accent_fg_color #ffffff;
+
+/* Use Xfwm's compositor for a subtle graphite panel with no extra compositor. */
+#XfcePanelWindow {
+  background-color: rgba(14, 16, 18, 0.94);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+#XfcePanelWindow button {
+  border-radius: 7px;
+  transition: background-color 140ms ease;
+}
+
+#XfcePanelWindow button:hover,
+#XfcePanelWindow button:checked {
+  background-color: rgba(47, 158, 68, 0.28);
+}

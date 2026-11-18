@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=SUAP
+Comment=Acesse o portal público do SUAP IFBA
+Exec=xdg-open https://suap.ifba.edu.br/
+TryExec=xdg-open
+Icon=/usr/share/ifba-os/assets/icons/suap.png
+Terminal=false
+StartupNotify=true
