@@ -5,6 +5,14 @@ wallpaper=/usr/share/backgrounds/ifba-os/wallpaper.png
 command -v xfconf-query >/dev/null
 [[ -r "$wallpaper" ]]
 
+# Make the X11 session endpoints available to the per-user assistant service.
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl --user import-environment DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS || true
+fi
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+  dbus-update-activation-environment --systemd DISPLAY XAUTHORITY || true
+fi
+
 # Xfdesktop names wallpaper properties after the monitor reported by X11.
 # Resolve those live paths instead of assuming every VM exposes "monitor0".
 for attempt in {1..10}; do

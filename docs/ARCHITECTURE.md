@@ -13,18 +13,20 @@ flowchart LR
   Daemon --> SQLite[~/.local/share/ifba-ai/assistant.sqlite3]
   Daemon --> Secret[Secret Service / libsecret]
   Daemon -->|bounded text stream| NVIDIA[NVIDIA NIM hosted API]
-  Daemon -. Etapa 3 .-> Visual[AT-SPI2 + explicit screenshot consent]
+  Daemon -->|selected window, explicit consent| Visual[AT-SPI2 + X11 context]
+  Visual -->|documented multimodal route| NVIDIA
   Daemon -. Etapa 4 .-> Tools[allowlisted typed system tools]
 ```
 
 ### Local contracts
 
 - The GTK process and daemon use the current user's D-Bus session bus. D-Bus name: `org.ifba.OS.AI`; object: `/org/ifba/OS/AI`; interface: `org.ifba.OS.AI1`.
-- Configuration/conversation methods: `GetStatus`, `GetSettings`, `SaveSettings`, `StoreApiKey`, `DeleteApiKey`, `CreateConversation`, `ListConversations`, `ListMessages`, and `AddMessage`. Stage 2 adds `StartGeneration`, `CancelGeneration`, and the `MessageDelta`, `GenerationFinished`, and `GenerationFailed` signals.
+- Configuration/conversation methods: `GetStatus`, `GetSettings`, `SaveSettings`, `StoreApiKey`, `DeleteApiKey`, `CreateConversation`, `ListConversations`, `ListMessages`, and `AddMessage`. Stage 2 adds `StartGeneration`, `CancelGeneration`, and the `MessageDelta`, `GenerationFinished`, and `GenerationFailed` signals. Stage 3 adds local window-list/capture/control-bound methods, `StartVisualGeneration`, and `VisualGuide`.
 - The daemon runs as the logged-in user, under a systemd user unit. It has no root authority, package installer, arbitrary shell interface, or screenshot access.
 - Per-user settings are validated JSON under XDG config. Conversations/messages/memory use a schema-versioned SQLite database under XDG data. Credentials are exclusively held by the Secret Service keyring.
 - The AI feature is optional. If `secret-tool` or the user's keyring is unavailable or locked, key operations fail closed and UI explains the state.
 - Stage 2 submits only a bounded recent text context to NVIDIA NIM. The per-user daemon owns the key retrieval, request, persistence, streaming, and cancellation path; GTK never receives the API key back from the service.
+- Stage 3 uses explicit local window selection and capture consent. Screenshots are transient in memory; only a documented multimodal model can receive them. A target ID must match AT-SPI2 and local code reads its bounds; no model-supplied coordinates, clicks, or typing are allowed.
 
 ## Session identity and current limitation
 

@@ -12,6 +12,7 @@ Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual d
 - The ISO was rebuilt after that correction and again after the AI foundation/chat changes. The current artifact is 1,259,190,272 bytes; SHA-256: `1daf0d3fe6acac2fde16ffb1d341e4840478058f325d095d100517f1408177a4`. `bsdtar` lists the GRUB config, Casper kernel/initrd, and compressed root filesystem in the image. This confirms archive structure only; the current graphical boot remains unverified.
 - An isolated VM run was attempted through UTM. The existing `Linux` VM was already running, and `utmctl clone` refused to clone it while running. Its config enables a host folder share, so it was not used for testing and was left unchanged. The UTM window was unavailable through the current UI automation session, so a new disposable VM could not be configured in this run. No claim is made that this ISO reaches XFCE.
 - The current ISO includes the Stage 1 assistant foundation and Stage 2 NVIDIA text-chat package. The source test suite passes with mocked API requests. GTK/D-Bus/keyring runtime and a live NVIDIA API request remain unverified.
+- Stage 3 visual-guidance code and its X11/AT-SPI packages were added after that ISO was built. Rebuild before any visual runtime test; the final integration stage should produce the next ISO.
 - No SUAP/AVA site was opened or logged into. No AI key or academic data was used. Shutdown/reboot from XFCE remain unverified.
 
 ### Offline checks

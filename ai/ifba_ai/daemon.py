@@ -31,6 +31,8 @@ class AssistantObject(dbus.service.Object):
                 self.MessageDelta(conversation_id, value)
             elif event == "finished":
                 self.GenerationFinished(conversation_id, value)
+            elif event == "guide":
+                self.VisualGuide(conversation_id, value)
             else:
                 self.GenerationFailed(conversation_id, value)
             return False
@@ -46,6 +48,10 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.signal(INTERFACE, signature="ss")
     def GenerationFailed(self, conversation_id, message):
+        pass
+
+    @dbus.service.signal(INTERFACE, signature="ss")
+    def VisualGuide(self, conversation_id, serialized_result):
         pass
 
     @dbus.service.method(INTERFACE, out_signature="bbs")
@@ -103,6 +109,25 @@ class AssistantObject(dbus.service.Object):
     @dbus.service.method(INTERFACE, out_signature="b")
     def CancelGeneration(self):
         return dbus.Boolean(self.service.cancel_generation())
+
+    @dbus.service.method(INTERFACE, out_signature="s")
+    def ListVisibleWindows(self):
+        return json.dumps(self.service.list_visible_windows(), ensure_ascii=False)
+
+    @dbus.service.method(INTERFACE, in_signature="u", out_signature="s")
+    def CaptureActiveWindowPreview(self, window_id):
+        return self.service.capture_visual_preview(int(window_id))
+
+    @dbus.service.method(INTERFACE, in_signature="us", out_signature="s")
+    def GetAccessibleControlBounds(self, window_id, target_id):
+        return json.dumps(self.service.get_accessible_control_bounds(int(window_id), str(target_id)),
+                          ensure_ascii=False)
+
+    @dbus.service.method(INTERFACE, in_signature="ssss", out_signature="b")
+    def StartVisualGeneration(self, conversation_id, prompt, image_data_url, context):
+        self.service.start_visual_generation(str(conversation_id), str(prompt),
+                                             str(image_data_url), str(context))
+        return dbus.Boolean(True)
 
 
 def main():

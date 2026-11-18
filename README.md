@@ -8,7 +8,7 @@ An early, independent Linux distribution prototype for academic use. The live im
 - XFCE desktop for a modest-resource starting point; desktop choice remains subject to hardware testing.
 - Mint-inspired usability and Linux Educacional-inspired educational app curation without reusing their branding.
 - SUAP and AVA are opened as ordinary web links. No institutional login, scraping, or private API integration is implemented.
-- The AI assistant is optional. The native GTK settings/chat UI, per-user credential/data foundation, and NVIDIA streaming client are present in source; live API and rebuilt-ISO runtime validation remain pending.
+- The AI assistant is optional. Native GTK settings/chat and consent-based visual guidance, per-user credential/data storage, and NVIDIA text/image request paths are present in source; live API and rebuilt-ISO runtime validation remain pending.
 
 ## Prototype
 

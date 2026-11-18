@@ -1,5 +1,6 @@
 import io
 import json
+import base64
 import unittest
 from urllib.error import HTTPError, URLError
 
@@ -7,6 +8,8 @@ from ifba_ai.nvidia import (
     API_URL,
     CancellationToken,
     GenerationCancelled,
+    MULTIMODAL_MODEL,
+    MODEL_ENDPOINTS,
     NvidiaClient,
     NvidiaError,
     bounded_context,
@@ -138,6 +141,43 @@ class ClientTests(unittest.TestCase):
             list(NvidiaClient(opener=lambda *_a, **_k: response).stream_chat(
                 "secret", "valid-model", [], 100, token
             ))
+
+    def test_documented_multimodal_model_receives_inline_user_image(self):
+        response = FakeResponse([b'data: [DONE]\n'])
+        captured = {}
+        image = base64.b64encode(b"fake-jpeg-data").decode("ascii")
+
+        def opener(request, timeout):
+            captured["url"] = request.full_url
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            return response
+
+        context = {"application": "Eclipse", "controls": [{"id": "control-1", "role": "button",
+                                                               "name": "Create Class"}]}
+        with self.assertRaisesRegex(NvidiaError, "sem conteúdo"):
+            list(NvidiaClient(opener=opener).stream_chat(
+                "secret", MULTIMODAL_MODEL,
+                [{"role": "user", "content": "Onde crio uma classe?"}], 100,
+                image_data_url="data:image/jpeg;base64," + image, visual_context=context,
+            ))
+        self.assertEqual(captured["url"], MODEL_ENDPOINTS[MULTIMODAL_MODEL])
+        user_message = captured["payload"]["messages"][-1]
+        self.assertEqual(user_message["content"][0]["text"], "Onde crio uma classe?")
+        self.assertEqual(user_message["content"][1]["image_url"]["url"], "data:image/jpeg;base64," + image)
+        self.assertIn("conteúdo não confiável", captured["payload"]["messages"][0]["content"].lower())
+
+    def test_screenshot_is_rejected_for_text_model_and_when_too_large(self):
+        calls = []
+        client = NvidiaClient(opener=lambda *_a, **_k: calls.append(1))
+        context = {"application": "Eclipse", "controls": []}
+        with self.assertRaisesRegex(NvidiaError, "não está validado"):
+            list(client.stream_chat("secret", "deepseek-ai/deepseek-v4.1-flash", [], 100,
+                                    image_data_url="data:image/jpeg;base64,YQ==", visual_context=context))
+        huge = base64.b64encode(b"x" * (180 * 1024 + 1)).decode("ascii")
+        with self.assertRaisesRegex(NvidiaError, "excede o limite"):
+            list(client.stream_chat("secret", MULTIMODAL_MODEL, [{"role": "user", "content": "help"}], 100,
+                                    image_data_url="data:image/jpeg;base64," + huge, visual_context=context))
+        self.assertEqual(calls, [])
 
 
 if __name__ == "__main__":

@@ -44,6 +44,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   xfce4-power-manager xfce4-pulseaudio-plugin xfce4-whiskermenu-plugin xfce4-genmon-plugin \
   xfce4-terminal thunar xfce4-appfinder xfce4-settings xfce4-notifyd \
   python3-dbus python3-gi gir1.2-gtk-3.0 gnome-keyring libpam-gnome-keyring libsecret-tools \
+  python3-xlib python3-pyatspi at-spi2-core gir1.2-atspi-2.0 \
   libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libasound2t64 \
   libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libdrm2 \
   libxkbcommon0 libpango-1.0-0 \

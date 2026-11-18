@@ -24,7 +24,9 @@ The requested common first-login password `12345` must not be packaged: knowing 
 
 ## Data sent to NVIDIA
 
-The Stage 2 client sends an educational system instruction, selected learning level, model ID, output-token ceiling, and bounded recent text messages to NVIDIA NIM. It does not send active-window data, files, academic data, or screenshots. HTTP requests are not logged; user-facing errors omit response bodies and credentials. An authenticated live request has not been tested.
+Text requests send an educational system instruction, selected learning level, model ID, output-token ceiling, and bounded recent text messages to NVIDIA NIM. Visual assistance requires selecting one local window, consenting to capture, reviewing the preview, and separately confirming upload. Only the documented `microsoft/phi-4-multimodal-instruct` endpoint accepts screenshot bytes. Images are limited to 140 KiB, kept in memory, and not written to disk or SQLite. Login/password windows are blocked when detected from title or AT-SPI2, and the preview remains the student's final privacy check. The model cannot provide coordinates; a target ID is matched against the accessible-control list and its bounds are queried again before the temporary click-through outline is displayed. The assistant never clicks or types.
+
+HTTP requests are not logged; user-facing errors omit response bodies and credentials. No authenticated live request or real desktop capture has been tested. Window selection, capture, accessibility, and overlay need X11/AT-SPI runtime validation.
 
 ## Local service boundaries
 

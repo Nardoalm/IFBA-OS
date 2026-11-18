@@ -11,7 +11,7 @@
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
-- [ ] **IN_PROGRESS · P1** Add a native GTK assistant, user-session D-Bus service, systemd user unit, private XDG settings/SQLite storage, Secret Service key adapter, NVIDIA text streaming chat, bounded context, and cancellation. Eighteen automated tests pass; runtime UI/keyring integration and a live API request remain unverified.
+- [ ] **IN_PROGRESS · P1** Add a native GTK assistant, user-session D-Bus service, systemd user unit, private XDG settings/SQLite storage, Secret Service key adapter, NVIDIA text streaming chat, bounded context, and cancellation. Twenty-five automated tests pass; runtime UI/keyring integration and a live API request remain unverified.
 - [ ] **IN_PROGRESS · P0** Replace the time-of-day phrase in the top panel with `Olá, [nome]!` and fall back to `Olá, estudante!`; a real matrícula login remains blocked by the shared passwordless live account and the lack of an installer or authorized account-provisioning service.
 
 ## What comes from Linux Educacional
@@ -54,6 +54,8 @@
 - [x] **DONE · P1** Implement a Secret Service adapter and fail-closed behavior for missing/locked keyrings; no key is stored in plaintext.
 - [x] **DONE · P1** Implement restrictive XDG directories, schema-versioned SQLite conversations/messages/memory, validated settings, and automated isolation/permission tests.
 - [x] **DONE · P1** Implement a text-only NVIDIA NIM client and GTK conversation workflow, streaming, cancellation, syntax validation, bounded retries/context, and network error handling. API availability and credentials remain unverified.
+- [ ] **IN_PROGRESS · P1** Add selectable X11 windows, bounded AT-SPI context, explicit capture consent and preview, a documented image-capable NVIDIA route, strict structured-response validation, and a temporary click-through outline. Tests use mocks; desktop runtime is unverified.
+- [ ] **TODO · P1** Watch focus/move/resize changes, offer selected-region capture, track tutorial state changes, and exercise the full guided workflow in Eclipse or a GTK test application.
 - [ ] **TODO · P1** Define operation-specific consent, visible screen sharing, confirmation before system changes, model/provider errors, rate/cost controls, and privacy retention.
 - [ ] **TODO · P2** Implement chat and educational walkthroughs only after the threat model and provider terms are reviewed. No AI is currently connected and no agent has unrestricted system control.
 
@@ -70,6 +72,6 @@
 - The OS is a prototype live ISO based on Ubuntu 24.04 amd64, not a finished installable distribution.
 - The app-selection catalogue does not install software. Shared installation across accounts is not implemented.
 - SUAP and AVA open public HTTPS sites; academic data is not integrated.
-- The native GTK assistant, per-user credential/data foundation, and NVIDIA streaming client are present in source. No authenticated live model request has been made. Screen understanding, long-term memory controls, and system-control tools are not implemented yet.
+- The native GTK assistant, per-user credential/data foundation, NVIDIA text streaming, and source-level consent-based visual guidance are present. No authenticated live model request or visual desktop integration has been tested. Educational memory controls and safe system tools are not implemented yet.
 - The current live ISO's single passwordless `ubuntu` account is not suitable for multiple students; matrícula login and user isolation require a proper installer/provisioning policy.
 - The IFBA-branded artwork is provisional, and institutional endorsement has not been established.
