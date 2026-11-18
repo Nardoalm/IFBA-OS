@@ -25,24 +25,28 @@ SOURCES
 mount --bind /dev "$ROOTFS/dev"
 mount -t proc proc "$ROOTFS/proc"
 mount --rbind /sys "$ROOTFS/sys"
+RESOLV_TARGET="$ROOTFS/run/systemd/resolve/stub-resolv.conf"
+mkdir -p "$(dirname "$RESOLV_TARGET")"
+touch "$RESOLV_TARGET"
+mount --bind /etc/resolv.conf "$RESOLV_TARGET"
 cleanup_mounts() {
+  umount "$RESOLV_TARGET" 2>/dev/null || true
   umount -R "$ROOTFS/dev" 2>/dev/null || true
   umount "$ROOTFS/proc" 2>/dev/null || true
   umount -R "$ROOTFS/sys" 2>/dev/null || true
 }
 trap cleanup_mounts EXIT
-cp /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
-
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get update
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-  linux-image-generic casper systemd-sysv xfce4 lightdm network-manager \
+  linux-image-generic casper systemd-sysv xfce4 lightdm lightdm-gtk-greeter \
+  xserver-xorg xinit network-manager \
   netsurf-gtk sudo dbus-x11 policykit-1
 
 chroot "$ROOTFS" /bin/bash -euxc '
   id ubuntu >/dev/null 2>&1 || useradd -m -s /bin/bash -G sudo ubuntu
   passwd -d ubuntu
   mkdir -p /etc/lightdm/lightdm.conf.d /usr/share/backgrounds/ifba-os
-  printf "[Seat:*]\nautologin-user=ubuntu\nautologin-user-timeout=0\n" > /etc/lightdm/lightdm.conf.d/50-ifba-autologin.conf
+  printf "[Seat:*]\nuser-session=xfce\ngreeter-session=lightdm-gtk-greeter\nautologin-user=ubuntu\nautologin-user-timeout=0\n" > /etc/lightdm/lightdm.conf.d/50-ifba-autologin.conf
   apt-get clean
   rm -rf /var/lib/apt/lists/* /tmp/*
 '
@@ -56,6 +60,7 @@ mkdir -p \
   "$ROOTFS/usr/share/ifba-os/app" \
   "$ROOTFS/usr/share/ifba-os/assets" \
   "$ROOTFS/usr/share/ifba-os/assets/wallpapers" \
+  "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml" \
   "$ROOTFS/home/ubuntu/Desktop" \
   "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml"
 cp -R /work/app/. "$ROOTFS/usr/share/ifba-os/app/"
@@ -63,9 +68,11 @@ cp -R /work/assets/icons "$ROOTFS/usr/share/ifba-os/assets/"
 cp /work/assets/wallpapers/ifba-os-graphite.png "$ROOTFS/usr/share/ifba-os/assets/wallpapers/"
 cp /work/packaging/ifba-os-welcome.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Welcome.desktop"
 cp /work/packaging/xfce4-desktop.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
+cp /work/packaging/xfce4-desktop.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
 chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu/Desktop /home/ubuntu/.config
 chmod +x "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Welcome.desktop"
 cleanup_mounts
+rm -f "$RESOLV_TARGET"
 
 mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -e boot
 du -sx --block-size=1 "$ROOTFS" | cut -f1 > "$ISO/casper/filesystem.size"
@@ -73,7 +80,7 @@ cat > "$ISO/boot/grub/grub.cfg" <<'GRUB'
 set timeout=5
 set default=0
 menuentry "IFBA OS prototype (live)" {
-  linux /casper/vmlinuz boot=casper quiet splash ---
+  linux /casper/vmlinuz boot=casper quiet ---
   initrd /casper/initrd
 }
 GRUB

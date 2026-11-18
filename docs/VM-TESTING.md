@@ -6,14 +6,28 @@ Check that the live desktop boots, the wallpaper renders, the welcome-page short
 
 ## Validation record — 2026-11-18
 
-The live desktop has not yet been booted in a VM. No QEMU, UTM, or VirtualBox executable or application was found on the build host, so desktop rendering, launcher interaction, networking, shutdown, and reboot remain unverified. Do not treat the checks below as a successful VM boot.
+### VM result
 
-Offline image checks completed:
+- UTM is installed; the existing VM named `Linux` booted the current IFBA OS ISO into an XFCE desktop as the `ubuntu` live user. This confirms the boot menu, kernel/live startup, LightDM autologin, and graphical session now work. The desktop panel, Home icon, and “Primeiros passos do I...” desktop shortcut were visible.
+- The previous terminal-only failure was explained by the built root filesystem: `startxfce4` was present, but `xinit` and the Xorg server were missing. `--no-install-recommends` had omitted them. The build now explicitly installs `xserver-xorg`, `xinit`, and `lightdm-gtk-greeter`, and pins the LightDM XFCE session and greeter.
+- The wallpaper did **not** render in the observed desktop; it showed the default solid background. The build now provides the XFCE wallpaper channel both as the live user's configuration and as the system XDG default. This latest adjustment still needs a fresh boot confirmation.
+- The shortcut was visible but could not be opened in this run. A CUA click failed at the UTM window boundary, so the local welcome page, its CSS/assets, and SUAP/AVA links were not verified in the guest.
+- Guest networking and `apt update` were not verified; the exact guest error was not captured. The build now removes the container-specific systemd-resolved stub file before creating the SquashFS, because the old rootfs stub contained the Docker host resolver address. This addresses a concrete image contamination risk, but NAT/DNS still needs a guest check.
+- Shutdown and reboot were not checked. The wallpaper, launcher, network, and power checks remain open; SUAP/AVA were not opened and no account or credentials were entered.
 
-- The ISO is present at `output/ifba-os-ubuntu-24.04-amd64.iso` and its SHA-256 is `319871f316f3cdc10c877b8a7bf127533f29ac600b151d29dd32c56f5ede149b`.
-- `file` identifies an ISO 9660 image with boot metadata and volume label `IFBA_OS_24_04`; `xorriso` reads the image and lists the Casper kernel, initrd, filesystem size, and SquashFS.
-- The embedded SquashFS listing contains NetSurf, the welcome-page HTML, the desktop launcher, and both wallpaper copies.
-- The welcome-page source links only to `https://suap.ifba.edu.br/` and `https://ava.ifba.edu.br/`; neither service was opened or logged into during validation.
-- `bash -n scripts/build-iso.sh scripts/build-iso-container.sh` completed successfully.
+### Offline image/build checks
 
-Next action when a VM application is available: use the checklist above with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, NAT networking, and no host-shared folders or personal credentials. Attach the ISO as a virtual CD and choose its live boot entry; do not run an installer.
+- Current ISO: `output/ifba-os-ubuntu-24.04-amd64.iso`; SHA-256: `510ebd2499a7bcfcef93d249fde36bae66ef803247503d81a1009746e6b9f6b5`. The image was rebuilt after adding the system XDG wallpaper default, but that change has not yet been confirmed by a fresh VM boot.
+- Previous image metadata checks identified an ISO 9660 image with boot metadata and volume label `IFBA_OS_24_04`; the embedded SquashFS contained NetSurf, the welcome-page HTML, launcher, and wallpaper files.
+- The welcome page links only to `https://suap.ifba.edu.br/` and `https://ava.ifba.edu.br/`. Neither service was opened or logged into.
+- `node --check app/renderer.js`, `bash -n scripts/build-iso.sh scripts/build-iso-container.sh`, `git diff --check`, and the complete ISO rebuild succeeded after the wallpaper-default adjustment. `file` identifies the result as a bootable ISO 9660 image with volume label `IFBA_OS_24_04`.
+
+### Remaining VM checklist
+
+- [ ] Boot the rebuilt ISO again and confirm the wallpaper is visible.
+- [ ] Open “Primeiros passos do IFBA OS”; inspect CSS, icon images, and layout.
+- [ ] Confirm SUAP/AVA links target their expected HTTPS domains without signing in.
+- [ ] Verify NAT networking and DNS from inside the guest.
+- [ ] Check display legibility at a common VM resolution, then shutdown and reboot.
+
+Keep the VM disposable: 4 GB RAM, 2 CPUs, 30 GB virtual disk, NAT, no shared host folders, and no credentials. Select the live boot entry only; do not run an installer.
