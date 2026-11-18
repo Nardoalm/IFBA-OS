@@ -43,6 +43,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   yaru-theme-gtk yaru-theme-icon fonts-inter \
   xfce4-power-manager xfce4-pulseaudio-plugin xfce4-whiskermenu-plugin xfce4-genmon-plugin \
   xfce4-terminal thunar xfce4-appfinder xfce4-settings xfce4-notifyd \
+  python3-dbus python3-gi gir1.2-gtk-3.0 gnome-keyring libpam-gnome-keyring libsecret-tools \
   libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libasound2t64 \
   libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libdrm2 \
   libxkbcommon0 libpango-1.0-0 \
@@ -66,6 +67,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
     /etc/xdg/xfce4/xfconf/xfce-perchannel-xml /etc/xdg/xfce4/panel \
     /etc/xdg/xfce4 /etc/skel/Desktop /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml \
     /etc/skel/.config/autostart \
+    /etc/skel/.config/ifba-ai /etc/skel/.local/share/ifba-ai /etc/skel/.cache/ifba-ai \
     /etc/skel/.config/gtk-3.0 /etc/gtk-3.0
   printf "[Seat:*]\nuser-session=xfce\ngreeter-session=lightdm-gtk-greeter\nautologin-user=ubuntu\nautologin-user-timeout=0\n" > /etc/lightdm/lightdm.conf.d/50-ifba-autologin.conf
   printf "[greeter]\nbackground=/usr/share/backgrounds/ifba-os/wallpaper.png\ntheme-name=Yaru-dark\nicon-theme-name=Yaru\nfont-name=Inter 10\n" > /etc/lightdm/lightdm-gtk-greeter.conf
@@ -99,7 +101,26 @@ mkdir -p \
   "$ROOTFS/home/ubuntu/.config/autostart" \
   "$ROOTFS/etc/skel/.config/xfce4/panel" \
   "$ROOTFS/home/ubuntu/.config/gtk-3.0" \
-  "$ROOTFS/home/ubuntu/.config"
+  "$ROOTFS/home/ubuntu/.config" \
+  "$ROOTFS/home/ubuntu/.config/ifba-ai" \
+  "$ROOTFS/home/ubuntu/.local/share/ifba-ai" \
+  "$ROOTFS/home/ubuntu/.cache/ifba-ai" \
+  "$ROOTFS/etc/skel/.local/share/ifba-ai" \
+  "$ROOTFS/etc/skel/.cache/ifba-ai" \
+  "$ROOTFS/usr/lib/systemd/user/default.target.wants" \
+  "$ROOTFS/usr/share/dbus-1/services" \
+  "$ROOTFS/usr/lib/python3/dist-packages"
+cp -R /work/ai/ifba_ai "$ROOTFS/usr/lib/python3/dist-packages/"
+cp /work/packaging/ifba-ai-ui "$ROOTFS/usr/bin/ifba-ai-ui"
+cp /work/packaging/ifba-ai-daemon "$ROOTFS/usr/bin/ifba-ai-daemon"
+chmod 0755 "$ROOTFS/usr/bin/ifba-ai-ui" "$ROOTFS/usr/bin/ifba-ai-daemon"
+cp /work/packaging/ifba-ai.desktop "$ROOTFS/usr/share/applications/ifba-ai.desktop"
+cp /work/packaging/org.ifba.OS.AI.service "$ROOTFS/usr/share/dbus-1/services/org.ifba.OS.AI.service"
+cp /work/packaging/ifba-ai.service "$ROOTFS/usr/lib/systemd/user/ifba-ai.service"
+ln -sfn ../ifba-ai.service "$ROOTFS/usr/lib/systemd/user/default.target.wants/ifba-ai.service"
+chmod 0700 "$ROOTFS/home/ubuntu/.config/ifba-ai" "$ROOTFS/home/ubuntu/.local/share/ifba-ai" \
+  "$ROOTFS/home/ubuntu/.cache/ifba-ai" "$ROOTFS/etc/skel/.config/ifba-ai" \
+  "$ROOTFS/etc/skel/.local/share/ifba-ai" "$ROOTFS/etc/skel/.cache/ifba-ai"
 cp -R /work/assets/icons "$ROOTFS/usr/share/ifba-os/assets/"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/ifba-os/assets/wallpapers/"
 cp /work/packaging/netsurf.desktop "$ROOTFS/usr/share/applications/netsurf.desktop"
@@ -174,7 +195,8 @@ cp "$ROOTFS/etc/xdg/autostart/ifba-os-session-setup.desktop" \
   "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-session-setup.desktop"
 cp "$ROOTFS/etc/xdg/autostart/ifba-os-session-setup.desktop" \
   "$ROOTFS/etc/skel/.config/autostart/ifba-os-session-setup.desktop"
-chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu/Desktop /home/ubuntu/.config
+chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu/Desktop /home/ubuntu/.config \
+  /home/ubuntu/.local/share/ifba-ai /home/ubuntu/.cache/ifba-ai
 chmod +x "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop" "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
 cleanup_mounts
 rm -f "$RESOLV_TARGET"

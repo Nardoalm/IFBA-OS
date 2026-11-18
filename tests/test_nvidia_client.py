@@ -1,0 +1,144 @@
+import io
+import json
+import unittest
+from urllib.error import HTTPError, URLError
+
+from ifba_ai.nvidia import (
+    API_URL,
+    CancellationToken,
+    GenerationCancelled,
+    NvidiaClient,
+    NvidiaError,
+    bounded_context,
+)
+
+
+class FakeResponse:
+    def __init__(self, chunks):
+        self.chunks = chunks
+        self.closed = False
+
+    def __iter__(self):
+        return iter(self.chunks)
+
+    def close(self):
+        self.closed = True
+
+
+class ClientTests(unittest.TestCase):
+    def test_streaming_uses_nvidia_endpoint_and_never_logs_key(self):
+        response = FakeResponse([
+            b'data: {"choices":[{"delta":{"content":"Ola"}}]}\n\n',
+            b'data: {"choices":[{"delta":{"content":" mundo"}}]}\n\n',
+            b'data: [DONE]\n\n',
+        ])
+        captured = {}
+
+        def opener(request, timeout):
+            captured["url"] = request.full_url
+            captured["auth"] = request.get_header("Authorization")
+            captured["timeout"] = timeout
+            captured["body"] = json.loads(request.data.decode())
+            return response
+
+        secret = "test-secret-never-print"
+        output = list(NvidiaClient(opener=opener).stream_chat(
+            secret, "deepseek-ai/deepseek-v4.1-flash", [{"role": "user", "content": "Oi"}], 256
+        ))
+        self.assertEqual(output, ["Ola", " mundo"])
+        self.assertEqual(captured["url"], API_URL)
+        self.assertEqual(captured["auth"], "Bearer " + secret)
+        self.assertEqual(captured["timeout"], 45)
+        self.assertTrue(captured["body"]["stream"])
+        self.assertNotIn(secret, repr(captured["body"]))
+        self.assertTrue(response.closed)
+
+    def test_unauthorized_key_has_safe_error(self):
+        secret = "a-secret-test-value"
+
+        def opener(*_args, **_kwargs):
+            raise HTTPError(API_URL, 401, "unauthorized", {}, io.BytesIO(secret.encode()))
+
+        with self.assertRaisesRegex(NvidiaError, "recusou a chave") as raised:
+            list(NvidiaClient(opener=opener, retries=0).stream_chat(secret, "valid-model", [], 100))
+        self.assertNotIn(secret, str(raised.exception))
+
+    def test_billing_and_model_access_errors_are_explained(self):
+        for code, phrase in ((402, "saldo disponível"), (403, "permissão")):
+            def opener(*_args, **_kwargs):
+                raise HTTPError(API_URL, code, "denied", {}, io.BytesIO(b"private response body"))
+            with self.subTest(status=code), self.assertRaisesRegex(NvidiaError, phrase):
+                list(NvidiaClient(opener=opener, retries=0).stream_chat("secret", "valid-model", [], 100))
+
+    def test_rate_limit_retries_are_bounded_and_honor_retry_after(self):
+        calls = []
+
+        def opener(*_args, **_kwargs):
+            calls.append(1)
+            raise HTTPError(API_URL, 429, "rate", {"Retry-After": "1"}, io.BytesIO())
+
+        client = NvidiaClient(opener=opener, retries=2)
+        # HTTP retry backoff uses the token's wait; keep the test immediate.
+        class ImmediateToken:
+            def is_set(self):
+                return False
+
+            def wait(self, _delay):
+                return False
+
+        with self.assertRaisesRegex(NvidiaError, "Limite de uso"):
+            list(client.stream_chat("secret", "valid-model", [], 100, ImmediateToken()))
+        self.assertEqual(len(calls), 3)
+
+    def test_network_error_retries_then_reports_unavailable(self):
+        calls = []
+
+        def opener(*_args, **_kwargs):
+            calls.append(1)
+            raise URLError("offline")
+
+        client = NvidiaClient(opener=opener, retries=1)
+        class ImmediateToken:
+            def is_set(self):
+                return False
+
+            def wait(self, _delay):
+                return False
+        with self.assertRaisesRegex(NvidiaError, "Verifique a internet"):
+            list(client.stream_chat("secret", "valid-model", [], 100, ImmediateToken()))
+        self.assertEqual(len(calls), 2)
+
+    def test_invalid_model_and_missing_key_are_rejected_before_network(self):
+        calls = []
+        client = NvidiaClient(opener=lambda *_a, **_k: calls.append(1))
+        with self.assertRaises(NvidiaError):
+            list(client.stream_chat("secret", "bad model", [], 100))
+        with self.assertRaises(NvidiaError):
+            list(client.stream_chat(None, "valid-model", [], 100))
+        self.assertEqual(calls, [])
+
+    def test_context_is_bounded_and_keeps_recent_messages(self):
+        history = [
+            {"role": "user", "content": "a" * 100},
+            {"role": "assistant", "content": "b" * 100},
+            {"role": "user", "content": "c" * 100},
+        ]
+        selected = bounded_context(history, max_chars=150)
+        self.assertEqual(sum(len(message["content"]) for message in selected), 150)
+        self.assertEqual(selected[-1]["role"], "user")
+
+    def test_cancel_token_closes_attached_response(self):
+        response = FakeResponse([])
+        token = CancellationToken()
+        token.attach(response)
+        token.cancel()
+        self.assertTrue(response.closed)
+        self.assertTrue(token.is_set())
+        with self.assertRaises(GenerationCancelled):
+            list(NvidiaClient(opener=lambda *_a, **_k: response).stream_chat(
+                "secret", "valid-model", [], 100, token
+            ))
+
+
+if __name__ == "__main__":
+    unittest.main()

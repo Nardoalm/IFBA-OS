@@ -1,0 +1,28 @@
+[Unit]
+Description=IFBA OS per-user assistant service
+After=dbus.service
+ConditionEnvironment=DBUS_SESSION_BUS_ADDRESS
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=dbus
+BusName=org.ifba.OS.AI
+ExecStart=/usr/bin/ifba-ai-daemon
+Restart=on-failure
+RestartSec=2
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=-%h/.config/ifba-ai -%h/.local/share/ifba-ai -%h/.cache/ifba-ai
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=default.target

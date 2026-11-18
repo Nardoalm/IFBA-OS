@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.ifba.OS.AI
+Exec=/usr/bin/ifba-ai-daemon
+SystemdService=ifba-ai.service

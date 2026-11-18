@@ -4,6 +4,7 @@
     <property name="custom" type="empty">
       <property name="Super_L" type="string" value="xfce4-popup-whiskermenu"/>
       <property name="Super_R" type="string" value="xfce4-popup-whiskermenu"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;i" type="string" value="/usr/bin/ifba-ai-ui"/>
     </property>
   </property>
   <property name="xfwm4" type="empty">

@@ -8,11 +8,13 @@ An early, independent Linux distribution prototype for academic use. The live im
 - XFCE desktop for a modest-resource starting point; desktop choice remains subject to hardware testing.
 - Mint-inspired usability and Linux Educacional-inspired educational app curation without reusing their branding.
 - SUAP and AVA are opened as ordinary web links. No institutional login, scraping, or private API integration is implemented.
-- The AI assistant is optional and not connected in this prototype.
+- The AI assistant is optional. The native GTK settings/chat UI, per-user credential/data foundation, and NVIDIA streaming client are present in source; live API and rebuilt-ISO runtime validation remain pending.
 
 ## Prototype
 
 The native session uses XFCE panels, Xfwm4, Xfdesktop, GTK settings, Thunar, NetSurf, and LightDM. The Electron welcome-screen source is kept in `app/` as a separate design prototype and is not launched by the ISO. The package catalogue is `config/educational-apps.json`. Visual assets are in `assets/`; generated IFBA marks are placeholders and must not be treated as official institutional artwork.
+
+The assistant architecture and security constraints are documented in `docs/ARCHITECTURE.md`, `docs/AI-ASSISTANT.md`, and `docs/SECURITY.md`. The current live image still uses one passwordless demo account and is not suitable for configuring real student credentials.
 
 ## Build an ISO
 
