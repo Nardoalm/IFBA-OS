@@ -1,6 +1,6 @@
 # IFBA OS
 
-An early, independent Linux distribution prototype for academic use. This repository currently contains an Electron welcome-app prototype, visual assets, package-selection data, and an Ubuntu live-build configuration. It is not an official IFBA system and is not suitable for production deployment.
+An early, independent Linux distribution prototype for academic use. This repository currently contains an Electron welcome-app prototype, visual assets, package-selection data, and a custom Ubuntu live-image build. It is not an official IFBA system and is not suitable for production deployment.
 
 ## Current direction
 
@@ -12,11 +12,11 @@ An early, independent Linux distribution prototype for academic use. This reposi
 
 ## Prototype
 
-The Electron welcome screen is in `app/`. The package catalogue is `config/educational-apps.json`. Visual assets are in `assets/`; generated IFBA marks are placeholders and must not be treated as official institutional artwork.
+The welcome screen source is in `app/`. The ISO currently opens that static page with NetSurf; the Electron shell is a separate source prototype and is not installed as the native desktop app yet. The package catalogue is `config/educational-apps.json`. Visual assets are in `assets/`; generated IFBA marks are placeholders and must not be treated as official institutional artwork.
 
 ## Build an ISO
 
-The build script uses a Docker Linux container and Ubuntu live-build. Review `docs/BUILDING.md` first. On Apple Silicon, Docker runs the amd64 build under emulation and may take a while. The output is written to `output/ifba-os-ubuntu-24.04-amd64.iso`.
+The build script uses debootstrap, Casper, XFCE, and GRUB inside a Docker Linux container. Review `docs/BUILDING.md` first. On Apple Silicon, Docker runs the amd64 build under emulation and may take a while. The output is written to `output/ifba-os-ubuntu-24.04-amd64.iso`.
 
 ## VM testing
 
