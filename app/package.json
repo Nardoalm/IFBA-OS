@@ -1,0 +1,1 @@
+{"name":"ifba-os-welcome","version":"0.1.0","private":true,"description":"IFBA OS first-run welcome and educational app selector prototype","main":"main.js","scripts":{"start":"electron ."},"devDependencies":{"electron":"^38.0.0"}}
