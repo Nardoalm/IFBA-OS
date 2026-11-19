@@ -88,6 +88,9 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn("cmp -s /work/packaging/xfce4-panel.xml", container_build)
         self.assertIn('"$ROOTFS/etc/xdg/xfce4/panel/default.xml"', container_build)
         self.assertNotIn('"$ROOTFS/usr/share/xfce4/panel/default.xml"', container_build)
+        self.assertIn('test -f "$ROOTFS/usr/lib/systemd/system/lightdm.service"', container_build)
+        self.assertIn('test -f "$ROOTFS/usr/lib/systemd/system/NetworkManager.service"', container_build)
+        self.assertNotIn('test -e "$ROOTFS/etc/systemd/system/display-manager.service"', container_build)
 
 
 if __name__ == "__main__":

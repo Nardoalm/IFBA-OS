@@ -304,11 +304,13 @@ test -x "$ROOTFS/usr/bin/ifba-ai-ui"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
 test -L "$ROOTFS/etc/systemd/system/default.target"
 test "$(readlink "$ROOTFS/etc/systemd/system/default.target")" = /lib/systemd/system/graphical.target
+test -f "$ROOTFS/usr/lib/systemd/system/graphical.target"
 test -L "$ROOTFS/etc/systemd/system/display-manager.service"
 test "$(readlink "$ROOTFS/etc/systemd/system/display-manager.service")" = /lib/systemd/system/lightdm.service
-test -e "$ROOTFS/etc/systemd/system/display-manager.service"
+test -f "$ROOTFS/usr/lib/systemd/system/lightdm.service"
 test -L "$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
-test -e "$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
+test "$(readlink "$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service")" = /usr/lib/systemd/system/NetworkManager.service
+test -f "$ROOTFS/usr/lib/systemd/system/NetworkManager.service"
 cmp -s /work/packaging/xfce4-panel.xml \
   "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
 cmp -s /work/packaging/xfce4-desktop.xml \
