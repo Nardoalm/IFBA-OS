@@ -2,6 +2,16 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## Latest UTM observation — 2026-11-19
+
+- Verified the running QEMU command line mounted `/Users/leonardo/Documents/IFBA-OS/output/ifba-os-ubuntu-24.04-amd64.iso` as the first boot device. Its SHA-256 during this inspection was `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658`. UTM's saved VM is x86_64/Q35, 4 GiB RAM, 2 CPUs, virtio-gpu, e1000 on Shared networking, and an attached 64 GiB qcow2 disk; no host folder is configured. This is not the requested fresh 30 GiB VM.
+- The live guest reached XFCE. A real screenshot showed a single lower panel with the IFBA menu mark, file manager, Firefox, terminal and assistant launchers, a task list, network/audio indicators and clock. Firefox opened without a visible profile-load error. This corrects the earlier claim that no interactive desktop or app appeared in that boot.
+- Firefox showed `NS_ERROR_OFFLINE` while trying to load `www.google.com`; the panel network icon showed disconnected. This confirms Firefox launches but internet access does not work in this session. UTM is configured for Shared/NAT and the cached rootfs has a DHCP Ethernet profile and enabled NetworkManager symlink. The guest's DHCP/IP/route/DNS state was not captured: input through the UTM console garbled diagnostic commands, so the cause is still undetermined.
+- Wallpaper appearance is still unverified: Firefox was maximized and covered the desktop, and the terminal opened over it. The desktop image file and source hash match, but that does not prove Xfdesktop displays it. The menu, IFBA AI, app launchers, workspace count, system settings, shutdown/reboot, and browser HTTPS success remain unverified.
+- The VM has now been shut down through UTM and is not running. The existing qcow2 disk was not deleted or modified by host commands. No personal credentials, host Wi-Fi password, SUAP/AVA login, student data, or NVIDIA key were used.
+
+The next run should use a new build-cache volume, verify the embedded ID with `ifba-os-version`, and expose the wallpaper before opening Firefox. Treat the current ISO as identified by path and hash only; it has no embedded build ID yet.
+
 ## Validation record — 2026-11-18 and 2026-11-19
 
 ### Corrected XFCE failsafe configuration — 2026-11-19

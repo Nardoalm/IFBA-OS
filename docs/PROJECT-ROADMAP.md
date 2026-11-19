@@ -4,13 +4,14 @@
 
 ## Current implementation
 
-- [ ] **IN_PROGRESS · P0** Final audit matrix is maintained in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). The project channel was missing Ubuntu's Failsafe definition, a configuration defect consistent with the observed failsafe-session error; it is restored and the ISO rebuilt. The exact new ISO transitions from splash to the dark wallpaper, but no desktop controls appear, so session startup remains unresolved.
+- [ ] **IN_PROGRESS · P0** Final audit matrix is maintained in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). The current UTM screenshot confirms an XFCE desktop with one lower panel and Firefox on the exact ISO path. Firefox is offline and the desktop wallpaper is obscured; verify those next.
 
-- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Current ISO SHA-256 is `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658`. Exact-image UTM evidence is in `VM-TESTING.md`: splash and wallpaper render but the panel/menu/greeter controls do not appear. The failsafe channel defect is fixed; full desktop boot remains unverified.
+- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Current checked ISO SHA-256 is `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658`. Exact-image UTM evidence is in `VM-TESTING.md`: XFCE, one lower panel and Firefox are visible; internet and desktop wallpaper need verification.
+- [ ] **IN_PROGRESS · P0** Add an embedded build ID/commit and `ifba-os-version`, an external final ISO SHA-256 manifest, and fail-fast rootfs checks. The build changes are implemented and pass static checks; a clean-volume rebuild and guest identity check remain pending.
 - [ ] **IN_PROGRESS · P0** XFCE defaults now declare one lower panel and one workspace, remove the pager, disable session auto-save, and seed the live user, XDG defaults, and `/etc/skel` from the same channels. Static regression checks pass; current-session behavior and persistence through an actual XFCE login/reboot still require a working VM boot.
 - [ ] **IN_PROGRESS · P1** Native desktop uses Yaru Dark/Yaru icons, Inter, a GTK3 graphite panel with green interaction states, Xfwm4 compositing, bottom launchers/task/tray controls, and a searchable Whisker menu. It remains visually based on upstream Ubuntu Yaru; GTK2/GTK4/non-GTK consistency and actual app/window appearance have not been checked in the current ISO.
 - [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS after the LightDM startup issue is resolved, without logging in.
-- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. Exact wallpaper appears after Plymouth, but the VM has no usable panel/menu/greeter controls. The XFCE failsafe settings are restored in the latest ISO, but the cause of the missing controls is open. Obtain reliable serial/journal output or test another disposable VM display backend before changing boot/display settings. Then confirm panel/menu, Firefox, network/audio, and shutdown.
+- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. A single lower panel and Firefox are observed; the wallpaper is obscured and network disconnected. Obtain guest diagnostics and test menu, wallpaper, AI, app interactions, and reboot. Do not make speculative network changes.
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
@@ -36,7 +37,7 @@
 
 ### Desktop and applications
 
-- [ ] **IN_PROGRESS · P0** Diagnose the post-GRUB inactive video output using guest logs, then boot the rebuilt image to XFCE and confirm the supplied wallpaper, single bottom panel, menu, and SUAP/AVA links render together without an Electron dashboard.
+- [ ] **IN_PROGRESS · P0** Verify the supplied wallpaper, menu, and SUAP/AVA launchers in the live session. The single bottom panel and Firefox were observed on the exact mounted ISO; those controls are no longer described as absent.
 - [ ] **IN_PROGRESS · P1** Package the exact user-provided image as both desktop wallpaper and custom Plymouth artwork; rebuild initramfs and verify the boot-to-desktop transition in UTM. The ISO image bytes match the source, and the custom Plymouth splash appeared, but desktop display is blocked by LightDM not starting.
 - [ ] **TODO · P1** Confirm the IFBA-icon Whisker menu opens by click and Super/Windows key; verify launchers at 1366×768 and 1920×1080, task switching, and keyboard-only access. The workspace pager is intentionally omitted while the default is one workspace.
 - [ ] **TODO · P1** Inspect Thunar, terminal, Firefox, XFCE Settings Manager, notification dialogs, LightDM greeter, and system dialogs for theme consistency and functional controls.

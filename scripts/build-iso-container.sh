@@ -219,6 +219,8 @@ cp /work/packaging/ifba-os-session-setup.sh "$ROOTFS/usr/local/bin/ifba-os-sessi
 chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-session-setup"
 cp /work/tools/fix-xfce-panel.sh "$ROOTFS/usr/local/bin/ifba-os-fix-xfce-panel"
 chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-fix-xfce-panel"
+cp /work/tools/ifba-os-version "$ROOTFS/usr/local/bin/ifba-os-version"
+chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-version"
 cp /work/packaging/xfce4-firefox-helper.desktop "$ROOTFS/usr/share/xfce4/helpers/firefox.desktop"
 cp /work/packaging/xfce4-helpers.rc "$ROOTFS/etc/xdg/xfce4/helpers.rc"
 cp /work/packaging/xfce4-helpers.rc "$ROOTFS/home/ubuntu/.config/xfce4/helpers.rc"
@@ -267,6 +269,55 @@ chroot "$ROOTFS" update-initramfs -u -k all
 cp "$ROOTFS/boot/initrd.img-"* "$ISO/casper/initrd"
 cleanup_mounts
 rm -f "$RESOLV_TARGET"
+
+install -D -m 0644 /work/output/.ifba-os-build-info.json "$ROOTFS/usr/share/ifba-os/build-info.json"
+
+required_files=(
+  "$ROOTFS/usr/share/ifba-os/build-info.json"
+  "$ROOTFS/usr/share/backgrounds/ifba-os/wallpaper.png"
+  "$ROOTFS/etc/gtk-3.0/gtk.css"
+  "$ROOTFS/usr/share/themes/Yaru-dark/xfwm4/themerc"
+  "$ROOTFS/usr/share/xfce4/panel/default.xml"
+  "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
+  "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
+  "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+  "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+  "$ROOTFS/etc/lightdm/lightdm.conf.d/50-ifba-autologin.conf"
+  "$ROOTFS/usr/bin/firefox"
+  "$ROOTFS/usr/share/applications/firefox.desktop"
+  "$ROOTFS/usr/bin/ifba-ai-ui"
+  "$ROOTFS/usr/share/applications/ifba-ai.desktop"
+  "$ROOTFS/usr/lib/python3/dist-packages/ifba_ai/ui.py"
+  "$ROOTFS/usr/share/applications/suap-ifba.desktop"
+  "$ROOTFS/usr/share/applications/ava-ifba.desktop"
+  "$ROOTFS/usr/local/bin/ifba-os-version"
+  "$ROOTFS/etc/NetworkManager/system-connections/ifba-wired.nmconnection"
+)
+for required_file in "${required_files[@]}"; do
+  if [[ ! -s "$required_file" ]]; then
+    printf 'Required rootfs file is missing or empty: %s\n' "${required_file#"$ROOTFS"}" >&2
+    exit 1
+  fi
+done
+test -x "$ROOTFS/usr/bin/firefox"
+test -x "$ROOTFS/usr/bin/ifba-ai-ui"
+test -x "$ROOTFS/usr/local/bin/ifba-os-version"
+test -L "$ROOTFS/etc/systemd/system/default.target"
+test "$(readlink "$ROOTFS/etc/systemd/system/default.target")" = /lib/systemd/system/graphical.target
+test -L "$ROOTFS/etc/systemd/system/display-manager.service"
+test "$(readlink "$ROOTFS/etc/systemd/system/display-manager.service")" = /lib/systemd/system/lightdm.service
+test -e "$ROOTFS/etc/systemd/system/display-manager.service"
+test -L "$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
+test -e "$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
+cmp -s /work/packaging/xfce4-panel.xml \
+  "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
+cmp -s /work/packaging/xfce4-desktop.xml \
+  "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
+cmp -s /work/packaging/xfce4-xsettings.xml \
+  "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+chroot "$ROOTFS" /usr/bin/python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); required=("build_id","source_commit","build_date_utc","system_version"); assert all(data.get(k) for k in required)' \
+  /usr/share/ifba-os/build-info.json
+printf 'Rootfs validation passed for build %s\n' "$(chroot "$ROOTFS" /usr/bin/python3 -c 'import json; print(json.load(open("/usr/share/ifba-os/build-info.json"))["build_id"])')"
 
 mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -processors "$(nproc)" -e boot
 du -sx --block-size=1 "$ROOTFS" | cut -f1 > "$ISO/casper/filesystem.size"

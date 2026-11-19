@@ -1,4 +1,5 @@
 .cache/
 output/*.iso
+output/*.manifest.json
 app/node_modules/
 npm-debug.log*
