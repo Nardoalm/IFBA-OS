@@ -12,7 +12,7 @@ An early, independent Linux distribution prototype for academic use. The live im
 
 ## Prototype
 
-The native session uses XFCE panels, Xfwm4, Xfdesktop, GTK settings, Thunar, NetSurf, and LightDM. The Electron welcome-screen source is kept in `app/` as a separate design prototype and is not launched by the ISO. The package catalogue is `config/educational-apps.json`. Visual assets are in `assets/`; generated IFBA marks are placeholders and must not be treated as official institutional artwork.
+The native session uses XFCE panels, Xfwm4, Xfdesktop, GTK settings, Thunar, Mozilla Firefox, and LightDM. The Electron welcome-screen source is kept in `app/` as a separate design prototype and is not launched by the ISO. The package catalogue is `config/educational-apps.json`. Visual assets are in `assets/`; generated IFBA marks are placeholders and must not be treated as official institutional artwork.
 
 The assistant architecture and security constraints are documented in `docs/ARCHITECTURE.md`, `docs/AI-ASSISTANT.md`, and `docs/SECURITY.md`. The current live image still uses one passwordless demo account and is not suitable for configuring real student credentials.
 

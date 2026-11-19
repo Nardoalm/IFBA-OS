@@ -1,12 +1,11 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Navegador Web
-Name[pt_BR]=Navegador Web
-Comment=Abra sites e páginas locais com o NetSurf
-Exec=netsurf-gtk %u
-TryExec=netsurf-gtk
-Icon=netsurf.png
+Name=Firefox
+Comment=Navegue pela internet com o Firefox
+Exec=firefox %u
+TryExec=firefox
+Icon=firefox
 Terminal=false
 Categories=Network;WebBrowser;
 MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;

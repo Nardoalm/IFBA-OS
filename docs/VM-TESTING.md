@@ -13,9 +13,25 @@ Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual d
 - The root filesystem contains `/etc/systemd/system/default.target -> /lib/systemd/system/graphical.target` and `display-manager.service -> /lib/systemd/system/lightdm.service`. `graphical.target` pulls in LightDM. These static checks do not prove the current live boot reaches the desktop.
 - No SUAP/AVA site was opened or logged into. No AI key or academic data was used. App launchers, network/audio controls, shutdown/reboot from the latest image, and the current wallpaper display remain unverified.
 
+### Current UTM desktop inspection — 2026-11-18
+
+- The UTM guest reached an XFCE desktop with a tall lower panel and desktop launchers, so this visible session was not terminal-only.
+- The desktop showed Ubuntu's blue default background, not the selected grayscale IFBA metallic wallpaper; the network tray icon showed a red disconnected mark. These are UI observations, not a diagnosed networking cause.
+- UTM's drive menu showed an attached ISO named `ifba-os-ubuntu-24.04-amd64.iso`, but the path and SHA-256 were not established during this inspection. This does not prove the VM booted the current project artifact.
+- The VM is QEMU x86_64/Q35, 4 GiB RAM, 2 CPUs, 64 GiB disk, Shared networking (NAT), and e1000 virtual Ethernet. NAT uses the Mac's active uplink; the guest does not need host Wi-Fi credentials.
+
+### Rebuilt Firefox ISO boot — 2026-11-18
+
+- Rebuilt `output/ifba-os-ubuntu-24.04-amd64.iso`; SHA-256 `88901ac4237d49c94003acbafd1f17d3f925acaba2774c743d6563a7218190b1`. `file` reports bootable ISO 9660 with volume label `IFBA_OS_24_04`.
+- The UTM CD menu showed the expected ISO filename. Its external file path was not exposed, so the attached media cannot be tied conclusively to this hash. UTM started and displayed the grayscale IFBA OS Plymouth splash, then a text console/login; LightDM and XFCE did not appear during the observed run. The guest was stopped after the check.
+- A text login shell was reachable. No guest network diagnostics were collected: QEMU Guest Agent is absent, and UTM `ip-address`/`exec` report that limitation. Therefore DHCP, gateway, DNS, and HTTPS are unverified; the red disconnected icon from the earlier desktop run remains an unresolved symptom.
+- Static inspection of the built rootfs confirms `/etc/systemd/system/default.target` points to `graphical.target` and `display-manager.service` points to LightDM. The rootfs includes Firefox `160.0.1~build1` and `firefox-l10n-pt-br`, does not include `netsurf-gtk`, and sets Firefox in the panel, XFCE helper, URL MIME associations, and application alternatives.
+- The wallpaper at `/usr/share/backgrounds/ifba-os/wallpaper.png` inside the ISO hashes to the source asset (`51f6f6e1ef6d4067d5427d02d3f7204565a2d7291d41b098893cf8c1eb0532c0`). The same image appeared on the Plymouth splash. Its appearance as the desktop background remains unverified because LightDM/XFCE did not start.
+- No host Wi-Fi password was entered or written to project files. No websites, student accounts, API keys, or private data were used.
+
 ### Offline checks
 
-- The build cache contains Ubuntu 24.04 amd64, Casper, XFCE 4.18, LightDM, Xorg, NetworkManager, NetSurf, Yaru Dark, Yaru icons, Inter, Whisker, and the XFCE panel plugins.
+- The build cache contains Ubuntu 24.04 amd64, Casper, XFCE 4.18, LightDM, Xorg, NetworkManager, Firefox, Yaru Dark, Yaru icons, Inter, Whisker, and the XFCE panel plugins.
 - `display-manager.service` points to LightDM; the latest build script creates the graphical default target.
 - The panel is configured natively in Xfconf, with a separate XFCE panel `default.xml` profile. The Xfconf channel is parsed with `xfconf-query` in a D-Bus session and reports two panels and the expected plugin IDs.
 - The welcome/Electron prototype remains separate and is not started in the live desktop. SUAP/AVA launchers point to their public HTTPS domains.
@@ -27,7 +43,7 @@ Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual d
 - [ ] Confirm LightDM/autologin succeeds.
 - [ ] Confirm the user-selected grayscale IFBA OS wallpaper and both native XFCE panels render in the latest ISO.
 - [ ] Open the Whisker menu by mouse and Super/Windows key; check search, categories, favorites, and session actions.
-- [ ] Check app launchers, task switching, workspace pager, Thunar, Terminal, NetSurf, settings, dialogs, and notifications.
+- [ ] Check app launchers, task switching, workspace pager, Thunar, Terminal, Firefox, settings, dialogs, and notifications.
 - [ ] Verify SUAP/AVA launcher target URLs without visiting the sites or signing in.
 - [ ] Check network/audio controls, readability at 1366×768 and 1920×1080, shutdown, and reboot.
 - [ ] Investigate the previously observed Casper `/usr/bin/plymouth` message if it reappears.

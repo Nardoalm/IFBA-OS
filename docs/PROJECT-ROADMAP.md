@@ -4,15 +4,15 @@
 
 ## Current implementation
 
-- [x] **DONE · P1** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, NetSurf, and an automatic live-session user.
+- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Current ISO has been rebuilt; UTM still reaches a text login instead of LightDM/XFCE.
 - [x] **DONE · P1** Native XFCE desktop configuration for Yaru Dark, Yaru icons, Inter, restrained green GTK3 accent, Xfwm4 built-in compositing, top greeting/date panel, bottom launcher/task/tray panel, workspace pager, and Super-key menu/window controls.
-- [x] **DONE · P1** Native SUAP and AVA desktop links and application-menu launchers using public HTTPS URLs, with NetSurf configured as the browser helper and default.
-- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. The build now selects `graphical.target` and embeds the exact user-selected wallpaper. A prior corrected image reached XFCE; on the newest image, UTM remains at the splash while `NetworkManager.service` is still starting. Confirm that boot completes and the selected wallpaper, panels, launchers, settings, notifications, network/audio, and shutdown work.
+- [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS after the LightDM startup issue is resolved, without logging in.
+- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. The current ISO contains the exact selected wallpaper in its Xfdesktop and Plymouth paths, but the latest UTM boot showed the custom splash followed by a text login; no desktop wallpaper/panels were visible. Confirm the latest ISO, LightDM, desktop, network/audio, and shutdown.
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
-- [ ] **IN_PROGRESS · P1** Native GTK assistant, per-user D-Bus service, private XDG/SQLite storage, Secret Service, NVIDIA text streaming, bounded context, cancellation, visual guidance, schema-v2 educational memory controls, retention/export, and typed user-initiated tools are implemented in source; 36 automated tests pass. Runtime UI/keyring/API and VM checks remain unverified.
-- [ ] **IN_PROGRESS · P0** Replace the time-of-day phrase in the top panel with `Olá, [nome]!` and fall back to `Olá, estudante!`; a real matrícula login remains blocked by the shared passwordless live account and the lack of an installer or authorized account-provisioning service.
+- [ ] **IN_PROGRESS · P1** Native GTK assistant, per-user D-Bus service, private XDG/SQLite storage, Secret Service, NVIDIA text streaming, bounded context, cancellation, visual guidance, schema-v2 educational memory controls, retention/export, and typed user-initiated tools are implemented in source. App identity and dark GTK interaction states are refined in source; UI/keyring/API and VM runtime checks remain unverified.
+- [ ] **IN_PROGRESS · P0** The top panel says `Olá, [nome]!` and falls back to `Olá, estudante!`; real matrícula login remains blocked by the shared passwordless live account and the lack of an installer or authorized account-provisioning service.
 
 ## What comes from Linux Educacional
 
@@ -34,9 +34,9 @@
 ### Desktop and applications
 
 - [ ] **IN_PROGRESS · P0** Boot the rebuilt image after setting the graphical systemd default and confirm the supplied wallpaper, native top greeting/date panel, bottom panel, and SUAP/AVA links render together without an Electron dashboard.
-- [ ] **IN_PROGRESS · P1** Package the exact user-provided image as both desktop wallpaper and custom Plymouth artwork; rebuild initramfs and verify the boot-to-desktop transition in UTM. The ISO embeds the correct bytes, but the latest boot remains at the splash during NetworkManager startup.
+- [ ] **IN_PROGRESS · P1** Package the exact user-provided image as both desktop wallpaper and custom Plymouth artwork; rebuild initramfs and verify the boot-to-desktop transition in UTM. The ISO image bytes match the source, and the custom Plymouth splash appeared, but desktop display is blocked by LightDM not starting.
 - [ ] **TODO · P1** Confirm the IFBA-icon Whisker menu opens by click and Super/Windows key; verify launchers at 1366×768 and 1920×1080, task switching, workspace pager, and keyboard-only access.
-- [ ] **TODO · P1** Inspect Thunar, terminal, NetSurf, XFCE Settings Manager, notification dialogs, LightDM greeter, and system dialogs for theme consistency and functional controls.
+- [ ] **TODO · P1** Inspect Thunar, terminal, Firefox, XFCE Settings Manager, notification dialogs, LightDM greeter, and system dialogs for theme consistency and functional controls.
 - [ ] **TODO · P2** Evaluate XFWM4's built-in compositor on software-rendered and accelerated VM/physical hardware; keep a user-accessible off switch. Do not add Picom alongside XFWM4.
 - [ ] **TODO · P2** Document unavailable effects (window open/minimize animations and background blur) unless a stable, accessible, low-resource solution is proven.
 - [ ] **TODO · P1** Add genuine first-start onboarding and optional app checkboxes; communicate disk use, availability, and licensing.

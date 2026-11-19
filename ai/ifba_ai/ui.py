@@ -10,7 +10,7 @@ try:
     import gi
     gi.require_version("Gtk", "3.0")
     from dbus.mainloop.glib import DBusGMainLoop
-    from gi.repository import GdkPixbuf, GLib, Gtk, Pango
+    from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, Pango
 except ImportError:
     sys.stderr.write("A interface exige GTK 3 e D-Bus Python instalados.\n")
     raise SystemExit(1)
@@ -25,7 +25,7 @@ from .tools import SystemTools
 
 class AssistantWindow(Gtk.ApplicationWindow):
     def __init__(self, application):
-        super().__init__(application=application, title="Assistente IFBA OS")
+        super().__init__(application=application, title="IFBA AI")
         self.set_default_size(860, 580)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.proxy = None
@@ -43,7 +43,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
     def _build(self):
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.add(root)
-        header = Gtk.HeaderBar(title="Assistente IFBA OS")
+        header = Gtk.HeaderBar(title="IFBA AI")
         header.set_show_close_button(True)
         self.set_titlebar(header)
 
@@ -275,7 +275,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
             self._append_text("Olá, estudante!\n\nFaça uma pergunta para começar uma nova conversa.\n")
             return
         for role, content, _created in self.proxy.ListMessages(self.current_conversation):
-            self._append_text(("Você" if str(role) == "user" else "Assistente IFBA OS") + "\n" + str(content) + "\n\n")
+            self._append_text(("Você" if str(role) == "user" else "IFBA AI") + "\n" + str(content) + "\n\n")
 
     def _new_conversation(self, *_):
         if not self.proxy or self.generating:
@@ -304,7 +304,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         if not self.current_conversation:
             self.current_conversation = str(self.proxy.CreateConversation(prompt[:60]))
         self.input.set_text("")
-        self._append_text("Você\n" + prompt + "\n\nAssistente IFBA OS\n")
+        self._append_text("Você\n" + prompt + "\n\nIFBA AI\n")
         self.generating = True
         self.send_button.set_sensitive(False)
         self.stop_button.set_sensitive(True)
@@ -493,7 +493,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
             self.current_conversation = str(self.proxy.CreateConversation(prompt[:60]))
         self.input.set_text("")
         self.last_visual_context = context
-        self._append_text("Você\n{}\n[Captura autorizada: {}]\n\nAssistente IFBA OS\n".format(prompt, title))
+        self._append_text("Você\n{}\n[Captura autorizada: {}]\n\nIFBA AI\n".format(prompt, title))
         self.generating = True
         self.send_button.set_sensitive(False)
         self.visual_button.set_sensitive(False)
@@ -895,6 +895,21 @@ class AssistantWindow(Gtk.ApplicationWindow):
 class AssistantApplication(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="org.ifba.OS.Assistant", flags=0)
+
+    def do_startup(self):
+        Gtk.Application.do_startup(self)
+        provider = Gtk.CssProvider()
+        css_path = "/usr/share/ifba-os/ifba-ai.css"
+        try:
+            provider.load_from_path(css_path)
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(),
+                provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+        except (GLib.Error, TypeError):
+            # Keep the assistant usable if the optional packaged theme is absent.
+            pass
 
     def do_activate(self):
         window = AssistantWindow(self)

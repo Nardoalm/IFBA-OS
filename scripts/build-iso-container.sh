@@ -8,7 +8,7 @@ OUT=/work/output/ifba-os-ubuntu-24.04-amd64.iso
 
 apt-get update
 apt-get install -y --no-install-recommends \
-  debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools
+  debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools curl gnupg ca-certificates
 
 if [[ ! -e "$ROOTFS/etc/os-release" ]]; then
   rm -rf "$ROOTFS"
@@ -21,6 +21,29 @@ deb http://archive.ubuntu.com/ubuntu noble main universe multiverse
 deb http://archive.ubuntu.com/ubuntu noble-updates main universe multiverse
 deb http://security.ubuntu.com/ubuntu noble-security main universe multiverse
 SOURCES
+
+# Use Mozilla's maintained DEB build instead of Ubuntu Noble's Firefox-to-Snap
+# transition package, which is unsuitable for this snap-free live rootfs.
+curl --fail --silent --show-error --location \
+  https://packages.mozilla.org/apt/repo-signing-key.gpg \
+  --output /tmp/mozilla-archive-keyring.asc
+gpg --show-keys --with-colons /tmp/mozilla-archive-keyring.asc | \
+  awk -F: '$1 == "fpr" { print $10; exit }' | \
+  grep --quiet '^35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3$'
+gpg --dearmor --output "$ROOTFS/tmp/mozilla-archive-keyring.gpg" /tmp/mozilla-archive-keyring.asc
+install -D -m 0644 "$ROOTFS/tmp/mozilla-archive-keyring.gpg" "$ROOTFS/usr/share/keyrings/packages.mozilla.org.gpg"
+cat > "$ROOTFS/etc/apt/sources.list.d/mozilla.sources" <<'MOZILLA'
+Types: deb
+URIs: https://packages.mozilla.org/apt
+Suites: mozilla
+Components: main
+Signed-By: /usr/share/keyrings/packages.mozilla.org.gpg
+MOZILLA
+cat > "$ROOTFS/etc/apt/preferences.d/mozilla-firefox" <<'PREFERENCES'
+Package: firefox*
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+PREFERENCES
 
 mount --bind /dev "$ROOTFS/dev"
 mount -t proc proc "$ROOTFS/proc"
@@ -48,7 +71,12 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libasound2t64 \
   libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libdrm2 \
   libxkbcommon0 libpango-1.0-0 \
-  netsurf-gtk sudo dbus-x11 policykit-1
+  firefox firefox-l10n-pt-br sudo dbus-x11 policykit-1
+
+# The build cache persists between runs, so remove NetSurf left by older images.
+if chroot "$ROOTFS" dpkg-query -W -f='${Status}' netsurf-gtk 2>/dev/null | grep -q 'install ok installed'; then
+  chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get remove -y netsurf-gtk
+fi
 
 # The root filesystem is cached between builds; remove the older fullscreen dashboard.
 rm -f "$ROOTFS/etc/xdg/autostart/ifba-os-welcome.desktop" \
@@ -74,7 +102,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
   printf "[greeter]\nbackground=/usr/share/backgrounds/ifba-os/wallpaper.png\ntheme-name=Yaru-dark\nicon-theme-name=Yaru\nfont-name=Inter 10\n" > /etc/lightdm/lightdm-gtk-greeter.conf
   # debootstrap defaults to multi-user.target; start LightDM and XFCE in the live image.
   ln -sfn /lib/systemd/system/graphical.target /etc/systemd/system/default.target
-  update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/netsurf-gtk 50
+  update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/firefox 100
   apt-get clean
     rm -rf /var/lib/apt/lists/* /tmp/*
 '
@@ -120,6 +148,7 @@ cp /work/packaging/ifba-ai-ui "$ROOTFS/usr/bin/ifba-ai-ui"
 cp /work/packaging/ifba-ai-daemon "$ROOTFS/usr/bin/ifba-ai-daemon"
 chmod 0755 "$ROOTFS/usr/bin/ifba-ai-ui" "$ROOTFS/usr/bin/ifba-ai-daemon"
 cp /work/packaging/ifba-ai.desktop "$ROOTFS/usr/share/applications/ifba-ai.desktop"
+cp /work/packaging/ifba-ai.css "$ROOTFS/usr/share/ifba-os/ifba-ai.css"
 cp /work/packaging/org.ifba.OS.AI.service "$ROOTFS/usr/share/dbus-1/services/org.ifba.OS.AI.service"
 cp /work/packaging/ifba-ai.service "$ROOTFS/usr/lib/systemd/user/ifba-ai.service"
 ln -sfn ../ifba-ai.service "$ROOTFS/usr/lib/systemd/user/default.target.wants/ifba-ai.service"
@@ -128,7 +157,7 @@ chmod 0700 "$ROOTFS/home/ubuntu/.config/ifba-ai" "$ROOTFS/home/ubuntu/.local/sha
   "$ROOTFS/etc/skel/.local/share/ifba-ai" "$ROOTFS/etc/skel/.cache/ifba-ai"
 cp -R /work/assets/icons "$ROOTFS/usr/share/ifba-os/assets/"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/ifba-os/assets/wallpapers/"
-cp /work/packaging/netsurf.desktop "$ROOTFS/usr/share/applications/netsurf.desktop"
+cp /work/packaging/firefox.desktop "$ROOTFS/usr/share/applications/firefox.desktop"
 cp /work/packaging/suap-ifba.desktop "$ROOTFS/usr/share/applications/suap-ifba.desktop"
 cp /work/packaging/ava-ifba.desktop "$ROOTFS/usr/share/applications/ava-ifba.desktop"
 cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop"
@@ -164,17 +193,17 @@ cp /work/packaging/ifba-os-greeting.sh "$ROOTFS/usr/lib/ifba-os/ifba-os-greeting
 chmod +x "$ROOTFS/usr/lib/ifba-os/ifba-os-greeting.sh"
 cp /work/packaging/ifba-os-session-setup.sh "$ROOTFS/usr/local/bin/ifba-os-session-setup"
 chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-session-setup"
-cp /work/packaging/xfce4-netsurf-helper.desktop "$ROOTFS/usr/share/xfce4/helpers/netsurf.desktop"
+cp /work/packaging/xfce4-firefox-helper.desktop "$ROOTFS/usr/share/xfce4/helpers/firefox.desktop"
 cp /work/packaging/xfce4-helpers.rc "$ROOTFS/etc/xdg/xfce4/helpers.rc"
 cp /work/packaging/xfce4-helpers.rc "$ROOTFS/home/ubuntu/.config/xfce4/helpers.rc"
 cp /work/assets/icons/ifba-mark-placeholder.png "$ROOTFS/usr/share/icons/hicolor/128x128/apps/ifba-os-menu.png"
 chroot "$ROOTFS" gtk-update-icon-cache -f /usr/share/icons/hicolor
 cat > "$ROOTFS/usr/share/ifba-os/mimeapps.list" <<'MIME'
 [Default Applications]
-x-scheme-handler/http=netsurf.desktop
-x-scheme-handler/https=netsurf.desktop
-text/html=netsurf.desktop
-application/xhtml+xml=netsurf.desktop
+x-scheme-handler/http=firefox.desktop
+x-scheme-handler/https=firefox.desktop
+text/html=firefox.desktop
+application/xhtml+xml=firefox.desktop
 MIME
 cp "$ROOTFS/usr/share/ifba-os/mimeapps.list" "$ROOTFS/etc/xdg/mimeapps.list"
 cp "$ROOTFS/usr/share/ifba-os/mimeapps.list" "$ROOTFS/home/ubuntu/.config/mimeapps.list"

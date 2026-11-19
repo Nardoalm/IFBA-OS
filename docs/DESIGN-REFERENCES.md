@@ -11,7 +11,7 @@ Research checked on 2026-11-18:
 - **macOS principles:** restrained dark surfaces, clear spacing, a compact bottom launcher with active-window list, consistent icons, focused typography, and subtle depth.
 - **Windows principles:** a discoverable searchable Whisker application menu, familiar task switching, accessible tray controls, and a responsive full-width panel layout.
 - **IFBA OS identity:** the supplied metallic wallpaper, the provisional IFBA OS menu mark, and a restrained green interaction accent.
-- **Native components:** XFCE panel and plugins, Whisker, Xfwm4, Xfdesktop, GTK settings, Thunar, NetSurf, and LightDM. The Electron page is not launched or included in the live desktop image.
+- **Native components:** XFCE panel and plugins, Whisker, Xfwm4, Xfdesktop, GTK settings, Thunar, Mozilla Firefox, and LightDM. The Electron page is not launched or included in the live desktop image.
 
 The ISO uses the upstream Ubuntu Yaru Dark GTK/Xfwm theme, Yaru icons, Inter, and Xfwm4's built-in compositor. Picom is deliberately not installed: Xfwm4 already owns compositing in this X11 session, and running two compositors risks rendering conflicts. The built-in compositor provides shadows and opacity, but XFWM4 does not provide polished open/minimize animations or background blur. The desktop keeps those effects off rather than adding an unverified compositor or sacrificing responsiveness.
 

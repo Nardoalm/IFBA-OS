@@ -57,7 +57,7 @@
     </property>
     <property name="plugin-3" type="string" value="launcher">
       <property name="items" type="array">
-        <value type="string" value="netsurf.desktop"/>
+        <value type="string" value="firefox.desktop"/>
       </property>
     </property>
     <property name="plugin-4" type="string" value="launcher">

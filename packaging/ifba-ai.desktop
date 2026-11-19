@@ -1,7 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Assistente IFBA OS
+Name=IFBA AI
+StartupWMClass=org.ifba.OS.Assistant
 Comment=Configure o assistente educacional opcional
 Exec=/usr/bin/ifba-ai-ui
 TryExec=/usr/bin/ifba-ai-ui
