@@ -4,10 +4,10 @@
 
 ## Current implementation
 
-- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Corrective ISO `08949f17d8ebd2f676c8b99db18826df048fa6eaa9828f93ce01ec24179f3b07` is attached in UTM, but the current run shows its splash then black display for more than seven minutes; no desktop or guest-agent response. Diagnose boot before marking usable.
+- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Corrective ISO `08949f17d8ebd2f676c8b99db18826df048fa6eaa9828f93ce01ec24179f3b07` is attached in UTM; GRUB renders and the custom splash appeared, then UTM reported inactive/black display output. Failure is after GRUB, but its cause is unresolved; no desktop or guest-agent response. Diagnose before marking usable.
 - [x] **DONE · P1** Native XFCE desktop configuration for Yaru Dark, Yaru icons, Inter, restrained green GTK3 accent, Xfwm4 built-in compositing, top greeting/date panel, bottom launcher/task/tray panel, workspace pager, and Super-key menu/window controls.
 - [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS after the LightDM startup issue is resolved, without logging in.
-- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. The exact selected wallpaper is in the ISO's Xfdesktop and Plymouth paths, but the latest boot showed the custom splash then a black display for over seven minutes. Guest-agent and network diagnostics are unavailable. Confirm boot, LightDM, desktop wallpaper/panels, Firefox, network/audio, and shutdown.
+- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. The exact selected wallpaper is in the ISO's Xfdesktop and Plymouth paths, but the latest boot showed GRUB and the custom splash before UTM reported inactive/black display output. TTY and guest-agent diagnostics did not yield logs. Confirm boot, LightDM, desktop wallpaper/panels, Firefox, network/audio, and shutdown.
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
@@ -33,7 +33,7 @@
 
 ### Desktop and applications
 
-- [ ] **IN_PROGRESS · P0** Boot the rebuilt image after setting the graphical systemd default and confirm the supplied wallpaper, native top greeting/date panel, bottom panel, and SUAP/AVA links render together without an Electron dashboard.
+- [ ] **IN_PROGRESS · P0** Diagnose the post-GRUB inactive video output using guest logs, then boot the rebuilt image to XFCE and confirm the supplied wallpaper, native top greeting/date panel, bottom panel, and SUAP/AVA links render together without an Electron dashboard.
 - [ ] **IN_PROGRESS · P1** Package the exact user-provided image as both desktop wallpaper and custom Plymouth artwork; rebuild initramfs and verify the boot-to-desktop transition in UTM. The ISO image bytes match the source, and the custom Plymouth splash appeared, but desktop display is blocked by LightDM not starting.
 - [ ] **TODO · P1** Confirm the IFBA-icon Whisker menu opens by click and Super/Windows key; verify launchers at 1366×768 and 1920×1080, task switching, workspace pager, and keyboard-only access.
 - [ ] **TODO · P1** Inspect Thunar, terminal, Firefox, XFCE Settings Manager, notification dialogs, LightDM greeter, and system dialogs for theme consistency and functional controls.
@@ -71,7 +71,7 @@
 
 ## Latest corrective slice — 2026-11-18
 
-- Offline tests pass (48 total). The ISO was rebuilt and UTM was started with the exact output path; it displays the custom splash then remains black for more than seven minutes. The desktop, wallpaper rendering, Firefox profile, network, and assistant launch are not runtime-verified. QEMU Guest Agent did not respond, preventing guest diagnostics.
+- Offline tests pass (48 total). UTM confirms the exact ISO path, renders GRUB, and displayed the custom splash, then reported inactive/black video output. A virtual-terminal switch did not provide readable logs; QEMU Guest Agent did not respond. Root cause is unresolved and the desktop, wallpaper rendering, Firefox profile, network, and assistant launch are not runtime-verified. See the follow-up observation in `docs/VM-TESTING.md`.
 - The model UI contains the five requested families. Endpoint IDs/options are adapted to current NVIDIA references rather than sending identical unsupported parameters to every family. The UI streams answer text only and discards private `reasoning_content`. The model cannot arbitrarily operate the OS; typed local tools remain user-initiated and bounded.
 - This is not completion of the broader Part 2 prompt. Installer, persistent individual student accounts, software installation, complete desktop feature set, live API call, and integrated secure system control remain open.
 
