@@ -30,7 +30,7 @@ Audit date: 2026-11-19. Scope is the current source tree and `output/ifba-os-ubu
 
 ## Corrective rebuild — 2026-11-19
 
-- Restored Ubuntu Noble's XFCE failsafe session name and process list; retained `SaveOnExit=false` and added regression assertions. This addresses the reproduced “Unable to load a failsafe session” error.
+- Restored Ubuntu Noble's XFCE failsafe session name and process list; retained `SaveOnExit=false` and added regression assertions. This corrects a concrete configuration defect that matched one possible cause of the “Unable to load a failsafe session” error. The popup did not recur, but a usable session was not reached.
 - Rebuilt ISO SHA-256: `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658`. ISO boot files were confirmed; the embedded SquashFS was extracted and the corrected XFCE channel and selected wallpaper hashes matched their source assets.
 - UTM booted the exact output ISO. The splash transitioned to the wallpaper, but no interactive desktop controls appeared after 6+ minutes. The VM was paused to avoid sustained CPU use under x86 TCG emulation. The correction fixes the identified configuration defect but does not establish successful desktop startup.
 - Offline checks: 55 tests passed, shell syntax/Python compilation/XML parsing passed, and the ISO is recognized as bootable ISO9660/MBR media. Firefox, NAT/DNS/HTTPS, IFBA AI, shutdown/reboot, and app launch remain unverified in the guest.

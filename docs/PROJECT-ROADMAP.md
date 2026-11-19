@@ -4,7 +4,7 @@
 
 ## Current implementation
 
-- [ ] **IN_PROGRESS · P0** Final audit matrix is maintained in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). The reproduced XFCE failsafe-session error was caused by a replaced channel missing Ubuntu's Failsafe definition; that configuration is restored and the ISO rebuilt. The exact new ISO now transitions from splash to the dark wallpaper, but no desktop controls appear; a second startup fault remains to diagnose.
+- [ ] **IN_PROGRESS · P0** Final audit matrix is maintained in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). The project channel was missing Ubuntu's Failsafe definition, a configuration defect consistent with the observed failsafe-session error; it is restored and the ISO rebuilt. The exact new ISO transitions from splash to the dark wallpaper, but no desktop controls appear, so session startup remains unresolved.
 
 - [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Current ISO SHA-256 is `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658`. Exact-image UTM evidence is in `VM-TESTING.md`: splash and wallpaper render but the panel/menu/greeter controls do not appear. The failsafe channel defect is fixed; full desktop boot remains unverified.
 - [ ] **IN_PROGRESS · P0** XFCE defaults now declare one lower panel and one workspace, remove the pager, disable session auto-save, and seed the live user, XDG defaults, and `/etc/skel` from the same channels. Static regression checks pass; current-session behavior and persistence through an actual XFCE login/reboot still require a working VM boot.
