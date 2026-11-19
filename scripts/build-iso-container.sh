@@ -97,7 +97,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
     /etc/xdg/xfce4 /etc/skel/Desktop /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml \
     /etc/skel/.config/autostart \
     /etc/skel/.config/ifba-ai /etc/skel/.local/share/ifba-ai /etc/skel/.cache/ifba-ai \
-    /etc/skel/.config/gtk-3.0 /etc/gtk-3.0
+    /etc/skel/.config/gtk-3.0 /etc/gtk-3.0 /usr/share/ifba-os/defaults
   printf "[Seat:*]\nuser-session=xfce\ngreeter-session=lightdm-gtk-greeter\nautologin-user=ubuntu\nautologin-user-timeout=0\n" > /etc/lightdm/lightdm.conf.d/50-ifba-autologin.conf
   printf "[greeter]\nbackground=/usr/share/backgrounds/ifba-os/wallpaper.png\ntheme-name=Yaru-dark\nicon-theme-name=Yaru\nfont-name=Inter 10\n" > /etc/lightdm/lightdm-gtk-greeter.conf
   # debootstrap defaults to multi-user.target; start LightDM and XFCE in the live image.
@@ -195,20 +195,21 @@ cp /work/packaging/xfce4-panel.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfc
 cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
 cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
 cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/xdg/xfce4/panel/default.xml"
-cat > "$ROOTFS/home/ubuntu/.config/xfce4/panel/genmon-13.rc" <<'GENMON'
-Command=/usr/lib/ifba-os/ifba-os-greeting.sh
-UseLabel=0
-UpdatePeriod=60000
-GENMON
-cp "$ROOTFS/home/ubuntu/.config/xfce4/panel/genmon-13.rc" "$ROOTFS/etc/skel/.config/xfce4/panel/genmon-13.rc"
+cp /work/packaging/xfwm4.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+cp /work/packaging/xfwm4.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+cp /work/packaging/xfwm4.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+cp /work/packaging/xfce4-session.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml"
+cp /work/packaging/xfce4-session.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml"
+cp /work/packaging/xfce4-session.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml"
+cp /work/packaging/xfce4-panel.xml /work/packaging/xfwm4.xml /work/packaging/xfce4-session.xml \
+  "$ROOTFS/usr/share/ifba-os/defaults/"
+rm -f "$ROOTFS/home/ubuntu/.config/xfce4/panel/genmon-13.rc" \
+  "$ROOTFS/etc/skel/.config/xfce4/panel/genmon-13.rc"
 cp /work/packaging/xfce4-keyboard-shortcuts.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml"
 cp /work/packaging/xfce4-keyboard-shortcuts.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml"
 cp /work/packaging/xfce4-xsettings.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
 cp /work/packaging/xfce4-xsettings.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
 cp /work/packaging/xfce4-xsettings.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
-cp /work/packaging/xfwm4.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
-cp /work/packaging/xfwm4.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
-cp /work/packaging/xfwm4.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
 cp /work/packaging/gtk.css "$ROOTFS/etc/gtk-3.0/gtk.css"
 cp /work/packaging/gtk.css "$ROOTFS/home/ubuntu/.config/gtk-3.0/gtk.css"
 cp /work/packaging/gtk.css "$ROOTFS/etc/skel/.config/gtk-3.0/gtk.css"
@@ -216,6 +217,8 @@ cp /work/packaging/ifba-os-greeting.sh "$ROOTFS/usr/lib/ifba-os/ifba-os-greeting
 chmod +x "$ROOTFS/usr/lib/ifba-os/ifba-os-greeting.sh"
 cp /work/packaging/ifba-os-session-setup.sh "$ROOTFS/usr/local/bin/ifba-os-session-setup"
 chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-session-setup"
+cp /work/tools/fix-xfce-panel.sh "$ROOTFS/usr/local/bin/ifba-os-fix-xfce-panel"
+chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-fix-xfce-panel"
 cp /work/packaging/xfce4-firefox-helper.desktop "$ROOTFS/usr/share/xfce4/helpers/firefox.desktop"
 cp /work/packaging/xfce4-helpers.rc "$ROOTFS/etc/xdg/xfce4/helpers.rc"
 cp /work/packaging/xfce4-helpers.rc "$ROOTFS/home/ubuntu/.config/xfce4/helpers.rc"

@@ -11,20 +11,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DesktopPackagingTests(unittest.TestCase):
-    def test_native_panels_have_valid_ids_and_top_bottom_positions(self):
+    def test_native_panel_has_only_the_bottom_panel_and_no_workspace_pager(self):
         panel = ET.parse(ROOT / "packaging/xfce4-panel.xml").getroot()
         panels = next(node for node in panel.iter("property") if node.attrib.get("name") == "panels")
         self.assertEqual(panels.attrib["type"], "array")
-        self.assertEqual([node.attrib["value"] for node in panels.findall("value")], ["1", "2"])
-        panel_positions = {
-            item.attrib["name"]: next(
-                prop.attrib["value"] for prop in item.findall("property")
-                if prop.attrib.get("name") == "position"
-            )
-            for item in panels.findall("property")
-        }
-        self.assertTrue(panel_positions["panel-1"].startswith("p=10;"))
-        self.assertTrue(panel_positions["panel-2"].startswith("p=6;"))
+        self.assertEqual([node.attrib["value"] for node in panels.findall("value")], ["1"])
+        panel1 = panels.find("property[@name='panel-1']")
+        self.assertTrue(panel1.find("property[@name='position']").attrib["value"].startswith("p=10;"))
+        self.assertIsNone(panels.find("property[@name='panel-2']"))
+        self.assertNotIn("15", [node.attrib["value"] for node in panel1.find("property[@name='plugin-ids']").findall("value")])
 
     def test_wallpaper_sources_are_identical_and_packed_at_desktop_path(self):
         wallpaper = (ROOT / "assets/wallpapers/ifba-os-desktop.png").read_bytes()

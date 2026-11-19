@@ -33,7 +33,7 @@ Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual d
 
 - The build cache contains Ubuntu 24.04 amd64, Casper, XFCE 4.18, LightDM, Xorg, NetworkManager, Firefox, Yaru Dark, Yaru icons, Inter, Whisker, and the XFCE panel plugins.
 - `display-manager.service` points to LightDM; the latest build script creates the graphical default target.
-- The panel is configured natively in Xfconf, with a separate XFCE panel `default.xml` profile. The Xfconf channel is parsed with `xfconf-query` in a D-Bus session and reports two panels and the expected plugin IDs.
+- Historical note: an earlier packaged Xfconf panel channel declared two panels and was parsed with `xfconf-query` in a D-Bus session. The source audit below corrects that declaration; the new ISO still needs a runtime check to confirm only one panel appears.
 - The welcome/Electron prototype remains separate and is not started in the live desktop. SUAP/AVA launchers point to their public HTTPS domains.
 - `hdiutil imageinfo` identifies ISO 9660 boot media with volume label `IFBA_OS_24_04`; `bsdtar -tf` confirms the expected boot files; `output/*.iso` remains ignored by Git.
 
@@ -41,9 +41,9 @@ Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual d
 
 - [ ] Create a new disposable UTM VM with 4 GB RAM, 2 CPUs, a 30 GB disk, NAT, no host shares, and boot the latest ISO to XFCE.
 - [ ] Confirm LightDM/autologin succeeds.
-- [ ] Confirm the user-selected grayscale IFBA OS wallpaper and both native XFCE panels render in the latest ISO.
+- [ ] Confirm the user-selected grayscale IFBA OS wallpaper and single lower XFCE panel render in the latest ISO.
 - [ ] Open the Whisker menu by mouse and Super/Windows key; check search, categories, favorites, and session actions.
-- [ ] Check app launchers, task switching, workspace pager, Thunar, Terminal, Firefox, settings, dialogs, and notifications.
+- [ ] Check app launchers, task switching, one workspace, Thunar, Terminal, Firefox, settings, dialogs, and notifications.
 - [ ] Verify SUAP/AVA launcher target URLs without visiting the sites or signing in.
 - [ ] Check network/audio controls, readability at 1366×768 and 1920×1080, shutdown, and reboot.
 - [ ] Investigate the previously observed Casper `/usr/bin/plymouth` message if it reappears.
@@ -76,3 +76,12 @@ Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual d
 - Result: **boot failure reproduced, root cause not yet identified, and XFCE desktop not validated**. Wallpaper presence inside the ISO remains a byte-level check only; network, Firefox, AI UI/runtime, shutdown, and reboot remain unverified. No credentials, student data, SUAP/AVA login, or authenticated NVIDIA request were used.
 
 This prototype has no installer, disk persistence, real educational-app installer, live-tested AI connection, or academic-data integration.
+
+### XFCE panel/workspace source audit — 2026-11-19
+
+- Static inspection located the direct duplicate-panel cause in `packaging/xfce4-panel.xml`: `/panels` declared IDs 1 and 2, with a second greeting/date panel; panel 1 also contained workspace pager plugin 15. `packaging/xfwm4.xml` set `/general/workspace_count` to 4.
+- Updated the packaged defaults to one lower panel, removed the pager and its unused plugin entry, and set the unlocked Xfwm4 default to one workspace. Added `xfce4-session` `SaveOnExit=false` to prevent newly saved sessions from reintroducing altered panel state.
+- The ISO build writes the panel, Xfwm4, and session channels into the live user's config, `/etc/xdg`, the panel profile default, and `/etc/skel` for later accounts. Added `tools/fix-xfce-panel.sh` and package it as `/usr/local/bin/ifba-os-fix-xfce-panel`; its current-session mode checks that panel 1 is running at the expected bottom position and refuses root, while its separate system-default mode writes only global/skel files.
+- Added regression tests for the panel list, pager removal, workspace count, session behavior, build destinations, and repair-script safety. All 54 automated tests pass; `bash -n`, parsing all packaged XFCE XML files, and `git diff --check` pass. The repair script also passed an integration test with mocked `xfconf-query`, including secondary-panel and pager removal, workspace reset, and panel restart.
+- Rebuilt `output/ifba-os-ubuntu-24.04-amd64.iso`; SHA-256 `6d320c44992edd02f3fe645c7c2016517ab498d00afe7932ce84627195091580`. `file` identifies a bootable ISO 9660 image and the ISO archive contains GRUB, Casper kernel/initrd, and SquashFS. Build-rootfs checks confirm synchronized live-user/system/skeleton XFCE defaults, executable repair tool, and removal of the stale genmon plugin config before SquashFS creation.
+- Attempted to reopen the paused UTM VM after rebuild, but the computer-use interface reported `cgWindowNotFound` for UTM even though the app inventory showed UTM running. No fresh boot of this ISO could be observed. The VM was not resumed or modified in this run; no panel was changed in an active guest. Saved-session files were not removed because none were observed in the build rootfs and no runtime user session could be inspected. LightDM, desktop theme, GTK/Xfwm appearance, new-user login, panel restart, network, browser, assistant, and reboot still require runtime verification.

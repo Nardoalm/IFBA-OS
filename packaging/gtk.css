@@ -13,10 +13,23 @@
 
 #XfcePanelWindow button {
   border-radius: 7px;
-  transition: background-color 140ms ease;
+  border-color: transparent;
+  background-image: none;
+  background-color: transparent;
 }
 
 #XfcePanelWindow button:hover,
 #XfcePanelWindow button:checked {
   background-color: rgba(47, 158, 68, 0.28);
+  border-color: rgba(47, 158, 68, 0.48);
+}
+
+#XfcePanelWindow button:active {
+  background-color: rgba(47, 158, 68, 0.42);
+}
+
+#XfcePanelWindow button:focus {
+  outline-color: #57b96a;
+  outline-style: solid;
+  outline-width: 1px;
 }

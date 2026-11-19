@@ -4,6 +4,19 @@
 
 The prototype is an Ubuntu 24.04 amd64 Casper live image using XFCE4, Xfwm4, Xfdesktop, LightDM, X11, and a native panel. The Electron files in `app/` are a design prototype and are not part of the desktop runtime.
 
+## XFCE defaults and precedence
+
+- The live account's active Xfconf channel files are under `/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/`; these per-user values take precedence over system defaults in `/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/`.
+- `/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/` seeds accounts created after the defaults are installed; it does not change existing accounts. The XFCE panel profile default is also written to `/etc/xdg/xfce4/panel/default.xml`.
+- The ISO build must keep the packaged channel, the live user's channel, XDG system defaults, the panel profile, and the skeleton copies in sync. Changing only `/etc/skel` or only `default.xml` cannot override an existing user's Xfconf channel.
+- The shipped panel configuration previously defined both `panel-1` and `panel-2`; `panel-1` was the lower launcher/task/status bar and `panel-2` was the extra greeting/date bar. It also included the workspace pager, while Xfwm4 set `workspace_count` to four. These declarations explain the extra bar and workspaces in a fresh profile. The default now keeps only panel 1 and one workspace.
+- Session auto-save is disabled in the system and skeleton XFCE session channels to prevent a later logout from re-saving a removed panel. No saved-session files are deleted automatically; the current UTM guest has not reached XFCE, so there is no evidence yet to justify altering an existing user's saved session.
+- The installed `ifba-os-fix-xfce-panel` tool has separate user-session and system-default modes. Session mode refuses root and verifies that panel 1 is the lower panel before removing extras. System-default mode changes only `/etc/xdg` and `/etc/skel`, using `pkexec` when needed; it does not apply Xfconf operations through a root D-Bus session.
+
+## Visual scope and limits
+
+The current desktop deliberately retains the upstream Yaru Dark GTK/Xfwm theme and Yaru icon set for stability. Inter, the supplied wallpaper, a dark graphite panel, green interaction states, and Xfwm4's compositor provide the IFBA OS layer. This is why some GTK2, GTK4/libadwaita, and non-GTK applications can still look like Ubuntu or use their own styling; the global override is GTK3-focused and there is no separate IFBA GTK2/Xfwm theme package yet. Do not claim that all dialogs and applications have been visually verified until XFCE starts in the target ISO.
+
 ## Assistant components
 
 ```mermaid
