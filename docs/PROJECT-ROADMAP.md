@@ -4,14 +4,14 @@
 
 ## Current implementation
 
-- [ ] **IN_PROGRESS · P0** Final audit matrix is maintained in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). The older `3022cef...` artifact showed XFCE, one lower panel, and Firefox (offline). A follow-up UTM run of clean-cache 0.1.0 reached an interactive text login, correcting the earlier apparent initramfs stall; LightDM/XFCE and guest build ID remain unverified. Track every generated image in [`ISO-RELEASES.md`](ISO-RELEASES.md).
+- [ ] **IN_PROGRESS · P0** Final audit matrix is maintained in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). The current 0.1.0 UTM observation confirms XFCE, supplied wallpaper and one bottom panel; the earlier text login was a selected VT. Guest build ID, LightDM status, network, app interactions and restart persistence remain unverified. Track every generated image in [`ISO-RELEASES.md`](ISO-RELEASES.md).
 
-- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Latest artifact 0.1.0 is recorded in `ISO-RELEASES.md`; UTM attached the exact ISO path and the guest reached a text shell, but graphical startup remains unverified.
+- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Latest artifact 0.1.0 is recorded in `ISO-RELEASES.md`; the current UTM screenshot confirms XFCE desktop startup. Guest build ID, LightDM journal/status, network, app interactions, and restart persistence remain to be checked.
 - [ ] **IN_PROGRESS · P0** Embedded build metadata, guest `ifba-os-version`, external final ISO SHA-256 manifest, and fail-fast rootfs checks are implemented. Version 0.1.0 and its matching host manifest are verified; the guest reached a shell, but guest identity command remains unverified.
-- [ ] **IN_PROGRESS · P0** XFCE defaults now declare one lower panel and one workspace, remove the pager, disable session auto-save, and seed the live user, XDG defaults, and `/etc/skel` from the same channels. Static regression checks pass; current-session behavior and persistence through an actual XFCE login/reboot still require a working VM boot.
+- [ ] **IN_PROGRESS · P0** XFCE defaults now declare one lower panel and one workspace, remove the pager, disable session auto-save, and seed the live user, XDG defaults, and `/etc/skel` from the same channels. The single panel is visible in the current screenshot; workspace count and configuration persistence through restart remain unverified.
 - [ ] **IN_PROGRESS · P1** Native desktop uses Yaru Dark/Yaru icons, Inter, a GTK3 graphite panel with green interaction states, Xfwm4 compositing, bottom launchers/task/tray controls, and a searchable Whisker menu. It remains visually based on upstream Ubuntu Yaru; GTK2/GTK4/non-GTK consistency and actual app/window appearance have not been checked in the current ISO.
-- [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS after the LightDM startup issue is resolved, without logging in.
-- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. A single lower panel and Firefox were observed on the prior `3022cef...` artifact; the latest 0.1.0 clean-cache build reaches a text shell under the existing TCG VM, while LightDM/XFCE status is unknown. Regain guest console access, then test menu, wallpaper, AI, app interactions, network, and reboot. Do not make speculative changes.
+- [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS in the current graphical session, without logging in.
+- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. The latest 0.1.0 screenshot confirms XFCE, the supplied wallpaper, desktop SUAP/AVA shortcuts, and a single bottom panel. The network indicator is disconnected; menu/app behavior, workspace count, LightDM status, guest build ID, and reboot persistence remain unverified. Regain authorized guest input and test these items; do not make speculative changes.
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
@@ -37,8 +37,8 @@
 
 ### Desktop and applications
 
-- [ ] **IN_PROGRESS · P0** Verify the supplied wallpaper, menu, and SUAP/AVA launchers in the live session. The single bottom panel and Firefox were observed on the exact mounted ISO; those controls are no longer described as absent.
-- [ ] **IN_PROGRESS · P1** Package the exact user-provided image as both desktop wallpaper and custom Plymouth artwork; rebuild initramfs and verify the boot-to-desktop transition in UTM. The ISO image bytes match the source, and the custom Plymouth splash appeared, but desktop display is blocked by LightDM not starting.
+- [ ] **IN_PROGRESS · P0** Verify the supplied wallpaper, menu, and SUAP/AVA launchers in the live session. Current UTM screenshot confirms wallpaper rendering, desktop shortcuts, and a single bottom panel; menu and launcher actions remain untested.
+- [ ] **IN_PROGRESS · P1** Package the exact user-provided image as both desktop wallpaper and custom Plymouth artwork; verify boot-to-desktop transition and wallpaper persistence. The image bytes match the source, the splash appeared, and the current UTM screenshot shows it on the desktop; restart persistence and lower-resolution readability remain untested.
 - [ ] **TODO · P1** Confirm the IFBA-icon Whisker menu opens by click and Super/Windows key; verify launchers at 1366×768 and 1920×1080, task switching, and keyboard-only access. The workspace pager is intentionally omitted while the default is one workspace.
 - [ ] **TODO · P1** Inspect Thunar, terminal, Firefox, XFCE Settings Manager, notification dialogs, LightDM greeter, and system dialogs for theme consistency and functional controls.
 - [ ] **TODO · P2** Evaluate XFWM4's built-in compositor on software-rendered and accelerated VM/physical hardware; keep a user-accessible off switch. Do not add Picom alongside XFWM4.
@@ -55,7 +55,7 @@
 
 ### Optional AI assistant
 
-- [ ] **IN_PROGRESS · P1** Verify assistant chat, settings/data-management windows, service startup, Secret Service behavior, tools, and per-user paths inside a rebuilt live ISO. Current UTM boot did not reach XFCE. The live account remains shared and passwordless; do not enter real student credentials.
+- [ ] **IN_PROGRESS · P1** Verify assistant chat, settings/data-management windows, service startup, Secret Service behavior, tools, and per-user paths inside the live ISO. The current desktop shows an IFBA AI launcher and the optional-setup notification, but its windows and service have not been opened or tested. The live account remains shared and passwordless; do not enter real student credentials.
 - [x] **DONE · P1** Implement a Secret Service adapter and fail-closed behavior for missing/locked keyrings; no key is stored in plaintext.
 - [x] **DONE · P1** Implement restrictive XDG directories, schema-versioned SQLite conversations/messages/memory, validated settings, and automated isolation/permission tests.
 - [ ] **IN_PROGRESS · P1** Implement an NVIDIA NIM client and GTK conversation workflow, streaming, cancellation, bounded retries/context, endpoint-specific model/reasoning adapters, and network error handling. Mocked tests pass; API availability, key entitlement, payload compatibility, and visual guidance remain unverified without an authenticated request.

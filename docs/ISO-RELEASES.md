@@ -26,6 +26,17 @@ This is a later observation of the same artifact, not a replacement or rewrite o
 - **Remaining blocker:** UTM input/view control became unavailable from the SSH execution context (`noWindowsAvailable`, `utmctl` OSStatus `-1743`, `screencapture` without a display, and System Events accessibility error `-1719`). The visible shell followed an intentional switch to a text VT, so the graphical VT may not have been in view. No journal/status output for LightDM was captured, no corrective boot change is justified yet, and no new ISO/version was generated.
 - **Outstanding checks:** Verify the graphical VT, LightDM/Xorg service state and boot journal; guest build ID; desktop wallpaper/panel/workspace; internet and Firefox; IFBA AI; persistence; and a graceful guest restart. No external or private credentials were used.
 
+### Addendum — 0.1.0 graphical desktop confirmed, 2026-11-19
+
+This is a new observation of the same running 0.1.0 artifact. It supplements the earlier shell/VT observations and leaves their historical records unchanged.
+
+- **Artifact identity:** Product version `0.1.0`, build `ifba-20261119T180608Z-786e4d60b842`, source commit `786e4d60b842f330c2f46189d9ce794df900b57a`, SHA-256 `2f190e1b8b4e842d77e710f1586502cb3d19a90026bf368a2bf5fcd2df1ac344`, size 1,362,454,528 bytes. The current file hash was recomputed and matches this recorded artifact. UTM's active QEMU process attaches the same output path at boot-index 0.
+- **Actual visual result:** A current screenshot from the UTM window shows the IFBA OS XFCE desktop, supplied grayscale wallpaper, SUAP and AVA IFBA shortcuts, and one bottom panel with application launchers, status area and clock. The screenshot is 2560×1600. Thus this running boot did pass initramfs and reached the graphical desktop. The screenshot was observed through the UTM computer-use surface and was not saved as a repository artifact.
+- **Clarification:** Earlier black/text screens followed `Alt+F1`/`Alt+F2`, which select Linux `tty1`/`tty2`; returning to the graphical display showed the desktop. Those text screens do not establish a persistent boot or LightDM failure. LightDM's exact unit status, guest build ID, and journal remain uncollected.
+- **Current issues:** The panel network icon visibly shows disconnected. The IFBA AI optional-setup notification is visible, but Firefox and IFBA AI were not launched during this observation. Menu interaction, workspace count, guest network diagnostics, HTTPS, persistence, shutdown and reboot remain unverified. CUA click actions returned `noWindowsAvailable`, and `utmctl` returned macOS `OSStatus -1743` from the current execution context. No macOS permission was bypassed.
+- **Changes/build:** No source changes that affect the artifact and no rebuild were made. The release remains 0.1.0; this addendum does not rewrite prior outcomes or invent a new build/version.
+- **Next:** Restore authorized UTM input to query LightDM/Xorg and guest network state, then test menu, Firefox, IFBA AI, settings, workspace defaults and persistence. Do not alter build inputs without a reproduced fault.
+
 ## Unversioned legacy artifacts
 
 These hashes and short descriptions are retained from earlier audit records. Those builds predate embedded build metadata; missing IDs, source commits, sizes, or validations are intentionally not inferred.
