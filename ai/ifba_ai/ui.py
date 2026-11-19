@@ -68,8 +68,8 @@ class AssistantWindow(Gtk.ApplicationWindow):
         sidebar.pack_start(self.conversation_list, True, True, 0)
 
         self.stack = Gtk.Stack()
-        self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        self.stack.set_transition_duration(150)
+        self.stack.set_transition_type(Gtk.StackTransitionType.NONE)
+        self.stack.set_transition_duration(0)
         body.pack_start(self.stack, True, True, 0)
         self.chat_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         self.chat_page.set_border_width(28)

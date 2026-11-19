@@ -6,6 +6,8 @@ The current build is a live demo, not a multi-user installation: it auto-logs in
 
 The requested common first-login password `12345` must not be packaged: knowing a student's matrícula plus a shared public password would allow account takeover before password rotation. Do not represent a typed matrícula as verified identity without an authorized identity source.
 
+The latest compliance status is tracked in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). A current user-session/AI security review could not be performed because the latest ISO has not been booted into an accessible UTM window; static checks do not establish runtime isolation or credential behavior.
+
 ## Credential handling
 
 - Store the API key only in the current user's Secret Service collection, accessed through `secret-tool`.

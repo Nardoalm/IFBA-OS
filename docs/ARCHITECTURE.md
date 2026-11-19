@@ -17,6 +17,8 @@ The prototype is an Ubuntu 24.04 amd64 Casper live image using XFCE4, Xfwm4, Xfd
 
 The current desktop deliberately retains the upstream Yaru Dark GTK/Xfwm theme and Yaru icon set for stability. Inter, the supplied wallpaper, a dark graphite panel, green interaction states, and Xfwm4's compositor provide the IFBA OS layer. This is why some GTK2, GTK4/libadwaita, and non-GTK applications can still look like Ubuntu or use their own styling; the global override is GTK3-focused and there is no separate IFBA GTK2/Xfwm theme package yet. Do not claim that all dialogs and applications have been visually verified until XFCE starts in the target ISO.
 
+The IFBA AI settings stack now defaults to no transitions. XFCE-wide reduced-motion preference and actual motion behavior across panel/window manager/apps remain unverified.
+
 ## Assistant components
 
 ```mermaid

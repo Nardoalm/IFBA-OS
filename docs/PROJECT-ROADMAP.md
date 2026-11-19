@@ -4,7 +4,9 @@
 
 ## Current implementation
 
-- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Corrective ISO `08949f17d8ebd2f676c8b99db18826df048fa6eaa9828f93ce01ec24179f3b07` is attached in UTM; GRUB renders and the custom splash appeared, then UTM reported inactive/black display output. Failure is after GRUB, but its cause is unresolved; no desktop or guest-agent response. Diagnose before marking usable.
+- [ ] **IN_PROGRESS · P0** Final audit matrix is maintained in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). Static and mocked evidence are separated from guest runtime results; the current UTM access block means the rebuilt image is not accepted as boot- or desktop-validated.
+
+- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Latest audit ISO SHA-256 is `9f6553df2575c710dac809c5a5d28aacdaa949056d2fb059927bc76ff4c9dffe`; its filesystem/boot entries were checked, but this exact image is not boot-validated. Prior image boots showed GRUB/splash followed by inactive or black display output; cause remains unresolved.
 - [ ] **IN_PROGRESS · P0** XFCE defaults now declare one lower panel and one workspace, remove the pager, disable session auto-save, and seed the live user, XDG defaults, and `/etc/skel` from the same channels. Static regression checks pass; current-session behavior and persistence through an actual XFCE login/reboot still require a working VM boot.
 - [ ] **IN_PROGRESS · P1** Native desktop uses Yaru Dark/Yaru icons, Inter, a GTK3 graphite panel with green interaction states, Xfwm4 compositing, bottom launchers/task/tray controls, and a searchable Whisker menu. It remains visually based on upstream Ubuntu Yaru; GTK2/GTK4/non-GTK consistency and actual app/window appearance have not been checked in the current ISO.
 - [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS after the LightDM startup issue is resolved, without logging in.
@@ -70,11 +72,19 @@
 - [ ] **TODO · P2** Add relevant automated checks, contribution guide, user documentation, changelog, issue templates, and support policy.
 - [ ] **TODO · P2** Prepare signed/checksummed releases only after installer, legal, hardware, and security criteria pass.
 
-## Latest corrective slice — 2026-11-18
+## Earlier corrective slice — 2026-11-18
 
 - Earlier ISO `08949f17d8ebd2f676c8b99db18826df048fa6eaa9828f93ce01ec24179f3b07`: UTM confirmed its path, rendered GRUB and custom splash, then reported inactive/black output. The cause is unresolved. Latest XFCE defaults are statically corrected and rebuilt as ISO `6d320c44992edd02f3fe645c7c2016517ab498d00afe7932ce84627195091580`; UTM access failed during that follow-up, so boot and desktop behavior are still unverified. The wallpaper rendering, Firefox profile, network, and assistant launch remain pending.
 - The model UI contains the five requested families. Endpoint IDs/options are adapted to current NVIDIA references rather than sending identical unsupported parameters to every family. The UI streams answer text only and discards private `reasoning_content`. The model cannot arbitrarily operate the OS; typed local tools remain user-initiated and bounded.
 - This is not completion of the broader Part 2 prompt. Installer, persistent individual student accounts, software installation, complete desktop feature set, live API call, and integrated secure system control remain open.
+
+## Final audit slice — 2026-11-19
+
+- See [`FINAL-AUDIT.md`](FINAL-AUDIT.md) for requirement-by-requirement status and acceptance tests. It explicitly distinguishes source and mock evidence from guest runtime evidence.
+- Disabled the IFBA AI settings stack animation and added a regression test. No system-wide reduced-motion control exists yet.
+- 55 tests pass; shell syntax, XML parsing, ISO hybrid boot metadata and expected boot files pass inspection. Extracted SquashFS contains the single-panel XFCE profile and the no-transition assistant source.
+- Latest ISO hash is recorded above. UTM window access (`cgWindowNotFound`) and `utmctl` Automation denial (`OSStatus -1743`) prevent testing this exact image in the guest.
+- The installer/multiuser login, system-wide animation settings, finished visual identity, global search, verified network/Firefox/AI runtime, accessibility, performance baselines and full application workflow remain incomplete or untested.
 
 ## Known limits
 

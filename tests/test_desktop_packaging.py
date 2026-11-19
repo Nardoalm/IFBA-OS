@@ -75,6 +75,12 @@ class DesktopPackagingTests(unittest.TestCase):
         for selector in ("button:hover", "button:active", "button:focus", "button:disabled"):
             self.assertIn(selector, css)
 
+    def test_assistant_view_transitions_default_to_no_animation(self):
+        ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
+        self.assertIn("Gtk.StackTransitionType.NONE", ui)
+        self.assertIn("self.stack.set_transition_duration(0)", ui)
+        self.assertNotIn("Gtk.StackTransitionType.CROSSFADE", ui)
+
 
 if __name__ == "__main__":
     unittest.main()
