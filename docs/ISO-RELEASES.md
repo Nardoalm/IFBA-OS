@@ -1,0 +1,37 @@
+# IFBA OS ISO release history
+
+This log identifies generated ISO artifacts. A successful build records source identity and content integrity; it does not by itself prove boot or runtime behavior. New builds must receive a new product version and build ID. See the versioning rules in `AGENTS.md`.
+
+## 0.1.0 — recovery build, 2026-11-19
+
+- **Artifact:** `output/ifba-os-ubuntu-24.04-amd64.iso`
+- **Build ID:** `ifba-20261119T180608Z-786e4d60b842`
+- **Source commit:** `786e4d60b842f330c2f46189d9ce794df900b57a` (`source_dirty: false`)
+- **Base / architecture:** Ubuntu 24.04 LTS / amd64
+- **Build method:** new Docker volume `ifba-os-build-cache-recovery`; the original `ifba-os-build-cache` was preserved. The first build stopped on an incorrect XFCE profile path; the rootfs symlink validation was also corrected before this artifact was generated.
+- **Artifact size:** 1,362,454,528 bytes
+- **SHA-256:** `2f190e1b8b4e842d77e710f1586502cb3d19a90026bf368a2bf5fcd2df1ac344`
+- **Build checks:** rootfs required-file and service-target checks passed; SquashFS and hybrid bootable ISO generation succeeded; ISO contains GRUB, Casper kernel/initrd, and SquashFS; computed SHA-256 and byte size match the generated sidecar manifest.
+- **Automated checks:** 59 unit tests passed; Bash syntax, Python compilation, packaged XML parsing, and `git diff --check` passed.
+- **UTM:** The existing x86_64/Q35 VM had this exact ISO path as boot-index 0, with 4 GiB RAM, 2 CPUs, e1000 Shared/NAT, virtio-gpu, and an existing 64 GiB qcow2 disk. The QEMU command line confirms the project ISO path. Output first reported `Display output is not active`, then showed the custom Plymouth image, followed by kernel/device output. The last visible initramfs line was `Begin: Running /scripts/init-premount ...`; no desktop or guest build ID appeared despite further waiting. QEMU TCG sustained high host CPU use and the UTM window became inaccessible. `utmctl` from the available SSH shell returned macOS OSStatus -1743. The exact QEMU launcher was sent SIGTERM and exited; this was not a guest-level shutdown. The existing virtual disk was preserved. This is failed runtime validation, not a successful desktop boot.
+- **Open issues:** Desktop and wallpaper rendering, network, Firefox internet access, IFBA AI runtime, menu/app interactions, shutdown/reboot are unverified on this build. Earlier desktop evidence came from a different artifact and must not be attributed to this one.
+
+## Unversioned legacy artifacts
+
+These hashes and short descriptions are retained from earlier audit records. Those builds predate embedded build metadata; missing IDs, source commits, sizes, or validations are intentionally not inferred.
+
+| Artifact SHA-256 | Known change or observed result |
+|---|---|
+| `510ebd2499a7bcfcef93d249fde36bae66ef803247503d81a1009746e6b9f6b5` | Added the selected wallpaper as a system Xfdesktop default; ISO structure was reported bootable. |
+| `17e9f8b8c6fafb3b77d20822ec36e229558da48cb36cff9c9963b63646723b72` | Included supplied PNG logo assets and encoded JPEGs used by the then separate welcome prototype. |
+| `8cd3e892caef4c8614325080e7534c52b95b061d529a9dcbedee78af9f2c6311` | Corrected graphical target and LightDM link; no post-fix UTM boot was recorded for that exact artifact. |
+| `da1aac1820a4a7b20555b3541277505b5a3890e35e59fe1d56df2dfcde5ac059` | Packaged the supplied grayscale wallpaper unchanged for desktop and Plymouth; bytes were verified in SquashFS. |
+| `88901ac4237d49c94003acbafd1f17d3f925acaba2774c743d6563a7218190b1` | Switched browser packaging to Mozilla Firefox DEB and removed NetSurf; boot and guest network were not validated. |
+| `08949f17d8ebd2f676c8b99db18826df048fa6eaa9828f93ce01ec24179f3b07` | Added model/reasoning UI and NVIDIA client changes; UTM showed splash then black display. |
+| `6d320c44992edd02f3fe645c7c2016517ab498d00afe7932ce84627195091580` | Corrected default panel/workspace declarations; UTM access was unavailable for this build. |
+| `9f6553df2575c710dac809c5a5d28aacdaa949056d2fb059927bc76ff4c9dffe` | Disabled the assistant settings stack transition; boot/runtime was not observed for the exact artifact. |
+| `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658` | Restored the XFCE failsafe session definition. A subsequent UTM run showed an XFCE panel and Firefox, but Firefox was offline and the wallpaper was obscured. |
+
+## Next product version
+
+No next artifact has been built or assigned a version. Increment `SYSTEM_VERSION` in `tools/build_metadata.py` as part of the next evidence-based product change, commit the build inputs, and add a new immutable entry here after recording the resulting artifact metadata.

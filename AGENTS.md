@@ -36,3 +36,11 @@ IFBA OS is a proposed Linux distribution for the IFBA academic community. The cu
 - Run only checks that are relevant to the requested change and allowed by the user's instructions. Do not add or run tests unless requested.
 - Before committing, review the staged diff and confirm it contains only the intended change.
 - In the completion summary, state what changed, what validation was performed, the commit identifier, and whether the push succeeded. If a push fails, do not claim it succeeded.
+
+## ISO versioning and release history
+
+- Treat every successfully generated ISO as a distinct build and give it a new semantic product version (`MAJOR.MINOR.PATCH`) in `tools/build_metadata.py` before starting the build. Increment the patch for routine prototype changes; use a minor increment for a new feature set and a major increment only for an incompatible release milestone.
+- Every ISO must have a unique timestamped build ID, source commit, UTC build time, clean/dirty source state, and an external SHA-256/size manifest. Never reuse or overwrite a version entry in `docs/ISO-RELEASES.md`.
+- Update `docs/ISO-RELEASES.md` with each artifact's version, build ID, source commit, date, SHA-256, size, build/cache method, checks, UTM result, and unresolved issues. Include failed boot/runtime checks; do not label a build validated based only on source or mocked tests.
+- Commit the product version and build inputs before generating the ISO so its embedded commit identifies the exact source. After the build, add the final hash and VM evidence to the release history in a separate documentation-only commit; do not rebuild solely because that log commit changed.
+- Keep older release entries immutable. Historical artifacts created before this policy may be listed as `unversioned legacy` with their known hashes and contemporaneous evidence. Do not invent missing build IDs, commits, or validation results.
