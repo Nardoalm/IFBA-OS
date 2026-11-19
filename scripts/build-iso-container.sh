@@ -277,7 +277,7 @@ required_files=(
   "$ROOTFS/usr/share/backgrounds/ifba-os/wallpaper.png"
   "$ROOTFS/etc/gtk-3.0/gtk.css"
   "$ROOTFS/usr/share/themes/Yaru-dark/xfwm4/themerc"
-  "$ROOTFS/usr/share/xfce4/panel/default.xml"
+  "$ROOTFS/etc/xdg/xfce4/panel/default.xml"
   "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
   "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
   "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"

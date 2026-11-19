@@ -86,6 +86,8 @@ class BuildMetadataTests(unittest.TestCase):
         ):
             self.assertIn(required, container_build)
         self.assertIn("cmp -s /work/packaging/xfce4-panel.xml", container_build)
+        self.assertIn('"$ROOTFS/etc/xdg/xfce4/panel/default.xml"', container_build)
+        self.assertNotIn('"$ROOTFS/usr/share/xfce4/panel/default.xml"', container_build)
 
 
 if __name__ == "__main__":
