@@ -4,9 +4,12 @@ import json
 import os
 import tempfile
 
+from .model_registry import DEFAULT_MODEL, MODELS, REASONING_LEVELS
+
 
 DEFAULTS = {
-    "model_id": "deepseek-ai/deepseek-v4.1-flash",
+    "model_id": DEFAULT_MODEL,
+    "reasoning_level": "off",
     "max_tokens": 2048,
     "memory_enabled": False,
     "share_active_application": False,
@@ -32,8 +35,11 @@ def validate_settings(values):
     result = dict(DEFAULTS)
     result.update(values)
     model = result["model_id"]
-    if not isinstance(model, str) or not model.strip() or len(model) > 256:
-        raise SettingsError("Selecione um identificador de modelo válido.")
+    if not isinstance(model, str) or model not in MODELS:
+        model = DEFAULT_MODEL
+    reasoning_level = result["reasoning_level"]
+    if reasoning_level not in REASONING_LEVELS:
+        raise SettingsError("Selecione um nível de raciocínio válido.")
     try:
         limit = int(result["max_tokens"])
     except (TypeError, ValueError):
@@ -54,7 +60,8 @@ def validate_settings(values):
         if value < lower or value > upper:
             raise SettingsError("Um limite de contexto ou retenção está fora da faixa permitida.")
         result[key] = value
-    result["model_id"] = model.strip()
+    result["model_id"] = model
+    result["reasoning_level"] = reasoning_level
     result["max_tokens"] = limit
     return result
 

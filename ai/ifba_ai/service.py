@@ -8,7 +8,7 @@ from .secrets import CredentialStoreError, SecretStore
 from .settings import SettingsStore
 from .storage import ConversationStore
 from .nvidia import CancellationToken, NvidiaClient, NvidiaError, GenerationCancelled
-from .nvidia import MULTIMODAL_MODEL
+from .nvidia import MULTIMODAL_MODELS
 from .visual import VisualContextError, capture_active_window, validate_visual_result
 
 
@@ -103,7 +103,7 @@ class AssistantService:
         self._generation = token
         try:
             settings = self.settings.read()
-            if visual_context is not None and settings["model_id"] != MULTIMODAL_MODEL:
+            if visual_context is not None and settings["model_id"] not in MULTIMODAL_MODELS:
                 raise ValueError("Selecione o modelo multimodal documentado para enviar uma captura.")
             api_key = self.secrets.get()
             self.storage.add_message(conversation_id, "user", prompt.strip())
@@ -124,6 +124,7 @@ class AssistantService:
                     api_key, settings["model_id"], history, settings["max_tokens"], token,
                     settings["education_level"], image_data_url=image_data_url,
                     visual_context=visual_context,
+                    reasoning_level=settings["reasoning_level"],
                     educational_context=self._educational_context(
                         prompt, conversation_id, include_memories=settings["memory_enabled"]),
                 ):

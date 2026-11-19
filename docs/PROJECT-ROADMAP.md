@@ -4,14 +4,14 @@
 
 ## Current implementation
 
-- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Current ISO has been rebuilt; UTM still reaches a text login instead of LightDM/XFCE.
+- [ ] **IN_PROGRESS · P0** Ubuntu 24.04 amd64 live image with Casper, Linux kernel, XFCE, LightDM, Xorg, NetworkManager, Mozilla Firefox DEB, and an automatic live-session user. Corrective ISO `08949f17d8ebd2f676c8b99db18826df048fa6eaa9828f93ce01ec24179f3b07` is attached in UTM, but the current run shows its splash then black display for more than seven minutes; no desktop or guest-agent response. Diagnose boot before marking usable.
 - [x] **DONE · P1** Native XFCE desktop configuration for Yaru Dark, Yaru icons, Inter, restrained green GTK3 accent, Xfwm4 built-in compositing, top greeting/date panel, bottom launcher/task/tray panel, workspace pager, and Super-key menu/window controls.
 - [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS after the LightDM startup issue is resolved, without logging in.
-- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. The current ISO contains the exact selected wallpaper in its Xfdesktop and Plymouth paths, but the latest UTM boot showed the custom splash followed by a text login; no desktop wallpaper/panels were visible. Confirm the latest ISO, LightDM, desktop, network/audio, and shutdown.
+- [ ] **IN_PROGRESS · P0** Verify the native desktop in UTM. The exact selected wallpaper is in the ISO's Xfdesktop and Plymouth paths, but the latest boot showed the custom splash then a black display for over seven minutes. Guest-agent and network diagnostics are unavailable. Confirm boot, LightDM, desktop wallpaper/panels, Firefox, network/audio, and shutdown.
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
-- [ ] **IN_PROGRESS · P1** Native GTK assistant, per-user D-Bus service, private XDG/SQLite storage, Secret Service, NVIDIA text streaming, bounded context, cancellation, visual guidance, schema-v2 educational memory controls, retention/export, and typed user-initiated tools are implemented in source. App identity and dark GTK interaction states are refined in source; UI/keyring/API and VM runtime checks remain unverified.
+- [ ] **IN_PROGRESS · P1** Native GTK assistant, per-user D-Bus service, private XDG/SQLite storage, Secret Service, NVIDIA SSE text streaming, bounded context, cancellation, visual guidance, schema-v2 educational memory controls, retention/export, and typed user-initiated tools are implemented in source. UI now has five model choices and Off/Low/Medium/High reasoning settings with endpoint-specific payload adapters. Raw `reasoning_content` is deliberately discarded; unrestricted model control is not implemented. GTK/keyring/API/VM runtime checks remain unverified.
 - [ ] **IN_PROGRESS · P0** The top panel says `Olá, [nome]!` and falls back to `Olá, estudante!`; real matrícula login remains blocked by the shared passwordless live account and the lack of an installer or authorized account-provisioning service.
 
 ## What comes from Linux Educacional
@@ -51,10 +51,10 @@
 
 ### Optional AI assistant
 
-- [ ] **IN_PROGRESS · P1** Verify assistant chat, settings/data-management windows, service startup, Secret Service behavior, tools, and per-user paths inside a rebuilt live ISO. The current live account is shared and passwordless, so do not enter real student credentials.
+- [ ] **IN_PROGRESS · P1** Verify assistant chat, settings/data-management windows, service startup, Secret Service behavior, tools, and per-user paths inside a rebuilt live ISO. Current UTM boot did not reach XFCE. The live account remains shared and passwordless; do not enter real student credentials.
 - [x] **DONE · P1** Implement a Secret Service adapter and fail-closed behavior for missing/locked keyrings; no key is stored in plaintext.
 - [x] **DONE · P1** Implement restrictive XDG directories, schema-versioned SQLite conversations/messages/memory, validated settings, and automated isolation/permission tests.
-- [x] **DONE · P1** Implement a text-only NVIDIA NIM client and GTK conversation workflow, streaming, cancellation, syntax validation, bounded retries/context, and network error handling. API availability and credentials remain unverified.
+- [ ] **IN_PROGRESS · P1** Implement an NVIDIA NIM client and GTK conversation workflow, streaming, cancellation, bounded retries/context, endpoint-specific model/reasoning adapters, and network error handling. Mocked tests pass; API availability, key entitlement, payload compatibility, and visual guidance remain unverified without an authenticated request.
 - [ ] **IN_PROGRESS · P1** Add selectable X11 windows, bounded AT-SPI context, explicit capture consent and preview, a documented image-capable NVIDIA route, strict structured-response validation, and a temporary click-through outline. Tests use mocks; desktop runtime is unverified.
 - [ ] **IN_PROGRESS · P1** Add local conversation summaries, bounded context controls, opt-in editable learning memories, lexical retrieval, retention, export/deletion, and typed local tools requiring GTK initiation and one-shot file-creation confirmation. Automated tests pass; XFCE/D-Bus runtime is unverified.
 - [ ] **TODO · P1** Watch focus/move/resize changes, offer selected-region capture, track tutorial state changes, and exercise the full guided workflow in Eclipse or a GTK test application.
@@ -68,6 +68,12 @@
 - [ ] **TODO · P1** Review security boundaries, local data handling, update authenticity, and build-script privilege use.
 - [ ] **TODO · P2** Add relevant automated checks, contribution guide, user documentation, changelog, issue templates, and support policy.
 - [ ] **TODO · P2** Prepare signed/checksummed releases only after installer, legal, hardware, and security criteria pass.
+
+## Latest corrective slice — 2026-11-18
+
+- Offline tests pass (48 total). The ISO was rebuilt and UTM was started with the exact output path; it displays the custom splash then remains black for more than seven minutes. The desktop, wallpaper rendering, Firefox profile, network, and assistant launch are not runtime-verified. QEMU Guest Agent did not respond, preventing guest diagnostics.
+- The model UI contains the five requested families. Endpoint IDs/options are adapted to current NVIDIA references rather than sending identical unsupported parameters to every family. The UI streams answer text only and discards private `reasoning_content`. The model cannot arbitrarily operate the OS; typed local tools remain user-initiated and bounded.
+- This is not completion of the broader Part 2 prompt. Installer, persistent individual student accounts, software installation, complete desktop feature set, live API call, and integrated secure system control remain open.
 
 ## Known limits
 

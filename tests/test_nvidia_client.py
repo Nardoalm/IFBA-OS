@@ -14,6 +14,7 @@ from ifba_ai.nvidia import (
     NvidiaError,
     bounded_context,
 )
+from ifba_ai.model_registry import DEFAULT_MODEL
 
 
 class FakeResponse:
@@ -56,6 +57,37 @@ class ClientTests(unittest.TestCase):
         self.assertNotIn(secret, repr(captured["body"]))
         self.assertTrue(response.closed)
 
+    def test_reasoning_deltas_are_never_exposed_as_chat_text(self):
+        response = FakeResponse([
+            b'data: {"choices":[{"delta":{"reasoning_content":"private thought","content":"Public answer"}}]}\n\n',
+            b'data: [DONE]\n\n',
+        ])
+        output = list(NvidiaClient(opener=lambda *_a, **_k: response).stream_chat(
+            "secret", DEFAULT_MODEL, [{"role": "user", "content": "Oi"}], 256
+        ))
+        self.assertEqual(output, ["Public answer"])
+        self.assertNotIn("private thought", "".join(output))
+
+    def test_unsupported_reasoning_parameter_retries_once_without_it(self):
+        calls = []
+        response = FakeResponse([b'data: {"choices":[{"delta":{"content":"Resposta"}}]}\n', b'data: [DONE]\n'])
+
+        def opener(request, timeout):
+            calls.append(json.loads(request.data.decode("utf-8")))
+            if len(calls) == 1:
+                raise HTTPError(API_URL, 400, "invalid", {}, io.BytesIO(b"Unsupported reasoning_effort"))
+            return response
+
+        output = list(NvidiaClient(opener=opener).stream_chat(
+            "secret", DEFAULT_MODEL, [{"role": "user", "content": "Oi"}], 256,
+            reasoning_level="high",
+        ))
+        self.assertEqual(output, ["Resposta"])
+        self.assertIn("reasoning_effort", calls[0])
+        self.assertNotIn("reasoning_effort", calls[1])
+        self.assertIn("apresente conclusões", calls[1]["messages"][0]["content"])
+        self.assertEqual(len(calls), 2)
+
     def test_unauthorized_key_has_safe_error(self):
         secret = "a-secret-test-value"
 
@@ -63,7 +95,7 @@ class ClientTests(unittest.TestCase):
             raise HTTPError(API_URL, 401, "unauthorized", {}, io.BytesIO(secret.encode()))
 
         with self.assertRaisesRegex(NvidiaError, "recusou a chave") as raised:
-            list(NvidiaClient(opener=opener, retries=0).stream_chat(secret, "valid-model", [], 100))
+            list(NvidiaClient(opener=opener, retries=0).stream_chat(secret, DEFAULT_MODEL, [], 100))
         self.assertNotIn(secret, str(raised.exception))
 
     def test_billing_and_model_access_errors_are_explained(self):
@@ -71,7 +103,7 @@ class ClientTests(unittest.TestCase):
             def opener(*_args, **_kwargs):
                 raise HTTPError(API_URL, code, "denied", {}, io.BytesIO(b"private response body"))
             with self.subTest(status=code), self.assertRaisesRegex(NvidiaError, phrase):
-                list(NvidiaClient(opener=opener, retries=0).stream_chat("secret", "valid-model", [], 100))
+                list(NvidiaClient(opener=opener, retries=0).stream_chat("secret", DEFAULT_MODEL, [], 100))
 
     def test_rate_limit_retries_are_bounded_and_honor_retry_after(self):
         calls = []
@@ -90,7 +122,7 @@ class ClientTests(unittest.TestCase):
                 return False
 
         with self.assertRaisesRegex(NvidiaError, "Limite de uso"):
-            list(client.stream_chat("secret", "valid-model", [], 100, ImmediateToken()))
+            list(client.stream_chat("secret", DEFAULT_MODEL, [], 100, ImmediateToken()))
         self.assertEqual(len(calls), 3)
 
     def test_network_error_retries_then_reports_unavailable(self):
@@ -108,7 +140,7 @@ class ClientTests(unittest.TestCase):
             def wait(self, _delay):
                 return False
         with self.assertRaisesRegex(NvidiaError, "Verifique a internet"):
-            list(client.stream_chat("secret", "valid-model", [], 100, ImmediateToken()))
+            list(client.stream_chat("secret", DEFAULT_MODEL, [], 100, ImmediateToken()))
         self.assertEqual(len(calls), 2)
 
     def test_invalid_model_and_missing_key_are_rejected_before_network(self):
@@ -117,7 +149,7 @@ class ClientTests(unittest.TestCase):
         with self.assertRaises(NvidiaError):
             list(client.stream_chat("secret", "bad model", [], 100))
         with self.assertRaises(NvidiaError):
-            list(client.stream_chat(None, "valid-model", [], 100))
+            list(client.stream_chat(None, DEFAULT_MODEL, [], 100))
         self.assertEqual(calls, [])
 
     def test_context_is_bounded_and_keeps_recent_messages(self):
@@ -139,7 +171,7 @@ class ClientTests(unittest.TestCase):
         self.assertTrue(token.is_set())
         with self.assertRaises(GenerationCancelled):
             list(NvidiaClient(opener=lambda *_a, **_k: response).stream_chat(
-                "secret", "valid-model", [], 100, token
+                "secret", DEFAULT_MODEL, [], 100, token
             ))
 
     def test_documented_multimodal_model_receives_inline_user_image(self):
@@ -160,7 +192,7 @@ class ClientTests(unittest.TestCase):
                 [{"role": "user", "content": "Onde crio uma classe?"}], 100,
                 image_data_url="data:image/jpeg;base64," + image, visual_context=context,
             ))
-        self.assertEqual(captured["url"], MODEL_ENDPOINTS[MULTIMODAL_MODEL])
+        self.assertEqual(captured["url"], API_URL)
         user_message = captured["payload"]["messages"][-1]
         self.assertEqual(user_message["content"][0]["text"], "Onde crio uma classe?")
         self.assertEqual(user_message["content"][1]["image_url"]["url"], "data:image/jpeg;base64," + image)
@@ -170,8 +202,8 @@ class ClientTests(unittest.TestCase):
         calls = []
         client = NvidiaClient(opener=lambda *_a, **_k: calls.append(1))
         context = {"application": "Eclipse", "controls": []}
-        with self.assertRaisesRegex(NvidiaError, "não está validado"):
-            list(client.stream_chat("secret", "deepseek-ai/deepseek-v4.1-flash", [], 100,
+        with self.assertRaisesRegex(NvidiaError, "modelo NVIDIA listado"):
+            list(client.stream_chat("secret", "unlisted-model", [], 100,
                                     image_data_url="data:image/jpeg;base64,YQ==", visual_context=context))
         huge = base64.b64encode(b"x" * (180 * 1024 + 1)).decode("ascii")
         with self.assertRaisesRegex(NvidiaError, "excede o limite"):

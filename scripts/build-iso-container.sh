@@ -71,7 +71,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libasound2t64 \
   libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libdrm2 \
   libxkbcommon0 libpango-1.0-0 \
-  firefox firefox-l10n-pt-br sudo dbus-x11 policykit-1
+  firefox firefox-l10n-pt-br sudo dbus-x11 policykit-1 qemu-guest-agent locales
 
 # The build cache persists between runs, so remove NetSurf left by older images.
 if chroot "$ROOTFS" dpkg-query -W -f='${Status}' netsurf-gtk 2>/dev/null | grep -q 'install ok installed'; then
@@ -102,10 +102,34 @@ chroot "$ROOTFS" /bin/bash -euxc '
   printf "[greeter]\nbackground=/usr/share/backgrounds/ifba-os/wallpaper.png\ntheme-name=Yaru-dark\nicon-theme-name=Yaru\nfont-name=Inter 10\n" > /etc/lightdm/lightdm-gtk-greeter.conf
   # debootstrap defaults to multi-user.target; start LightDM and XFCE in the live image.
   ln -sfn /lib/systemd/system/graphical.target /etc/systemd/system/default.target
+  printf "LANG=pt_BR.UTF-8\nLANGUAGE=pt_BR:pt:en\n" > /etc/default/locale
+  printf "pt_BR.UTF-8 UTF-8\n" > /etc/locale.gen
+  locale-gen pt_BR.UTF-8
+  printf "America/Bahia\n" > /etc/timezone
+  ln -sfn /usr/share/zoneinfo/America/Bahia /etc/localtime
   update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/firefox 100
   apt-get clean
     rm -rf /var/lib/apt/lists/* /tmp/*
 '
+
+mkdir -p "$ROOTFS/etc/systemd/system/multi-user.target.wants"
+ln -sfn /lib/systemd/system/qemu-guest-agent.service \
+  "$ROOTFS/etc/systemd/system/multi-user.target.wants/qemu-guest-agent.service"
+mkdir -p "$ROOTFS/etc/NetworkManager/system-connections"
+cat > "$ROOTFS/etc/NetworkManager/system-connections/ifba-wired.nmconnection" <<'NETWORK'
+[connection]
+id=IFBA OS Ethernet
+type=ethernet
+autoconnect=true
+autoconnect-priority=100
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+NETWORK
+chmod 0600 "$ROOTFS/etc/NetworkManager/system-connections/ifba-wired.nmconnection"
 
 rm -rf "$ISO"
 mkdir -p "$ISO/casper" "$ISO/boot/grub"
@@ -170,8 +194,7 @@ cp /work/packaging/xfce4-desktop.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce
 cp /work/packaging/xfce4-panel.xml "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
 cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
 cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
-sed 's/<property name="panels" type="uint" value="2">/<property name="panels" type="array">\n      <value type="int" value="1"\/>\n      <value type="int" value="2"\/>/' \
-  /work/packaging/xfce4-panel.xml > "$ROOTFS/etc/xdg/xfce4/panel/default.xml"
+cp /work/packaging/xfce4-panel.xml "$ROOTFS/etc/xdg/xfce4/panel/default.xml"
 cat > "$ROOTFS/home/ubuntu/.config/xfce4/panel/genmon-13.rc" <<'GENMON'
 Command=/usr/lib/ifba-os/ifba-os-greeting.sh
 UseLabel=0
@@ -229,8 +252,8 @@ cp "$ROOTFS/etc/xdg/autostart/ifba-os-session-setup.desktop" \
   "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-session-setup.desktop"
 cp "$ROOTFS/etc/xdg/autostart/ifba-os-session-setup.desktop" \
   "$ROOTFS/etc/skel/.config/autostart/ifba-os-session-setup.desktop"
-chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu/Desktop /home/ubuntu/.config \
-  /home/ubuntu/.local/share/ifba-ai /home/ubuntu/.cache/ifba-ai
+chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu
+chmod 0700 "$ROOTFS/home/ubuntu/.cache" "$ROOTFS/home/ubuntu/.local"
 chmod +x "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop" "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
 chroot "$ROOTFS" update-alternatives --install \
   /usr/share/plymouth/themes/default.plymouth default.plymouth \
@@ -242,7 +265,7 @@ cp "$ROOTFS/boot/initrd.img-"* "$ISO/casper/initrd"
 cleanup_mounts
 rm -f "$RESOLV_TARGET"
 
-mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -processors 2 -e boot
+mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -processors "$(nproc)" -e boot
 du -sx --block-size=1 "$ROOTFS" | cut -f1 > "$ISO/casper/filesystem.size"
 cat > "$ISO/boot/grub/grub.cfg" <<'GRUB'
 set timeout=5

@@ -50,6 +50,27 @@ button:checked {
   border-color: #49a85c;
 }
 
+button.flat {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+button.linked {
+  border-radius: 0;
+}
+
+button.linked:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+button.linked:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+label.dim-label {
+  color: #a7adaf;
+}
+
 button:focus,
 entry:focus,
 textview:focus {

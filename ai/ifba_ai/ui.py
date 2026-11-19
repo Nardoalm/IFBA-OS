@@ -21,6 +21,7 @@ OBJECT_PATH = "/org/ifba/OS/AI"
 INTERFACE = "org.ifba.OS.AI1"
 
 from .tools import SystemTools
+from .model_registry import DEFAULT_MODEL, MODELS, REASONING_LEVELS
 
 
 class AssistantWindow(Gtk.ApplicationWindow):
@@ -151,11 +152,46 @@ class AssistantWindow(Gtk.ApplicationWindow):
         page.pack_start(self.key_entry, False, False, 0)
 
         page.pack_start(Gtk.Label(label="Modelo", xalign=0), False, False, 0)
-        self.model = Gtk.ComboBoxText.new_with_entry()
-        self.model.append("deepseek-ai/deepseek-v4.1-flash", "DeepSeek V4.1 Flash")
-        self.model.append("microsoft/phi-4-multimodal-instruct", "Microsoft Phi-4 Multimodal")
-        self.model.set_active_id("deepseek-ai/deepseek-v4.1-flash")
+        self.model = Gtk.ComboBoxText()
+        for model_id, metadata in MODELS.items():
+            self.model.append(model_id, metadata["title"])
+        self.model.set_active_id(DEFAULT_MODEL)
+        self.model.connect("changed", self._update_model_hint)
         page.pack_start(self.model, False, False, 0)
+
+        self.model_hint = Gtk.Label(xalign=0)
+        self.model_hint.set_line_wrap(True)
+        page.pack_start(self.model_hint, False, False, 0)
+
+        page.pack_start(Gtk.Label(label="Nível de raciocínio", xalign=0), False, False, 0)
+        reasoning_group = Gtk.ButtonBox(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        reasoning_group.set_layout(Gtk.ButtonBoxStyle.CENTER)
+        reasoning_group.get_style_context().add_class("linked")
+        page.pack_start(reasoning_group, False, False, 0)
+        self.reasoning_buttons = {}
+        labels = {"off": "Off", "low": "Baixo", "medium": "Médio", "high": "Alto"}
+        previous = None
+        for level in REASONING_LEVELS:
+            button = Gtk.ToggleButton(label=labels[level])
+            if previous is not None:
+                button.set_group(previous)
+            button.connect("toggled", self._update_model_hint)
+            reasoning_group.add(button)
+            self.reasoning_buttons[level] = button
+            previous = button
+        self.reasoning_buttons["off"].set_active(True)
+
+        self.deep_mode_hint = Gtk.Label(xalign=0)
+        self.deep_mode_hint.set_line_wrap(True)
+        self.deep_mode_hint.get_style_context().add_class("dim-label")
+        page.pack_start(self.deep_mode_hint, False, False, 0)
+        self.reasoning_privacy = Gtk.Label(
+            label="As respostas podem explicar conclusões e passos úteis; raciocínio interno bruto não é exibido."
+        )
+        self.reasoning_privacy.set_xalign(0)
+        self.reasoning_privacy.set_line_wrap(True)
+        self.reasoning_privacy.get_style_context().add_class("dim-label")
+        page.pack_start(self.reasoning_privacy, False, False, 0)
 
         self.tokens = Gtk.SpinButton.new_with_range(1, 32768, 256)
         self.tokens.set_value(2048)
@@ -210,6 +246,21 @@ class AssistantWindow(Gtk.ApplicationWindow):
         actions.add(save)
         return page
 
+    def _selected_reasoning_level(self):
+        return next((level for level, button in self.reasoning_buttons.items()
+                     if button.get_active()), "off")
+
+    def _update_model_hint(self, *_args):
+        if not hasattr(self, "model_hint") or not hasattr(self, "deep_mode_hint"):
+            return
+        model_id = self.model.get_active_id() or DEFAULT_MODEL
+        metadata = MODELS.get(model_id, MODELS[DEFAULT_MODEL])
+        self.model_hint.set_text(metadata["subtitle"])
+        deep_mode = model_id == "moonshotai/kimi-k3.1-pro" and self._selected_reasoning_level() in ("medium", "high")
+        self.deep_mode_hint.set_text(
+            "Modo profundo: respostas podem levar alguns segundos" if deep_mode else ""
+        )
+
     def _connect_service(self):
         try:
             DBusGMainLoop(set_as_default=True)
@@ -237,7 +288,10 @@ class AssistantWindow(Gtk.ApplicationWindow):
 
     def _load_settings(self):
         values = json.loads(str(self.proxy.GetSettings()))
-        self.model.get_child().set_text(values["model_id"])
+        self.model.set_active_id(values["model_id"] if values["model_id"] in MODELS else DEFAULT_MODEL)
+        for level, button in self.reasoning_buttons.items():
+            button.set_active(level == values["reasoning_level"])
+        self._update_model_hint()
         self.tokens.set_value(values["max_tokens"])
         self.memory.set_active(values["memory_enabled"])
         self.context_messages.set_value(values["context_max_messages"])
@@ -348,20 +402,18 @@ class AssistantWindow(Gtk.ApplicationWindow):
     def _capture_visual(self, *_):
         if not self.proxy or self.generating:
             return
-        selected_model = self.model.get_child().get_text().strip()
-        if selected_model != "microsoft/phi-4-multimodal-instruct":
+        selected_model = self.model.get_active_id() or DEFAULT_MODEL
+        if selected_model not in MODELS:
             dialog = Gtk.MessageDialog(transient_for=self, modal=True,
                                        message_type=Gtk.MessageType.INFO,
                                        buttons=Gtk.ButtonsType.CLOSE,
                                        text="Selecione um modelo multimodal para orientação visual.")
             dialog.format_secondary_text(
-                "O modelo de texto atual não foi validado para imagens. "
-                "A captura só é permitida com Microsoft Phi-4 Multimodal, cuja documentação NVIDIA descreve entrada de imagens."
+                "O modelo atual não está habilitado para imagens. Selecione um dos modelos multimodais disponíveis."
             )
             dialog.run()
             dialog.destroy()
             self.stack.set_visible_child_name("settings")
-            self.model.get_child().set_text("microsoft/phi-4-multimodal-instruct")
             return
         try:
             windows = json.loads(str(self.proxy.ListVisibleWindows()))
@@ -585,9 +637,10 @@ class AssistantWindow(Gtk.ApplicationWindow):
         if not self.proxy:
             self.status.set_text("O serviço local do assistente não está disponível.")
             return
-        model = self.model.get_child().get_text().strip()
+        model = self.model.get_active_id() or DEFAULT_MODEL
         values = {
             "model_id": model,
+            "reasoning_level": self._selected_reasoning_level(),
             "max_tokens": self.tokens.get_value_as_int(),
             "memory_enabled": self.memory.get_active(),
             "share_active_application": self.share_app.get_active(),

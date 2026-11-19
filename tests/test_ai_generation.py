@@ -75,7 +75,7 @@ class GenerationTests(unittest.TestCase):
                 secret_store=FakeSecretStore(), nvidia_client=client, emit=emit,
             )
             settings = service.settings.read()
-            settings["model_id"] = "microsoft/phi-4-multimodal-instruct"
+            settings["model_id"] = "deepseek-ai/deepseek-v4.1-flash"
             service.settings.write(settings)
             conversation_id = service.storage.create_conversation("Eclipse")
             image = "data:image/jpeg;base64,YQ=="

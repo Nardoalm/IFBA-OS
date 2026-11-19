@@ -5,7 +5,6 @@ wallpaper=/usr/share/backgrounds/ifba-os/wallpaper.png
 command -v xfconf-query >/dev/null
 [[ -r "$wallpaper" ]]
 
-# Make the X11 session endpoints available to the per-user assistant service.
 if command -v systemctl >/dev/null 2>&1; then
   systemctl --user import-environment DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS || true
 fi
@@ -13,9 +12,12 @@ if command -v dbus-update-activation-environment >/dev/null 2>&1; then
   dbus-update-activation-environment --systemd DISPLAY XAUTHORITY || true
 fi
 
-# Xfdesktop names wallpaper properties after the monitor reported by X11.
-# Resolve those live paths instead of assuming every VM exposes "monitor0".
-for attempt in {1..10}; do
+# Wait for Xfdesktop to register its real output and workspace properties.
+for attempt in {1..30}; do
+  if ! pgrep -x xfdesktop >/dev/null 2>&1; then
+    sleep 1
+    continue
+  fi
   mapfile -t wallpaper_paths < <(
     xfconf-query --channel xfce4-desktop --list 2>/dev/null \
       | grep -E '^/backdrop/screen[0-9]+/monitor[^/]+/workspace[0-9]+/last-image$' || true
@@ -37,7 +39,3 @@ for path in "${wallpaper_paths[@]}"; do
 done
 
 xfdesktop --reload >/dev/null 2>&1 || true
-
-# Apply the Xfconf panel profile after the session has initialized its plugins.
-sleep 2
-xfce4-panel --restart >/dev/null 2>&1 || xfce4-panel >/dev/null 2>&1 &

@@ -8,13 +8,14 @@ import threading
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from .model_registry import DEFAULT_MODEL, IMAGE_MODELS, ModelRegistryError
+from .model_registry import fallback_instruction, request_options
 
 API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
-MULTIMODAL_MODEL = "microsoft/phi-4-multimodal-instruct"
-MODEL_ENDPOINTS = {
-    MULTIMODAL_MODEL: "https://integrate.api.nvidia.com/v1/microsoft/phi-4-multimodal-instruct",
-}
+MULTIMODAL_MODEL = DEFAULT_MODEL
+MULTIMODAL_MODELS = IMAGE_MODELS
+MODEL_ENDPOINTS = {}
 MAX_INLINE_IMAGE_BYTES = 180 * 1024
 SYSTEM_PROMPT = (
     "Você é o assistente educacional do IFBA OS. Explique com clareza em português, "
@@ -92,7 +93,7 @@ class NvidiaClient:
 
     def stream_chat(self, api_key, model, messages, max_tokens, cancel_event=None,
                     education_level="iniciante", image_data_url=None, visual_context=None,
-                    educational_context=None):
+                    educational_context=None, reasoning_level="off"):
         if not isinstance(api_key, str) or not api_key.strip():
             raise NvidiaError("Configure uma chave NVIDIA pessoal nas configurações.")
         if not isinstance(model, str) or not MODEL_RE.fullmatch(model):
@@ -104,6 +105,10 @@ class NvidiaClient:
         if not 1 <= max_tokens <= 32768:
             raise NvidiaError("O limite de resposta deve ficar entre 1 e 32768 tokens.")
         cancel_event = cancel_event or threading.Event()
+        try:
+            reasoning_options = request_options(model, reasoning_level)
+        except ModelRegistryError as error:
+            raise NvidiaError(str(error)) from error
         system_prompt = SYSTEM_PROMPT + " Nível de aprendizagem informado pelo estudante: {}.".format(education_level)
         if educational_context:
             if not isinstance(educational_context, str) or len(educational_context) > 12000:
@@ -113,7 +118,7 @@ class NvidiaClient:
                 + educational_context
             )
         if visual_context is not None:
-            if model != MULTIMODAL_MODEL:
+            if model not in MULTIMODAL_MODELS:
                 raise NvidiaError("Este modelo não está validado para imagens. Selecione um modelo multimodal compatível.")
             if not isinstance(visual_context, dict) or len(json.dumps(visual_context, ensure_ascii=False)) > 30000:
                 raise NvidiaError("O contexto visual não é válido ou excede o limite permitido.")
@@ -126,7 +131,7 @@ class NvidiaClient:
             )
         conversation = bounded_context(messages)
         if image_data_url is not None:
-            if model != MULTIMODAL_MODEL:
+            if model not in MULTIMODAL_MODELS:
                 raise NvidiaError("Este modelo não está validado para imagens. Selecione um modelo multimodal compatível.")
             match = re.fullmatch(r"data:image/(jpeg|png);base64,([A-Za-z0-9+/]+={0,2})", image_data_url)
             if match is None:
@@ -150,22 +155,32 @@ class NvidiaClient:
             "max_tokens": max_tokens,
             "stream": True,
         }
-        encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        request = Request(MODEL_ENDPOINTS.get(model, API_URL), data=encoded, method="POST", headers={
-            "Authorization": "Bearer " + api_key.strip(),
-            "Content-Type": "application/json",
-            "Accept": "text/event-stream",
-        })
+        payload.update(reasoning_options)
+        def make_request(body):
+            encoded = json.dumps(body, ensure_ascii=False).encode("utf-8")
+            return Request(MODEL_ENDPOINTS.get(model, API_URL), data=encoded, method="POST", headers={
+                "Authorization": "Bearer " + api_key.strip(),
+                "Content-Type": "application/json",
+                "Accept": "text/event-stream",
+            })
+
         attempt = 0
+        parameter_fallback_used = False
         while True:
             if cancel_event.is_set():
                 raise GenerationCancelled("Geração interrompida.")
             try:
-                response = self.opener(request, timeout=self.timeout)
+                response = self.opener(make_request(payload), timeout=self.timeout)
                 break
             except HTTPError as error:
                 status = error.code
                 retry_after = error.headers.get("Retry-After", "") if error.headers else ""
+                error_detail = ""
+                if status in (400, 422) and not parameter_fallback_used and reasoning_options:
+                    try:
+                        error_detail = error.read(4096).decode("utf-8", errors="ignore").lower()
+                    except OSError:
+                        error_detail = ""
                 error.close()
                 if status == 401:
                     raise NvidiaError("A NVIDIA recusou a chave. Confira a chave pessoal configurada.")
@@ -174,6 +189,17 @@ class NvidiaClient:
                 if status == 403:
                     raise NvidiaError("A conta NVIDIA não tem permissão para usar este modelo.")
                 if status in (400, 404, 422):
+                    if (status in (400, 422) and not parameter_fallback_used and reasoning_options
+                            and any(field in error_detail for field in ("reasoning_effort", "chat_template_kwargs", "thinking"))):
+                        payload = dict(payload)
+                        for field in reasoning_options:
+                            payload.pop(field, None)
+                        fallback = fallback_instruction(reasoning_level)
+                        payload["messages"] = list(payload["messages"])
+                        payload["messages"][0] = dict(payload["messages"][0])
+                        payload["messages"][0]["content"] += " " + fallback
+                        parameter_fallback_used = True
+                        continue
                     raise NvidiaError("Modelo ou parâmetros incompatíveis. Confira o identificador do modelo.")
                 if status == 429 and attempt < self.retries:
                     try:
@@ -217,7 +243,8 @@ class NvidiaClient:
                 try:
                     event = json.loads(data)
                     choices = event.get("choices") or []
-                    delta = (choices[0].get("delta") or {}).get("content") if choices else None
+                    delta_object = (choices[0].get("delta") or {}) if choices else {}
+                    delta = delta_object.get("content")
                 except (ValueError, TypeError, AttributeError, IndexError):
                     continue
                 if isinstance(delta, str) and delta:
