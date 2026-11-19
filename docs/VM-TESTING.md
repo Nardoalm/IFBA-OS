@@ -2,7 +2,16 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
-## Validation record — 2026-11-18
+## Validation record — 2026-11-18 and 2026-11-19
+
+### Corrected XFCE failsafe configuration — 2026-11-19
+
+- A live UTM run displayed the XFCE failsafe-session error and named `xfconfd`/D-Bus, `XDG_CONFIG_DIRS`, and `xfce4-session` as possible causes. Comparing the project channel with the official Ubuntu Noble `xfce4-session` package identified a concrete packaging defect: replacing the whole channel removed `/general/FailsafeSessionName` and `/sessions/Failsafe`.
+- Restored the packaged Ubuntu failsafe session definition (window manager, settings daemon, panel, Thunar daemon, and desktop) while keeping `SaveOnExit=false`. Added regression assertions for the failsafe name and launch commands.
+- Rebuilt `output/ifba-os-ubuntu-24.04-amd64.iso`; SHA-256 `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658`, size 1,367,744,512 bytes. ISO9660/MBR boot metadata, GRUB, Casper kernel/initrd, and SquashFS are present. The build cache has the corrected XML at `/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml` (matching the source SHA-256 `f0532c853865fc5a4e637dd615b9b2ac632de68389334ae7db24e765b1da43c9`) and the wallpaper at the configured path (SHA-256 `51f6f6e1ef6d4067d5427d02d3f7204565a2d7291d41b098893cf8c1eb0532c0`).
+- Confirmed from the active QEMU command line that UTM booted this exact ISO path. The splash appeared, then the selected very-dark wallpaper/logo became visible. No panel, menu, LightDM controls, or application window appeared during 6+ minutes of observation. Switching to a text VT produced no readable diagnostic output. The failsafe dialog did not reappear, but this does not prove the full XFCE session started successfully.
+- Paused the VM after the observation to stop x86 software-emulation CPU use. VM remains the existing 4 GiB/2 CPU/64 GiB-disk UTM guest with NAT and no shared folder, rather than a fresh 30 GiB disposable profile. No network, Firefox, assistant, shutdown, or reboot behavior was validated.
+- Offline verification: all 55 unit tests pass with `PYTHONPATH=ai`; shell syntax, Python compilation, packaged XML parsing, and `git diff --check` pass. Extracted the ISO's embedded SquashFS and confirmed that its corrected session XML matches source SHA-256 `f0532c853865fc5a4e637dd615b9b2ac632de68389334ae7db24e765b1da43c9` and its wallpaper matches SHA-256 `51f6f6e1ef6d4067d5427d02d3f7204565a2d7291d41b098893cf8c1eb0532c0`. The GUI remains an open runtime defect, so do not mark boot-to-desktop as passing.
 
 ### UTM run
 

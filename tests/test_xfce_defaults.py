@@ -39,6 +39,20 @@ class XfceDefaultsTests(unittest.TestCase):
         save_on_exit = general.find("property[@name='SaveOnExit']")
         self.assertIsNotNone(save_on_exit)
         self.assertEqual(save_on_exit.attrib["value"], "false")
+        failsafe_name = general.find("property[@name='FailsafeSessionName']")
+        self.assertIsNotNone(failsafe_name)
+        self.assertEqual(failsafe_name.attrib["value"], "Failsafe")
+        failsafe = channel.find("property[@name='sessions']/property[@name='Failsafe']")
+        self.assertIsNotNone(failsafe)
+        self.assertEqual(
+            [
+                value.attrib["value"]
+                for item in failsafe.findall("property")
+                if item.attrib["name"].endswith("_Command")
+                for value in item.findall("value")
+            ],
+            ["xfwm4", "xfsettingsd", "xfce4-panel", "Thunar", "--daemon", "xfdesktop"],
+        )
 
     def test_build_installs_channel_defaults_for_live_and_future_users(self):
         script = (ROOT / "scripts/build-iso-container.sh").read_text()

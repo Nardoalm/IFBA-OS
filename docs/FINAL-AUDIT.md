@@ -1,12 +1,12 @@
 # IFBA OS final audit matrix
 
-Audit date: 2026-11-19. Scope is the current source tree and `output/ifba-os-ubuntu-24.04-amd64.iso`. A source declaration or mocked test is not runtime evidence. UTM was accessible through its native UI in the latest follow-up; the exact ISO was started, but the guest did not reach LightDM/XFCE and UTM reported inactive display output. See `VM-TESTING.md`.
+Audit date: 2026-11-19. Scope is the current source tree and `output/ifba-os-ubuntu-24.04-amd64.iso`. A source declaration or mocked test is not runtime evidence. The latest UTM run used the exact ISO and showed the selected wallpaper after the splash, but no panel, menu, greeter controls, or application appeared. The reproduced XFCE failsafe configuration defect is corrected in the source and rebuilt artifact; desktop startup remains incomplete. See `VM-TESTING.md`.
 
 | Requirement | Expected | Observed evidence | Status | Priority / correction or acceptance test |
 |---|---|---|---|---|
-| Base and ISO | Ubuntu 24.04 amd64 live system boots to XFCE | Exact ISO was started in UTM; kernel logs show virtio_gpu, e1000, CD-ROM and disk. Custom Plymouth screen appeared, then output became inactive before LightDM/XFCE. Another attempt reached BusyBox; `/cdrom` and `/cow` were mounted. | Blocked | P0: acquire reliable serial/journal diagnostics or test a disposable VM with a different supported display backend, then isolate Casper/system/display failure before changing build configuration. |
-| Desktop wallpaper | Supplied grayscale IFBA OS image on Xfdesktop | Source asset is packaged and Xfconf default points to it; prior ISO image bytes were checked. Current desktop rendering is not confirmed. | Not tested | P0: inspect desktop after boot at 1366×768 and 1920×1080. |
-| Panel | One lower XFCE panel, launchers, task list, tray, clock and session actions | Xfconf XML lists panel 1 only; a regression test checks location and pager absence; build copies the file to live user, XDG and `/etc/skel`. | Partially conforme | P0: verify real panel, each launcher, menu, network/audio indicators and reboot persistence. |
+| Base and ISO | Ubuntu 24.04 amd64 live system boots to XFCE | Exact rebuilt ISO was started in UTM. The splash faded to the selected wallpaper, but no panel, menu, greeter controls, or apps appeared. An earlier failsafe-session error was traced to the missing packaged XFCE failsafe definition, now restored from Ubuntu's package defaults and present in the new build cache. | Blocked | P0: obtain a readable guest journal/serial log or test a disposable VM with another display backend; identify why the session does not present its controls after the wallpaper appears. |
+| Desktop wallpaper | Supplied grayscale IFBA OS image on Xfdesktop | Exact wallpaper is packaged at the configured Xfdesktop path; current UTM output showed its centered dark logo after the splash. Whether this was Xfdesktop or LightDM background is not established. | Partially tested | P0: confirm wallpaper inside a usable session and inspect at 1366×768 and 1920×1080. |
+| Panel | One lower XFCE panel, launchers, task list, tray, clock and session actions | Xfconf XML lists panel 1, and restored failsafe config starts `xfce4-panel`; source and build cache are checked. No panel appeared in the latest UTM run. | Blocked | P0: establish session startup and verify panel, launchers, menu, indicators, and reboot persistence. |
 | Workspaces | One by default; user can add more | Xfwm4 default is one and is not locked; test checks both. | Partially conforme | P1: test Settings UI, user change and persistence in a booted session. |
 | Panel repair | Repair only an identified duplicate panel; no recurring cleanup | Script checks non-root session, active panel 1 and bottom position; mock integration covers removing extras and pager. No real-session run. | Partially conforme | P1: run inside XFCE and validate failure paths with a backup profile. |
 | Visual identity | Consistent IFBA OS design throughout desktop and applications | Yaru Dark/Yaru remain upstream themes; Inter, supplied wallpaper, panel CSS and GTK assistant styles add limited customization. GTK2/GTK4/libadwaita/non-GTK apps are not unified. | Não conforme | P1: develop and visually review a complete theme only after VM access; no official IFBA endorsement is implied. |
@@ -24,9 +24,16 @@ Audit date: 2026-11-19. Scope is the current source tree and `output/ifba-os-ubu
 | Installer and login | Installable OS and separate student accounts | ISO is live-only and auto-logs into shared passwordless `ubuntu`; no installer or trusted IFBA identity provisioner. | Não conforme | P0: decide installer and account provisioning; never ship shared `12345`. |
 | Accessibility | Keyboard, contrast, scaling, screen-reader and reduced motion | Some native GTK focus/hover styles and keyboard bindings exist; no end-to-end AT-SPI, screen reader, contrast, scaling or reduced-motion audit. | Not tested | P1: run GTK/AT-SPI and keyboard passes at common VM sizes. |
 | Performance | Measured boot, idle, launch and AI latency | No comparable timing/RAM/CPU dataset is present. | Not tested | P2: capture baseline only after reliable boot, with VM CPU/RAM configuration noted. |
-| Plymouth/LightDM | Branded boot to graphical login/desktop | Exact current ISO displayed its branded Plymouth artwork in UTM, then no desktop appeared; UTM reported inactive display output. No reliable journal was captured. | Blocked | P0: capture serial/system journal and inspect the display output through a disposable VM; verify LightDM handoff after diagnosis. |
+| Plymouth/LightDM | Branded boot to graphical login/desktop | Exact current ISO displayed its branded splash and then the dark wallpaper, but no greeter or desktop controls appeared. No reliable guest journal was captured. | Blocked | P0: capture serial/system journal and inspect the display output through a disposable VM; verify LightDM handoff after diagnosis. |
 | Legal/package integrity | Licensed assets/packages and authorized branding | Build uses Ubuntu/Mozilla repositories and supplied/generated assets; no complete SBOM/license or logo authorization record. | Parcialmente conforme | P1: add package manifest, asset provenance and redistribution review before distribution. |
 | ISO reproducibility | Repeatable pinned build and verified output | Build script and Docker cache produce a bootable ISO, but apt archives are not snapshot-pinned; output hash changes over time. | Parcialmente conforme | P1: pin repository snapshots/package manifest and verify rebuilt artifacts against recorded inputs. |
+
+## Corrective rebuild — 2026-11-19
+
+- Restored Ubuntu Noble's XFCE failsafe session name and process list; retained `SaveOnExit=false` and added regression assertions. This addresses the reproduced “Unable to load a failsafe session” error.
+- Rebuilt ISO SHA-256: `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658`. ISO boot files were confirmed; the embedded SquashFS was extracted and the corrected XFCE channel and selected wallpaper hashes matched their source assets.
+- UTM booted the exact output ISO. The splash transitioned to the wallpaper, but no interactive desktop controls appeared after 6+ minutes. The VM was paused to avoid sustained CPU use under x86 TCG emulation. The correction fixes the identified configuration defect but does not establish successful desktop startup.
+- Offline checks: 55 tests passed, shell syntax/Python compilation/XML parsing passed, and the ISO is recognized as bootable ISO9660/MBR media. Firefox, NAT/DNS/HTTPS, IFBA AI, shutdown/reboot, and app launch remain unverified in the guest.
 
 ## Corrections in this audit slice
 
@@ -36,13 +43,13 @@ Audit date: 2026-11-19. Scope is the current source tree and `output/ifba-os-ubu
 
 ## Runtime boundary
 
-The latest image was started in UTM, but no desktop acceptance scenario completed. The kernel and custom Plymouth splash were visible, followed by inactive/black display output; another attempt reached BusyBox initramfs with `/cdrom` and `/cow` mounted. A cause was not isolated, so no graphics or boot-service workaround was applied. Static package inspection, unit tests, and ISO integrity checks cannot validate desktop appearance, real networking, Firefox profile startup, GTK accessibility, or user-session persistence. See `VM-TESTING.md` for observed evidence and next diagnostics.
+The latest image was started in UTM, but no desktop acceptance scenario completed. The custom splash and then the selected dark wallpaper were visible, but no usable desktop controls appeared. The previously observed XFCE failsafe-session configuration defect is corrected; a separate cause for the missing controls is still undiagnosed. Static package inspection, unit tests, and ISO integrity checks cannot validate real networking, Firefox profile startup, GTK accessibility, or user-session persistence. See `VM-TESTING.md` for observed evidence and next diagnostics.
 
 ## Final artifact for this audit
 
 - ISO: `output/ifba-os-ubuntu-24.04-amd64.iso`
-- SHA-256: `9f6553df2575c710dac809c5a5d28aacdaa949056d2fb059927bc76ff4c9dffe`
+- SHA-256: `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658`
 - Size: 1,367,744,512 bytes.
 - Artifact checks: bootable ISO9660 DOS/MBR structure, IFBA volume label, GRUB config, Casper kernel/initrd, and SquashFS entries.
 - Automated evidence: 55 tests pass; shell syntax and packaged XML parsing pass.
-- Guest evidence: none for this exact ISO; it is not VM-validated.
+- Guest evidence: splash-to-wallpaper transition on the exact ISO; desktop controls and application behavior did not appear and are not validated.
