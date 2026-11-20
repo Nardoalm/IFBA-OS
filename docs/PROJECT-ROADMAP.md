@@ -33,10 +33,11 @@
 - [x] Add an isolated Ubuntu 26.04 LTS/Plasma 6.6 build recipe using official `resolute` repositories, separate rootfs cache and versioned output path.
 - [x] Add build declarations for Plasma/KWin/SDDM, Dolphin, Konsole, Discover, System Settings, network/audio widgets, X11 and Wayland session packages.
 - [x] Package the supplied wallpaper, IFBA dark green color scheme, native global theme, one-time first-run panel/workspace layout, and IFBA AI launcher; runtime application is still unverified.
-- [ ] Build the version 0.2.0 ISO and verify in UTM the single floating lower panel, menu, task switching, KRunner, wallpaper, AI app and one initial workspace.
+- [ ] Build the version 0.2.1 ISO with the corrected X11 SDDM session and verify in UTM that SDDM autologin reaches Plasma.
+- [ ] Verify in UTM the single floating lower panel, menu, task switching, KRunner, wallpaper, AI app and one initial workspace.
 - [ ] Validate Wayland on UTM and retain X11 as a fallback only if its actual session is available and works. Current live profile is configured for X11 to reduce VM compatibility risk; the Wayland packages are installed by the source build recipe.
 - [ ] Test SDDM, Firefox, IFBA AI, NetworkManager, SUAP/AVA launchers, screen-reader/keyboard paths, persistence and recovery in UTM.
-- [ ] Product version `0.2.0` is assigned in the uncommitted build inputs. Commit those inputs before building; after build, record hash/package versions and actual UTM evidence in a separate documentation-only commit.
+- [ ] Product version `0.2.1` is assigned in the current build inputs. Commit those inputs before building; after build, record hash/package versions and actual UTM evidence in a separate documentation-only commit.
 
 ### Base system and release engineering
 

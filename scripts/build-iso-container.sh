@@ -73,7 +73,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
     /etc/skel/.local/share/ifba-ai /etc/skel/.cache/ifba-ai \
     /home/ubuntu/Desktop /home/ubuntu/.config/autostart /home/ubuntu/.config/ifba-ai \
     /home/ubuntu/.local/share/ifba-ai /home/ubuntu/.cache/ifba-ai
-  printf "[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=breeze\n\n[Autologin]\nUser=ubuntu\nSession=plasma.desktop\nRelogin=false\n" > /etc/sddm.conf.d/10-ifba-os.conf
+  printf "[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=breeze\n\n[Autologin]\nUser=ubuntu\nSession=plasmax11.desktop\nRelogin=false\n" > /etc/sddm.conf.d/10-ifba-os.conf
   ln -sfn /lib/systemd/system/graphical.target /etc/systemd/system/default.target
   ln -sfn /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service
   printf "LANG=pt_BR.UTF-8\nLANGUAGE=pt_BR:pt:en\n" > /etc/default/locale

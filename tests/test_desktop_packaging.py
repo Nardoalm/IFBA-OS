@@ -132,7 +132,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('touch "$marker"', setup)
         self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop", setup)
         self.assertIn("plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png", setup)
-        self.assertIn("Session=plasma.desktop", build)
+        self.assertIn("Session=plasmax11.desktop", build)
         self.assertIn("/lib/systemd/system/sddm.service", build)
         self.assertNotIn("xfce4-session", build)
         self.assertNotIn("lightdm", build.lower())
