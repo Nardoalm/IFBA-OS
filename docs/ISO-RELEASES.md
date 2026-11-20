@@ -106,6 +106,22 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 - **UTM:** The running `Linux` VM shows the supplied metallic IFBA OS wallpaper, desktop shortcuts for AVA IFBA, IFBA AI and SUAP, and a working-looking Plasma bottom panel with application launcher, browser/file-manager/terminal launchers, system tray and clock. The screen is the Plasma desktop, not the Plymouth splash; this corrects the preliminary black/splash-only observation made before the graphical session finished. UTM is left running this version so it can be observed. The panel appears light-colored and centered rather than the intended dark IFBA styling. A click attempt on the IFBA AI desktop shortcut did not produce a visible assistant window; further app-launch testing is pending, so the assistant is not runtime-validated.
 - **Still unverified:** Exact guest build ID, SDDM/journal diagnostics, menu and shortcut interactions, Firefox network access, guest internet/DNS/HTTPS, IFBA AI functionality/API, workspace count, display scaling, persistence across restart, graceful shutdown/reboot, and Wayland session.
 
+## 0.3.0 — native ARM64 multiarchitecture build, 2026-11-20
+
+- **Artifact:** `output/ifba-os-ubuntu-26.04-arm64-v0.3.0.iso`
+- **Build ID:** `ifba-20261120T173559Z-arm64-66f71bdac5cc`
+- **Source commit:** `66f71bdac5cc8a08240aa9340627bdfed6095274` (`source_dirty: true`)
+- **Base / architecture:** Ubuntu 26.04 LTS / arm64 (AArch64); Plasma 6.6 target
+- **Build time:** `2026-11-20T17:35:59Z`
+- **Build method:** Native `linux/arm64` Docker build using the isolated `ifba-os-plasma-build-cache-arm64` volume and official Ubuntu Ports archive. The AMD64 cache and existing UTM VM were preserved.
+- **Artifact size:** 1,669,216,256 bytes
+- **SHA-256:** `e9571211d212d0c1990a8058ff76310ebdef2096f30a4e2078addbf27c08dd40`
+- **Changes:** Added architecture-aware build targets, ARM64 package/bootstrap/archive/GRUB settings, a separate ARM64 cache and release metadata. The ARM GRUB helper now installs `mtools`; the first build completed SquashFS but `grub-mkrescue` failed because `mformat` was unavailable. The follow-up build after commit `66f71bd` succeeded. Plasma Look-and-Feel defaults to Breeze Dark and the bottom panel uses full-width length mode.
+- **Build checks:** All 66 Python unit tests passed after the `mtools` fix; shell syntax and `git diff --check` passed. The sidecar manifest SHA-256 and byte size match a host recomputation. `file` identifies a bootable ISO 9660 image; ISO listing contains `efi/boot/bootaa64.efi`, `casper/vmlinuz`, `casper/initrd`, and `casper/filesystem.squashfs`; the extracted kernel identifies as AArch64 PE32+. This validates image structure, not guest boot.
+- **Source state:** The build metadata says `source_dirty: true` because `assets/plymouth/ifba-os-startup.png` changed locally during the build. That image change was preserved and not included in the build-fix commit. The artifact therefore includes build inputs from a dirty working tree; its exact content is identified by this artifact hash, while the source commit alone does not reproduce the changed splash asset.
+- **UTM:** Not boot-tested. The existing `Linux` VM was observed suspended, x86_64, 4 GiB RAM and still attached to the older AMD64 v0.2.1 ISO. A separate ARM VM wizard was opened, but the CUA interface returned `noWindowsAvailable` when opening the ISO file picker, so no ARM VM was saved and no guest boot/runtime claim is made. The old VM was not changed or deleted.
+- **Unresolved:** ARM64 boot, graphics, networking, Firefox, IFBA AI, panel behavior and performance remain unverified in a guest. The requested UTM view is not yet updated to the new ISO.
+
 ## Next product version
 
-Product version `0.2.1` is the latest built artifact. The next release inputs assign `0.3.0` for the multiarchitecture feature set; commit them before building ARM64. If a separate AMD64 artifact is subsequently built, assign it a distinct semantic product version first and preserve all existing 0.2.x artifacts and records. Network, application behavior, styling and restart persistence still need validation.
+Product version `0.3.0` is the latest built artifact (ARM64; not yet boot-validated). If a separate AMD64 artifact is subsequently built, assign it the next distinct semantic version (`0.3.1` unless release scope changes) before building. Preserve all existing artifacts and records. ARM64/AMD64 guest boot, network, application behavior, styling and restart persistence still need validation.
