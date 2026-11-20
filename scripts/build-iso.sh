@@ -28,7 +28,7 @@ docker volume create --name "$BUILD_CACHE_VOLUME" >/dev/null
 docker run --rm --privileged --platform linux/amd64 \
   -v "$ROOT:/work" \
   --mount type=volume,src="$BUILD_CACHE_VOLUME",dst=/var/cache/ifba-rootfs \
-  -w /work ubuntu:26.04 bash /work/scripts/build-iso-container.sh
+  -w /work ubuntu:24.04 bash /work/scripts/build-iso-container.sh
 python3 "$ROOT/tools/build_metadata.py" iso-manifest \
   --build-info "$BUILD_INFO" \
   --iso "$OUT" \

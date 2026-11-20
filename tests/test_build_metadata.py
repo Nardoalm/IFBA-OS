@@ -73,6 +73,8 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn("IFBA_BUILD_CACHE_VOLUME", host_build)
         self.assertIn("build-info", host_build)
         self.assertIn("iso-manifest", host_build)
+        self.assertIn("ubuntu:24.04", host_build)
+        self.assertNotIn("ubuntu:26.04", host_build)
         for required in (
             "wallpaper.png",
             "IFBA-OS-Dark.colors",
