@@ -37,6 +37,15 @@ This is a new observation of the same running 0.1.0 artifact. It supplements the
 - **Changes/build:** No source changes that affect the artifact and no rebuild were made. The release remains 0.1.0; this addendum does not rewrite prior outcomes or invent a new build/version.
 - **Next:** Restore authorized UTM input to query LightDM/Xorg and guest network state, then test menu, Firefox, IFBA AI, settings, workspace defaults and persistence. Do not alter build inputs without a reproduced fault.
 
+### Addendum — live network diagnostic, 2026-11-20
+
+This is additional runtime evidence for the same 0.1.0 ISO; it is not a new build or a replacement for earlier results.
+
+- **Artifact:** The output ISO SHA-256 remains `2f190e1b8b4e842d77e710f1586502cb3d19a90026bf368a2bf5fcd2df1ac344`; UTM's active QEMU process attaches that output path at boot-index 0.
+- **Guest evidence:** On the running XFCE live session, `ip -br a` showed `enp0s1 DOWN` with no IPv4/IPv6 address; `nmcli g` reported `disconnected`, `connectivity unknown`, and no guest Wi-Fi hardware. The panel's red disconnected mark agreed with these commands. UTM's active QEMU arguments show an e1000 device on `vmnet-shared`.
+- **Static image evidence:** The exact cached rootfs used for the image contains an enabled NetworkManager system service and a root-owned mode-0600 Ethernet connection profile configured for autoconnect and DHCP. This rules out a missing profile in the build cache but does not show that the running guest loaded or activated it.
+- **Result:** Network failure is reproduced, but its cause remains unresolved. Further terminal input was garbled under high TCG load. No guest-side setting was changed, no ISO was rebuilt, and Firefox/NVIDIA/HTTPS remain untested in this run. The network feature is not marked fixed.
+
 ## Unversioned legacy artifacts
 
 These hashes and short descriptions are retained from earlier audit records. Those builds predate embedded build metadata; missing IDs, source commits, sizes, or validations are intentionally not inferred.

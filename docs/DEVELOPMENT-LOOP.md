@@ -1,5 +1,14 @@
 # Development loop record
 
+## Iteration 16 — 2026-11-20
+
+- **Objective:** Continue the final audit from the live UTM guest, investigate the disconnected network, and verify remaining app/runtime claims without guessing at VM state.
+- **Observed:** The running 0.1.0 UTM guest was at the XFCE desktop with a terminal open. `ip -br a` showed `enp0s1 DOWN` without an address; `nmcli g` reported `disconnected`, `connectivity unknown`, and `WIFI-HW missing`. UTM's active QEMU arguments show e1000 on `vmnet-shared` NAT. The exact cached rootfs contains enabled NetworkManager and a root-owned mode-0600 DHCP autoconnect profile.
+- **Input limitation:** TCG was using roughly 175% host CPU. UTM delivered the first short command but later keyboard/clipboard input produced a garbled command. It was interrupted; no system-changing guest command was executed. `utmctl` confirms OSStatus `-1743` in this SSH session. No bypass was attempted.
+- **Correction decision:** The network failure is confirmed, but the cause is not isolated. Since the static profile exists and the guest device is down, editing the same profile or adding speculative network services is not a justified fix. No source change, ISO rebuild or new product version was made. Firefox and IFBA AI remain unverified in this pass; no credentials or external academic systems were used.
+- **Validation:** Full suite: 59 tests passed. Bash syntax checks, Python compilation, and `git diff --check` passed. The current ISO hash still matches the immutable 0.1.0 release record.
+- **Documentation:** Added exact guest and host evidence to `VM-TESTING.md`, `ISO-RELEASES.md`, `FINAL-AUDIT.md`, and `PROJECT-ROADMAP.md`; release artifact history remains immutable. The next runtime attempt needs reliable UTM input or a supported guest-agent session to capture device status, carrier, NetworkManager journal, route, and resolver before an evidence-based change.
+
 ## Iteration 1 — 2026-11-18
 
 - **Objective:** Inspect the current repo/ISO, attempt UTM VM boot, and improve a safe independent user-facing feature.

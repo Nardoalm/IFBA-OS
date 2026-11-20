@@ -2,6 +2,16 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## Current UTM network diagnostic — 2026-11-20
+
+- **VM/artifact:** UTM `Linux` remained on the existing x86_64/Q35 guest with 4 GiB RAM, 2 CPUs, a 64 GiB qcow2, e1000, `vmnet-shared` NAT and the 0.1.0 output ISO at boot-index 0. This is not a disposable 30 GiB VM. Host process inspection showed QEMU TCG at roughly 175% CPU; no acceleration or macOS permission setting was changed.
+- **Desktop:** The current UTM screenshot shows the already-confirmed XFCE desktop with an open Terminal. The shell prompt is `ubuntu@ubuntu`; returning with `Alt+F7` restored the graphical display after an inactive-output view. The screenshot also shows the IFBA AI optional-setup notification and a red disconnected network tray icon.
+- **Guest network evidence:** `ip -br a` returned `lo UNKNOWN 127.0.0.1/8 ::1/128` and `enp0s1 DOWN` with no address. `nmcli g` returned `STATE disconnected`, `CONNECTIVITY unknown`, `WIFI-HW missing`, `WIFI enabled`, `WWAN-HW missing`, `WWAN enabled`. Therefore Wi-Fi is not the guest's available transport; the configured VM Ethernet NAT path is the one to diagnose. This does not identify why `enp0s1` remained down.
+- **Host/build evidence:** The active QEMU arguments show `-device e1000,...,netdev=net0` and `-netdev vmnet-shared`; the ISO's cached rootfs has NetworkManager enabled and a root-owned mode-0600 `IFBA OS Ethernet` system connection with autoconnect and DHCP for IPv4/IPv6. The static configuration is present; it does not prove runtime activation or host NAT connectivity.
+- **Input limitation:** UTM keyboard input became unreliable under TCG load. A follow-up command was garbled (`nmcli nmcli de`), so it was interrupted; no state-changing guest command was executed. No guest route, DHCP lease, NetworkManager device state, resolver, journal, Firefox launch, or HTTPS page was verified. Do not use a guest command transcript that was not visibly returned as evidence.
+- **Correction decision:** No source/network setting change or ISO rebuild is justified yet because the guest-side cause is not isolated. The next diagnostic needs reliable local UTM input or a supported QEMU Guest Agent session, and should collect `nmcli device status`, `ip link show enp0s1`, `systemctl status NetworkManager`, routes, resolver state, and NetworkManager journal before changing the guest. Do not enter the host Wi-Fi password; UTM Shared/NAT uses the host uplink.
+- **App checks:** The visible Firefox launcher and IFBA AI notification are not proof either app launched. No clean Firefox launch was completed from this diagnostic shell; no AI key, login, chat or external academic site was used.
+
 ## Current UTM desktop observation — 2026-11-19
 
 - UTM is running the existing `Linux` VM. The live QEMU process confirms `/Users/leonardo/Documents/IFBA-OS/output/ifba-os-ubuntu-24.04-amd64.iso` is attached as boot-index 0. The VM remains x86_64/Q35, 4 GiB RAM, 2 CPUs, Shared/NAT, virtio-gpu, TCG, with its existing 64 GiB qcow2 disk. It is not a newly created disposable 30 GiB VM.
