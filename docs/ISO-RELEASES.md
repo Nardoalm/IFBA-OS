@@ -77,6 +77,35 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 | `9f6553df2575c710dac809c5a5d28aacdaa949056d2fb059927bc76ff4c9dffe` | Disabled the assistant settings stack transition; boot/runtime was not observed for the exact artifact. |
 | `3022cef8989f8052dec5268c1c86b94f762e504e34ca0dd82726338be6e2a658` | Restored the XFCE failsafe session definition. A subsequent UTM run showed an XFCE panel and Firefox, but Firefox was offline and the wallpaper was obscured. |
 
+## 0.2.0 — initial Plasma migration build, 2026-11-20
+
+- **Artifact:** `output/ifba-os-ubuntu-26.04-amd64-v0.2.0.iso`
+- **Build ID:** `ifba-20261120T161731Z-f06990135de4`
+- **Source commit:** `f06990135de490fe5de280bf3e7e9dcabf95fd7a` (`source_dirty: false`)
+- **Base / architecture:** Ubuntu 26.04 / amd64; Plasma 6.6 target
+- **Build time:** `2026-11-20T16:17:31Z`
+- **Build method:** Docker helper `ubuntu:24.04` with the isolated Plasma build cache; the `ubuntu:26.04` helper could not extract the bootstrap rootfs in this environment (`tar: Function not implemented`).
+- **Artifact size:** 1,700,597,760 bytes
+- **SHA-256:** `9770ffcfa428e2bf219c1159eba978bf719df284255e1485fd26d768ea75896d`
+- **Build checks:** Build completed; manifest records the source commit and clean source state. The ISO is preserved under its versioned filename. Package/session rootfs inspection was performed during diagnosis of the next build.
+- **UTM:** The exact 0.2.0 ISO booted through GRUB and showed the custom IFBA OS Plymouth splash. At the time of observation the display remained on the splash/black screen, with no desktop visible. This was an incomplete initial observation; a later boot of 0.2.1 below confirms the desktop can start after the session correction.
+- **Unresolved at this build:** The X11 SDDM session selection did not correspond to the installed X11 session desktop file. Do not treat this artifact as a desktop-validated release.
+
+## 0.2.1 — Plasma X11 session correction, 2026-11-20
+
+- **Artifact:** `output/ifba-os-ubuntu-26.04-amd64-v0.2.1.iso`
+- **Build ID:** `ifba-20261120T164231Z-cc43d4e43747`
+- **Source commit:** `cc43d4e43747a54b84761f5940e2e44583c12520` (`source_dirty: false`)
+- **Base / architecture:** Ubuntu 26.04 / amd64; Plasma 6.6 target
+- **Build time:** `2026-11-20T16:42:31Z`
+- **Build method:** Docker helper `ubuntu:24.04` with the isolated Plasma build cache. Output is versioned so rebuilding a later product version does not replace this artifact.
+- **Artifact size:** 1,713,565,696 bytes
+- **SHA-256:** `af961e76720e664eb1512485181b277598fa7044a491402dbe163b9698d6c75c`
+- **Changes:** SDDM now selects `plasmax11.desktop`, which is the installed X11 Plasma session, instead of `plasma.desktop`, which is the Wayland session. Added metadata-derived versioned ISO naming.
+- **Build checks:** 64 unit tests passed on the source commit; shell syntax, Python compilation, and `git diff --check` passed before build. SquashFS inspection confirmed `/usr/share/xsessions/plasmax11.desktop` invokes `/usr/bin/startplasma-x11`; SDDM is configured for X11 and autologin. Manifest and artifact hash/size match.
+- **UTM:** The running `Linux` VM shows the supplied metallic IFBA OS wallpaper, desktop shortcuts for AVA IFBA, IFBA AI and SUAP, and a working-looking Plasma bottom panel with application launcher, browser/file-manager/terminal launchers, system tray and clock. The screen is the Plasma desktop, not the Plymouth splash; this corrects the preliminary black/splash-only observation made before the graphical session finished. UTM is left running this version so it can be observed. The panel appears light-colored and centered rather than the intended dark IFBA styling. A click attempt on the IFBA AI desktop shortcut did not produce a visible assistant window; further app-launch testing is pending, so the assistant is not runtime-validated.
+- **Still unverified:** Exact guest build ID, SDDM/journal diagnostics, menu and shortcut interactions, Firefox network access, guest internet/DNS/HTTPS, IFBA AI functionality/API, workspace count, display scaling, persistence across restart, graceful shutdown/reboot, and Wayland session.
+
 ## Next product version
 
-Product version `0.2.0` is assigned in the current uncommitted Ubuntu 26.04/Plasma 6 migration inputs. No 0.2.0 ISO, build ID, hash, size, or UTM result exists yet. Commit all build inputs first; then build and add a new immutable entry with the generated manifest and actual VM evidence. Do not alter either 0.1.x record.
+Product version `0.2.1` is the latest built artifact. Assign `0.2.2` in the build inputs and commit those inputs before generating the next ISO. Continue to preserve both 0.2.x artifacts and their records above. The Plasma desktop now visibly starts in UTM, but application behavior, network, styling, and restart persistence still need validation.

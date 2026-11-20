@@ -1,6 +1,6 @@
 # IFBA OS final audit matrix
 
-Audit date: 2026-11-20. Scope is current source and the latest built ISO, 0.1.1. A source declaration or mocked test is not runtime evidence. The 0.1.1 artifact reached XFCE in UTM, but the observed desktop used an Ubuntu-blue background and showed network disconnected. The assistant startup correction is included in this build; opening the AI window remains unverified. Firefox and internet are also not runtime-validated. See `VM-TESTING.md` and `ISO-RELEASES.md`.
+Audit date: 2026-11-20. This matrix retains the detailed 0.1.1/XFCE audit below; the latest source and Plasma ISO 0.2.1 are summarized in the KDE migration runtime update. A source declaration or mocked test is not runtime evidence. See `VM-TESTING.md` and `ISO-RELEASES.md`.
 
 | Requirement | Expected | Observed evidence | Status | Priority / correction or acceptance test |
 |---|---|---|---|---|
@@ -37,9 +37,13 @@ Audit date: 2026-11-20. Scope is current source and the latest built ISO, 0.1.1.
 | Legal/package integrity | Licensed assets/packages and authorized branding | Build uses Ubuntu/Mozilla repositories and supplied/generated assets; no complete SBOM/license or logo authorization record. | Parcial | P1: add package manifest, asset provenance and redistribution review before distribution. |
 | ISO reproducibility | Repeatable pinned build and verified output | Source now embeds a build ID/internal manifest, emits a SHA-256 sidecar and checks required rootfs content. A clean-volume build has not yet run; archive snapshots remain unpinned. | Implementado, não validado | P1: verify a clean-volume build and pin repository snapshots/package manifest. |
 
-## KDE migration source status — 2026-11-20
+## KDE migration runtime update — 2026-11-20
 
-The audit table above records the last built XFCE ISO 0.1.1 and must not be interpreted as runtime evidence for the in-progress KDE source. The development builder now targets Ubuntu 26.04/Plasma 6.6 and packages SDDM, Plasma sessions, KWin, KDE applications, NetworkManager, the submitted wallpaper, an IFBA dark color scheme, a native global-theme layout and the existing GTK assistant. Its package/layout script, assistant settings routing and ISO metadata have source-level checks only. No Plasma ISO exists yet; therefore SDDM, the actual floating panel, wallpaper, KRunner, network, Firefox, IFBA AI, persistence, performance, accessibility and Wayland/X11 behavior are all unverified. Product version 0.2.0 is assigned but must be committed before the first new build.
+The Plasma build inputs target Ubuntu 26.04/Plasma 6.6 and include SDDM, Plasma sessions, KWin, KDE applications, NetworkManager, the supplied wallpaper, an IFBA dark color scheme, a native global-theme layout and the existing GTK assistant. ISO 0.2.0 reached the custom Plymouth image in the first observed boot; the later ISO 0.2.1 corrected SDDM's X11 session selection and is now visibly running the Plasma desktop in UTM.
+
+The 0.2.1 UTM screenshot shows the supplied metallic wallpaper, AVA IFBA, IFBA AI and SUAP desktop shortcuts, and a single centered bottom panel with launcher, browser/file-manager/terminal launchers, system tray and clock. The panel is light rather than the intended IFBA dark treatment. The IFBA AI desktop shortcut was clicked, but no assistant window became visible; because UTM input semantics may not have delivered the click to the guest, this does not establish either success or a reproducible app failure. The app is not runtime-validated. Network state, Firefox, menu, audio, workspace count, persistence, guest build ID, SDDM/journal, graceful shutdown/reboot, scaling, accessibility and Wayland remain unverified.
+
+Detailed immutable build identities, hashes, tests, and UTM observations are in `ISO-RELEASES.md`. The live ISO is still a prototype; visual desktop startup does not make the migration functionally complete.
 
 ## Corrective rebuild — 2026-11-19
 

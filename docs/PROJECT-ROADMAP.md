@@ -4,14 +4,14 @@
 
 ## Current implementation
 
-- [ ] **IN_PROGRESS · P0** Final audit matrix is maintained in [`FINAL-AUDIT.md`](FINAL-AUDIT.md). ISO 0.1.1 reached XFCE in UTM, but its observed background was Ubuntu blue and network showed disconnected. IFBA AI, Firefox, guest build ID, settings persistence and shutdown/restart remain unverified. Track every generated image in [`ISO-RELEASES.md`](ISO-RELEASES.md).
+- [ ] **IN_PROGRESS · P0** The detailed audit matrix in [`FINAL-AUDIT.md`](FINAL-AUDIT.md) retains the 0.1.1/XFCE evidence; its KDE runtime update records the latest 0.2.1 desktop. Plasma app/network behavior, guest build ID, persistence and shutdown/restart remain unverified. Track every image in [`ISO-RELEASES.md`](ISO-RELEASES.md).
 
-- [ ] **IN_PROGRESS · P0** Latest built artifact remains Ubuntu 24.04/XFCE 0.1.1; observed UTM state had a blue background and disconnected network, and did not test Firefox or IFBA AI. Current source is migrating to an isolated Ubuntu 26.04/Plasma 6.6 builder on `development`; no KDE ISO has been built or runtime-tested yet. XFCE source is preserved on local `legacy/xfce4`.
+- [ ] **IN_PROGRESS · P0** Latest built artifact is Ubuntu 26.04/Plasma 6.6 ISO 0.2.1. UTM visibly reaches Plasma with the supplied wallpaper, AVA/IFBA AI/SUAP desktop shortcuts, and one bottom panel. The panel is light and centered; application and network behavior remain unverified. XFCE source is preserved on local `legacy/xfce4`.
 - [ ] **IN_PROGRESS · P0** Embedded build metadata, guest `ifba-os-version`, external final ISO SHA-256 manifest, and fail-fast rootfs checks are implemented. Version 0.1.0 and its matching host manifest are verified; the guest reached a shell, but guest identity command remains unverified.
-- [ ] **IN_PROGRESS · P0** The legacy XFCE defaults declare one lower panel/workspace and are preserved in `legacy/xfce4`. The active KDE source now defines a one-time native Plasma first-run layout with a centered floating bottom panel and one workspace; this has not yet been built or visually checked.
+- [ ] **IN_PROGRESS · P0** The legacy XFCE defaults declare one lower panel/workspace and are preserved in `legacy/xfce4`. The active KDE source defines a one-time native Plasma first-run layout. ISO 0.2.1 visibly starts Plasma and shows one bottom panel; its intended styling and workspace count are not validated.
 - [ ] **IN_PROGRESS · P1** The new builder packages an IFBA OS Dark KDE color scheme and native Plasma global-theme layout. Window decorations, system settings appearance, icons, splash/login styling, animations, accessibility, GTK/KDE consistency, and actual app/window appearance remain to be reviewed in UTM.
 - [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS in the current graphical session, without logging in.
-- [ ] **IN_PROGRESS · P0** Verify the new Plasma desktop in UTM after a versioned ISO is built. Earlier XFCE evidence confirms its desktop and wallpaper but found disconnected network; it does not prove Plasma, SDDM, Firefox, or IFBA AI behavior. Collect guest network, route, DNS, HTTPS, app-start, and restart evidence without using personal credentials.
+- [ ] **IN_PROGRESS · P0** Plasma ISO 0.2.1 now reaches the desktop in UTM. Collect guest build ID, network/route/DNS/HTTPS, Firefox and IFBA AI launch, and restart evidence without using personal credentials. Do not count visually present panel items or shortcuts as proof their actions work.
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
@@ -33,16 +33,16 @@
 - [x] Add an isolated Ubuntu 26.04 LTS/Plasma 6.6 build recipe using official `resolute` repositories, separate rootfs cache and versioned output path.
 - [x] Add build declarations for Plasma/KWin/SDDM, Dolphin, Konsole, Discover, System Settings, network/audio widgets, X11 and Wayland session packages.
 - [x] Package the supplied wallpaper, IFBA dark green color scheme, native global theme, one-time first-run panel/workspace layout, and IFBA AI launcher; runtime application is still unverified.
-- [ ] Build the version 0.2.1 ISO with the corrected X11 SDDM session and verify in UTM that SDDM autologin reaches Plasma.
+- [x] Build the version 0.2.1 ISO with the corrected X11 SDDM session; UTM visibly reaches the Plasma desktop.
 - [ ] Verify in UTM the single floating lower panel, menu, task switching, KRunner, wallpaper, AI app and one initial workspace.
 - [ ] Validate Wayland on UTM and retain X11 as a fallback only if its actual session is available and works. Current live profile is configured for X11 to reduce VM compatibility risk; the Wayland packages are installed by the source build recipe.
 - [ ] Test SDDM, Firefox, IFBA AI, NetworkManager, SUAP/AVA launchers, screen-reader/keyboard paths, persistence and recovery in UTM.
-- [ ] Product version `0.2.1` is assigned in the current build inputs. Commit those inputs before building; after build, record hash/package versions and actual UTM evidence in a separate documentation-only commit.
+- [x] Product version `0.2.1` is built from commit `cc43d4e`; hash, package/session inspection and UTM desktop observation are recorded in `ISO-RELEASES.md`.
 
 ### Base system and release engineering
 
 - [ ] **TODO · P0** Define supported devices/CPU, RAM/storage minimums, boot firmware, graphics, Wi-Fi, audio, and display-resolution matrix.
-- [ ] **TODO · P0** Complete repeatable VM checks for boot menu, desktop startup, wallpaper, panel, welcome application, app menu, file manager, browser, terminal, network, audio, shutdown, and reboot.
+- [ ] **TODO · P0** Complete repeatable VM checks for boot menu, wallpaper, panel/menu interaction, welcome application, file manager, browser, terminal, network, audio, shutdown, and reboot. ISO 0.2.1 proves desktop startup and visually confirms wallpaper and panel only.
 - [ ] **TODO · P1** Choose a supported installer and safe partition/recovery workflow. The current ISO is live-only and has no installer.
 - [ ] **TODO · P1** Define updates, persistence, account creation, recovery, backups, and rollback.
 - [ ] **TODO · P1** Pin Ubuntu archive snapshots/build dependencies and produce checksums and a package manifest.
