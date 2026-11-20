@@ -122,6 +122,21 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 - **UTM:** Not boot-tested. The existing `Linux` VM was observed suspended, x86_64, 4 GiB RAM and still attached to the older AMD64 v0.2.1 ISO. A separate ARM VM wizard was opened, but the CUA interface returned `noWindowsAvailable` when opening the ISO file picker, so no ARM VM was saved and no guest boot/runtime claim is made. The old VM was not changed or deleted.
 - **Unresolved:** ARM64 boot, graphics, networking, Firefox, IFBA AI, panel behavior and performance remain unverified in a guest. The requested UTM view is not yet updated to the new ISO.
 
+## 0.3.1 — AMD64 parity build, 2026-11-20
+
+- **Artifact:** `output/ifba-os-ubuntu-26.04-amd64-v0.3.1.iso`
+- **Build ID:** `ifba-20261120T174613Z-amd64-fe3960ea9231`
+- **Source commit:** `fe3960ea923108561caf58e0e5ff4bab31fdbd84` (`source_dirty: false`)
+- **Base / architecture:** Ubuntu 26.04 LTS / amd64 (x86_64); Plasma 6.6 target
+- **Build time:** `2026-11-20T17:46:13Z`
+- **Build method:** Ubuntu 24.04 Docker helper, official Ubuntu archive, and preserved AMD64 Plasma build cache. The ARM64 cache was not modified.
+- **Artifact size:** 1,715,800,064 bytes
+- **SHA-256:** `ef6039c1a5a103c8ae48cd5396ae939857e347bdf21f3b5c9df93e64d8fd11a4`
+- **Changes:** Builds the shared Plasma/IFBA OS desktop for AMD64 at the distinct version 0.3.1, including the same network profile, browser, IFBA AI, panel layout, and current startup artwork inputs as the ARM64 work.
+- **Build checks:** All 66 unit tests passed for the committed source inputs; Python compilation and build metadata checks passed. The sidecar manifest hash and size match independent host recomputation. `file` identifies a bootable ISO; its contents include `efi/boot/bootx64.efi`, Casper kernel/initrd and SquashFS; the kernel identifies as x86 bzImage. This validates structure, not guest boot.
+- **UTM:** Not runtime-tested. The existing `Linux` VM remains suspended on AMD64 v0.2.1. The CUA file picker returned `noWindowsAvailable`; bundled `utmctl list` returned macOS `OSStatus -1743` because the current execution context is outside Aqua. The new ISO was not attached to a VM, and no desktop, network, Firefox or IFBA AI behavior is claimed.
+- **Unresolved:** Both architecture builds still require real UTM boot validation. Network/DHCP/DNS/HTTPS, Firefox, IFBA AI, visual panel, desktop performance, persistence and restart remain unverified for these 0.3.x artifacts.
+
 ## Next product version
 
-Product version `0.3.0` is the latest built artifact (ARM64; not yet boot-validated). If a separate AMD64 artifact is subsequently built, assign it the next distinct semantic version (`0.3.1` unless release scope changes) before building. Preserve all existing artifacts and records. ARM64/AMD64 guest boot, network, application behavior, styling and restart persistence still need validation.
+Product version `0.3.1` is the latest built artifact (AMD64); ARM64 `0.3.0` is its architecture counterpart. Neither has guest runtime validation. Assign a new version (`0.3.2` unless release scope changes) before another ISO build. Preserve all existing artifacts and records.
