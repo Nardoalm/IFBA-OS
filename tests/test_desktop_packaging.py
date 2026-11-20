@@ -90,6 +90,13 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("timeout=5", ui)
         self.assertIn("self.status.set_text(\"O assistente abriu, mas o serviço local não respondeu.", ui)
 
+    def test_iso_build_uses_active_kernel_and_initrd_symlinks(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        self.assertIn('cp -L "$ROOTFS/boot/vmlinuz" "$ISO/casper/vmlinuz"', build)
+        self.assertIn('cp -L "$ROOTFS/boot/initrd.img" "$ISO/casper/initrd"', build)
+        self.assertNotIn('cp "$ROOTFS/boot/vmlinuz-"*', build)
+        self.assertNotIn('cp "$ROOTFS/boot/initrd.img-"*', build)
+
 
 if __name__ == "__main__":
     unittest.main()

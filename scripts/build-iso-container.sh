@@ -133,8 +133,8 @@ chmod 0600 "$ROOTFS/etc/NetworkManager/system-connections/ifba-wired.nmconnectio
 
 rm -rf "$ISO"
 mkdir -p "$ISO/casper" "$ISO/boot/grub"
-cp "$ROOTFS/boot/vmlinuz-"* "$ISO/casper/vmlinuz"
-cp "$ROOTFS/boot/initrd.img-"* "$ISO/casper/initrd"
+test -s "$ROOTFS/boot/vmlinuz"
+cp -L "$ROOTFS/boot/vmlinuz" "$ISO/casper/vmlinuz"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/backgrounds/ifba-os/wallpaper.png"
 mkdir -p \
   "$ROOTFS/usr/share/plymouth/themes/ifba-os" \
@@ -266,7 +266,8 @@ chroot "$ROOTFS" update-alternatives --install \
 chroot "$ROOTFS" update-alternatives --set default.plymouth \
   /usr/share/plymouth/themes/ifba-os/ifba-os.plymouth
 chroot "$ROOTFS" update-initramfs -u -k all
-cp "$ROOTFS/boot/initrd.img-"* "$ISO/casper/initrd"
+test -s "$ROOTFS/boot/initrd.img"
+cp -L "$ROOTFS/boot/initrd.img" "$ISO/casper/initrd"
 cleanup_mounts
 rm -f "$RESOLV_TARGET"
 
