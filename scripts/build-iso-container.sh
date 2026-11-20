@@ -9,7 +9,7 @@ case "$IFBA_ARCH" in
     ;;
   arm64)
     ARCHIVE=http://ports.ubuntu.com/ubuntu-ports
-    BOOT_PACKAGES=(grub-efi-arm64-bin)
+    BOOT_PACKAGES=(grub-efi-arm64-bin mtools)
     ;;
   *)
     printf 'Unsupported architecture: %s\n' "$IFBA_ARCH" >&2

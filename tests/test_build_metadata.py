@@ -128,7 +128,7 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn("rootfs-plasma-26.04-arm64", container_build)
         self.assertIn('IFBA_ARCH="$ARCH"', host_build)
         self.assertIn('ARCHIVE=http://ports.ubuntu.com/ubuntu-ports', container_build)
-        self.assertIn('BOOT_PACKAGES=(grub-efi-arm64-bin)', container_build)
+        self.assertIn('BOOT_PACKAGES=(grub-efi-arm64-bin mtools)', container_build)
         self.assertIn('BOOT_PACKAGES=(grub-pc-bin grub-efi-amd64-bin mtools)', container_build)
         self.assertIn('test "$(readlink "$ROOTFS/etc/systemd/system/display-manager.service")" = /lib/systemd/system/sddm.service', container_build)
         self.assertIn('install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup', container_build)
