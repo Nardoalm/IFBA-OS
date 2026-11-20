@@ -265,29 +265,58 @@ class AssistantWindow(Gtk.ApplicationWindow):
         try:
             DBusGMainLoop(set_as_default=True)
             self.bus = dbus.SessionBus()
-            obj = self.bus.get_object(BUS_NAME, OBJECT_PATH)
+            obj = self.bus.get_object(BUS_NAME, OBJECT_PATH, introspect=False)
             self.proxy = dbus.Interface(obj, dbus_interface=INTERFACE)
             self.bus.add_signal_receiver(self._on_delta, signal_name="MessageDelta", dbus_interface=INTERFACE)
             self.bus.add_signal_receiver(self._on_finished, signal_name="GenerationFinished", dbus_interface=INTERFACE)
             self.bus.add_signal_receiver(self._on_failed, signal_name="GenerationFailed", dbus_interface=INTERFACE)
             self.bus.add_signal_receiver(self._on_visual_guide, signal_name="VisualGuide", dbus_interface=INTERFACE)
-            configured, store_available, model = self.proxy.GetStatus()
-            if not store_available:
-                self.status.set_text("Cofre indisponível ou bloqueado. Desbloqueie-o na sessão antes de salvar uma chave.")
-            else:
-                self.status.set_text("Chave configurada." if configured else "Assistente opcional: configure uma chave ou continue sem IA.")
-            self.new_chat.set_sensitive(bool(configured))
-            self.visual_button.set_sensitive(bool(configured))
-            self._load_settings()
-            self._load_conversations()
+            self.proxy.GetStatus(
+                reply_handler=self._on_service_status,
+                error_handler=self._on_service_error,
+                timeout=5,
+            )
+        except Exception:
+            self._on_service_error()
+
+    def _on_service_status(self, configured, store_available, _model):
+        if not store_available:
+            self.status.set_text("Cofre indisponível ou bloqueado. Desbloqueie-o na sessão antes de salvar uma chave.")
+        else:
+            self.status.set_text("Chave configurada." if configured else "Assistente opcional: configure uma chave ou continue sem IA.")
+        self.new_chat.set_sensitive(bool(configured))
+        self.visual_button.set_sensitive(bool(configured))
+        try:
             if not configured:
                 self.stack.set_visible_child_name("settings")
+            self.proxy.GetSettings(
+                reply_handler=self._on_settings_loaded,
+                error_handler=self._on_service_error,
+                timeout=5,
+            )
         except Exception:
-            self.status.set_text("Não foi possível iniciar o serviço. Verifique a sessão D-Bus e o cofre de credenciais.")
-            self.stack.set_visible_child_name("settings")
+            self._on_service_error()
 
-    def _load_settings(self):
-        values = json.loads(str(self.proxy.GetSettings()))
+    def _on_settings_loaded(self, serialized):
+        try:
+            self._load_settings(serialized)
+            self.proxy.ListConversations(
+                reply_handler=self._on_conversations_loaded,
+                error_handler=self._on_service_error,
+                timeout=5,
+            )
+        except Exception:
+            self._on_service_error()
+
+    def _on_conversations_loaded(self, conversations):
+        self._load_conversations(conversations)
+
+    def _on_service_error(self, *_details):
+        self.status.set_text("O assistente abriu, mas o serviço local não respondeu. Verifique a sessão D-Bus e tente novamente.")
+        self.stack.set_visible_child_name("settings")
+
+    def _load_settings(self, serialized=None):
+        values = json.loads(str(serialized if serialized is not None else self.proxy.GetSettings()))
         self.model.set_active_id(values["model_id"] if values["model_id"] in MODELS else DEFAULT_MODEL)
         for level, button in self.reasoning_buttons.items():
             button.set_active(level == values["reasoning_level"])
@@ -302,12 +331,13 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.share_system.set_active(values["share_system_profile"])
         self.level.set_active_id(values["education_level"])
 
-    def _load_conversations(self):
+    def _load_conversations(self, conversations=None):
         if not self.proxy:
             return
         for child in self.conversation_list.get_children():
             self.conversation_list.remove(child)
-        for conversation_id, title, _updated in self.proxy.ListConversations():
+        rows = conversations if conversations is not None else self.proxy.ListConversations()
+        for conversation_id, title, _updated in rows:
             row = Gtk.ListBoxRow()
             row.set_name(str(conversation_id))
             label = Gtk.Label(label=str(title), xalign=0)

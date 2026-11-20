@@ -81,6 +81,15 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("self.stack.set_transition_duration(0)", ui)
         self.assertNotIn("Gtk.StackTransitionType.CROSSFADE", ui)
 
+    def test_assistant_service_activation_does_not_block_initial_window(self):
+        ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
+        self.assertIn("self.proxy.GetStatus(\n                reply_handler=self._on_service_status", ui)
+        self.assertIn("self.proxy.GetSettings(\n                reply_handler=self._on_settings_loaded", ui)
+        self.assertIn("self.proxy.ListConversations(\n                reply_handler=self._on_conversations_loaded", ui)
+        self.assertIn("error_handler=self._on_service_error", ui)
+        self.assertIn("timeout=5", ui)
+        self.assertIn("self.status.set_text(\"O assistente abriu, mas o serviço local não respondeu.", ui)
+
 
 if __name__ == "__main__":
     unittest.main()
