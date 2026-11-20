@@ -157,3 +157,9 @@ This prototype has no installer, disk persistence, real educational-app installe
 - During another attempt in this same investigation, the guest presented a BusyBox initramfs shell. Read-only `mount` output showed `/cdrom` mounted read-only as ISO9660 and `/cow` as tmpfs, but command entry/display stopped responding reliably. The observed data does not isolate whether the failure is Casper root discovery, system startup, the display backend, or an interaction between them. No service or graphics configuration was changed speculatively.
 - This is a reproduced boot-to-desktop failure, not a successful VM acceptance test. Current desktop wallpaper, panel, Firefox, network, AI, accessibility, shutdown and reboot remain unverified. The ISO still contains the selected artwork by checksum from the prior build checks; that does not prove it appears on the desktop.
 - No credentials, host Wi-Fi password, SUAP/AVA login, student data, or NVIDIA API request were used. No host directories were shared.
+### UTM check of ISO 0.1.1 — 2026-11-20
+
+- UTM/QEMU attached `output/ifba-os-ubuntu-24.04-amd64-v0.1.1.iso` as boot media. The VM reached a graphical XFCE desktop; the screenshot was 2560×1600. The display included the SUAP and AVA desktop launchers and one bottom panel.
+- The observed desktop field was a solid Ubuntu-blue background, so the user-selected IFBA wallpaper is not considered applied in this run. The tray showed a disconnected network indicator.
+- IFBA AI was present as a panel launcher in the build, but the app was not opened in this check. Firefox was also not launched. No AI key, NVIDIA request, SUAP/AVA login, or host Wi-Fi credential was used.
+- No guest-side version command, network diagnostics, settings persistence, session restart, or shutdown test was performed. The build's `ifba-os-version` and static rootfs validation are not a substitute for those runtime checks.

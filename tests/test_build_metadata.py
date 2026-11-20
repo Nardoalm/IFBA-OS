@@ -24,7 +24,7 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertEqual(info["build_id"], "ifba-20261119T120000Z-abcdef123456")
         self.assertEqual(info["source_commit"], "abcdef1234567890")
         self.assertTrue(info["source_dirty"])
-        self.assertEqual(info["base"], "Ubuntu 24.04 LTS")
+        self.assertEqual(info["base"], "Ubuntu 26.04 LTS")
 
     def test_iso_manifest_records_sha256_and_exact_size(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -75,8 +75,9 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn("iso-manifest", host_build)
         for required in (
             "wallpaper.png",
-            "Yaru-dark/xfwm4/themerc",
-            "xfce4-panel.xml",
+            "IFBA-OS-Dark.colors",
+            "plasma-session-wayland",
+            "sddm.conf.d/10-ifba-os.conf",
             "firefox.desktop",
             "ifba-ai.desktop",
             "suap-ifba.desktop",
@@ -85,12 +86,10 @@ class BuildMetadataTests(unittest.TestCase):
             "build-info.json",
         ):
             self.assertIn(required, container_build)
-        self.assertIn("cmp -s /work/packaging/xfce4-panel.xml", container_build)
-        self.assertIn('"$ROOTFS/etc/xdg/xfce4/panel/default.xml"', container_build)
-        self.assertNotIn('"$ROOTFS/usr/share/xfce4/panel/default.xml"', container_build)
-        self.assertIn('test -f "$ROOTFS/usr/lib/systemd/system/lightdm.service"', container_build)
-        self.assertIn('test -f "$ROOTFS/usr/lib/systemd/system/NetworkManager.service"', container_build)
-        self.assertNotIn('test -e "$ROOTFS/etc/systemd/system/display-manager.service"', container_build)
+        self.assertIn('debootstrap --arch=amd64 resolute', container_build)
+        self.assertIn('test "$(readlink "$ROOTFS/etc/systemd/system/display-manager.service")" = /lib/systemd/system/sddm.service', container_build)
+        self.assertIn('install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup', container_build)
+        self.assertIn('"$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"', container_build)
 
 
 if __name__ == "__main__":

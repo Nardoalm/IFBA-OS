@@ -55,7 +55,7 @@ class XfceDefaultsTests(unittest.TestCase):
         )
 
     def test_build_installs_channel_defaults_for_live_and_future_users(self):
-        script = (ROOT / "scripts/build-iso-container.sh").read_text()
+        script = (ROOT / "scripts/build-iso-xfce4-legacy-container.sh").read_text()
         for target in (
             "$ROOTFS/home/ubuntu/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml",
             "$ROOTFS/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml",

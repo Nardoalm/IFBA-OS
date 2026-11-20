@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="$ROOT/output/ifba-os-ubuntu-24.04-amd64.iso"
+OUT="$ROOT/output/ifba-os-ubuntu-26.04-amd64.iso"
 BUILD_INFO="$ROOT/output/.ifba-os-build-info.json"
-BUILD_CACHE_VOLUME="${IFBA_BUILD_CACHE_VOLUME:-ifba-os-build-cache}"
+BUILD_CACHE_VOLUME="${IFBA_BUILD_CACHE_VOLUME:-ifba-os-plasma-build-cache}"
 BUILD_COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
 BUILD_DATE_UTC="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 BUILD_ID="ifba-$(date -u +'%Y%m%dT%H%M%SZ')-${BUILD_COMMIT:0:12}"
@@ -28,7 +28,7 @@ docker volume create --name "$BUILD_CACHE_VOLUME" >/dev/null
 docker run --rm --privileged --platform linux/amd64 \
   -v "$ROOT:/work" \
   --mount type=volume,src="$BUILD_CACHE_VOLUME",dst=/var/cache/ifba-rootfs \
-  -w /work ubuntu:24.04 bash /work/scripts/build-iso-container.sh
+  -w /work ubuntu:26.04 bash /work/scripts/build-iso-container.sh
 python3 "$ROOT/tools/build_metadata.py" iso-manifest \
   --build-info "$BUILD_INFO" \
   --iso "$OUT" \

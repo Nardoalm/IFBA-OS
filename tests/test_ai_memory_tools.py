@@ -3,6 +3,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from ifba_ai.paths import AppPaths
@@ -121,6 +122,16 @@ class SystemToolsTests(unittest.TestCase):
         with self.assertRaises(ToolError):
             self.tools.open_url("file:///etc/passwd")
         self.assertEqual(self.tools.system_info()["desktop"], "XFCE")
+
+    def test_settings_tools_follow_the_active_desktop_without_arbitrary_commands(self):
+        kde_app = self.app
+        tools = SystemTools(app_provider=lambda: {"kcm_kscreen.desktop": kde_app},
+                            app_launcher=lambda app: self.calls.append(("settings", app)))
+        with patch.dict("os.environ", {"XDG_CURRENT_DESKTOP": "KDE"}):
+            tools.open_xfce_settings("display")
+            with self.assertRaises(ToolError):
+                tools.open_xfce_settings("arbitrary-command")
+        self.assertEqual(self.calls, [("settings", kde_app)])
 
     def test_directory_scope_symlinks_and_safe_find(self):
         (self.root / "lesson.txt").write_text("Java")

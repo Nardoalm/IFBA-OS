@@ -2,7 +2,17 @@
 
 ## Current platform
 
-The prototype is an Ubuntu 24.04 amd64 Casper live image using XFCE4, Xfwm4, Xfdesktop, LightDM, X11, and a native panel. The Electron files in `app/` are a design prototype and are not part of the desktop runtime.
+The current built prototype remains an Ubuntu 24.04 amd64 Casper live image using XFCE4, Xfwm4, Xfdesktop, LightDM, X11, and a native panel. ISO 0.1.1 includes the assistant startup correction and kernel/initramfs build correction. The Electron files in `app/` are a design prototype and are not part of the desktop runtime.
+
+## KDE migration decision and status
+
+The migration is being developed in source and has not yet been incorporated into a built or tested ISO. Local branch `legacy/xfce4` points to the preserved `development` commit `4c09ec5`, and work remains on `development`. The old builder is retained as `scripts/build-iso-xfce4-legacy-container.sh`; `scripts/build-iso-container.sh` and the host wrapper target a separate Ubuntu 26.04 Plasma rootfs/cache.
+
+The selected base is Ubuntu 26.04 LTS amd64, using only the official `resolute` archives. Official package metadata, successful debootstrap resolution, and a clean apt dependency simulation confirm Plasma 6.6, Qt 6.10, KDE Frameworks 6.24, KWin 6.6, SDDM 0.21, and both Wayland and X11 sessions are available. The live package candidates observed in the archive were Plasma 6.6.7 and Qt 6.10.2; exact versions must be captured from the resulting root filesystem. Kubuntu 26.04 provides the relevant LTS reference stack. Avoid mixing Ubuntu series or using PPAs for Plasma.
+
+For the migration, retain the independent Python/GTK IFBA AI client and D-Bus backend, per-user state and Secret Service credential storage, Mozilla-signed Firefox DEB, and SUAP/AVA ordinary HTTPS launchers where compatible. The assistant's desktop-settings tool now selects a fixed allowlist for KDE or XFCE based on the active session; it does not execute model-provided commands. The Electron files remain a prototype. Product version `0.2.0` is assigned to this feature-set migration and must be committed before generating the ISO. No Plasma release artifact has yet been built or assigned a build ID.
+
+The current migration build inputs define an `IFBA OS Dark` KDE color scheme and a Plasma global-theme package with a first-run, centered floating lower panel, Kickoff launcher, task manager, system tray, clock, and one virtual desktop. The first-run setup applies this layout and the supplied wallpaper once so later user changes are not overwritten at every login. SDDM is configured to start the live `ubuntu` account in the X11 `plasma.desktop` session on UTM; Wayland package support is included, but Wayland runtime compatibility is still unverified. This remains a prototype, not a fully themed production desktop.
 
 ## XFCE defaults and precedence
 
@@ -63,4 +73,4 @@ See [`IMPLEMENTATION-QUEUE.md`](IMPLEMENTATION-QUEUE.md) for order and status.
 
 The existing per-user SQLite store is schema version 2. It preserves version 1 data and adds a bounded extractive conversation summary plus indexes. Context sent to NVIDIA is restricted by user-configurable message and character ceilings; the assistant does not send the full stored transcript. Long-term memories remain opt-in and are manually added or corrected. Retrieval is local lexical matching, with no embedding service or additional database.
 
-The existing per-user D-Bus service exposes typed methods for app launch, HTTP(S) URL opening, basic system details, and XFCE settings. File listing/search/creation runs in the GTK client because the daemon is sandboxed with read-only access to home directories. The GTK tool panel grants a folder for the current UI session. New file creation is limited to that folder's immediate children, uses exclusive creation and mode `0600`, never overwrites, and requires a one-use confirmation token that expires after 120 seconds. The AI request path has no system-tool calling capability.
+The existing per-user D-Bus service exposes typed methods for app launch, HTTP(S) URL opening, basic system details, and a fixed settings allowlist selected for KDE or XFCE. File listing/search/creation runs in the GTK client because the daemon is sandboxed with read-only access to home directories. The GTK tool panel grants a folder for the current UI session. New file creation is limited to that folder's immediate children, uses exclusive creation and mode `0600`, never overwrites, and requires a one-use confirmation token that expires after 120 seconds. The AI request path has no system-tool calling capability.

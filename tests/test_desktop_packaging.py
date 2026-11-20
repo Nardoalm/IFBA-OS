@@ -1,7 +1,7 @@
-"""Static packaging contracts for the native XFCE desktop."""
+"""Static packaging contracts for the native desktop builds."""
 
 import configparser
-import hashlib
+import json
 from pathlib import Path
 import unittest
 import xml.etree.ElementTree as ET
@@ -21,18 +21,18 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIsNone(panels.find("property[@name='panel-2']"))
         self.assertNotIn("15", [node.attrib["value"] for node in panel1.find("property[@name='plugin-ids']").findall("value")])
 
-    def test_wallpaper_sources_are_identical_and_packed_at_desktop_path(self):
-        wallpaper = (ROOT / "assets/wallpapers/ifba-os-desktop.png").read_bytes()
-        splash = (ROOT / "assets/plymouth/ifba-os-startup.png").read_bytes()
+    def test_wallpaper_and_splash_are_copied_to_their_own_runtime_paths(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
-        self.assertEqual(hashlib.sha256(wallpaper).digest(), hashlib.sha256(splash).digest())
         self.assertIn("/usr/share/backgrounds/ifba-os/wallpaper.png", build)
         self.assertIn("/work/assets/wallpapers/ifba-os-desktop.png", build)
+        self.assertIn("/usr/share/plymouth/themes/ifba-os/", build)
+        self.assertIn("/work/assets/plymouth/ifba-os-startup.png", build)
 
     def test_live_home_permissions_and_guest_diagnostics_are_packaged(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
         self.assertIn("chown -R ubuntu:ubuntu /home/ubuntu", build)
-        self.assertIn('chmod 0700 "$ROOTFS/home/ubuntu/.cache"', build)
+        self.assertIn('"$ROOTFS/home/ubuntu/.cache/ifba-ai"', build)
+        self.assertIn('"$ROOTFS/etc/skel/.cache/ifba-ai"', build)
         self.assertIn("qemu-guest-agent", build)
         self.assertIn("ifba-wired.nmconnection", build)
 
@@ -47,7 +47,7 @@ class DesktopPackagingTests(unittest.TestCase):
         helper_settings = (ROOT / "packaging/xfce4-helpers.rc").read_text()
         panel = ET.parse(ROOT / "packaging/xfce4-panel.xml").getroot()
         panel_values = [node.attrib.get("value") for node in panel.iter("value")]
-        mime_defaults = (ROOT / "scripts/build-iso-container.sh").read_text()
+        mime_defaults = (ROOT / "scripts/build-iso-xfce4-legacy-container.sh").read_text()
 
         self.assertIn("WebBrowser=firefox", helper_settings)
         self.assertIn("firefox.desktop", panel_values)
@@ -96,6 +96,46 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('cp -L "$ROOTFS/boot/initrd.img" "$ISO/casper/initrd"', build)
         self.assertNotIn('cp "$ROOTFS/boot/vmlinuz-"*', build)
         self.assertNotIn('cp "$ROOTFS/boot/initrd.img-"*', build)
+
+    def test_plasma_builder_uses_only_ubuntu_26_04_desktop_components(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
+        defaults = (ROOT / "packaging/plasma/ifba-os/contents/defaults").read_text()
+        metadata = json.loads((ROOT / "packaging/plasma/ifba-os/metadata.json").read_text())
+        for package in (
+            "plasma-desktop",
+            "plasma-session-wayland",
+            "plasma-session-x11",
+            "kwin-x11",
+            "sddm",
+            "dolphin",
+            "konsole",
+            "plasma-discover",
+            "plasma-nm",
+            "plasma-pa",
+            "systemsettings",
+        ):
+            self.assertIn(package, build)
+        self.assertIn("debootstrap --arch=amd64 resolute", build)
+        self.assertIn("IFBA-OS-Dark.colors", build)
+        self.assertIn("IFBA OS Dark", build)
+        self.assertIn("org.ifbaos.desktop", build)
+        self.assertEqual(metadata["KPackageStructure"], "Plasma/LookAndFeel")
+        self.assertEqual(metadata["KPlugin"]["Id"], "org.ifbaos.desktop")
+        self.assertIn("panel.floating = true", layout)
+        for widget in ("org.kde.plasma.kickoff", "org.kde.plasma.icontasks",
+                       "org.kde.plasma.systemtray", "org.kde.plasma.digitalclock"):
+            self.assertIn(widget, layout)
+        self.assertIn("LookAndFeelPackage=org.ifbaos.desktop", defaults)
+        setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
+        self.assertIn('marker="$HOME/.config/ifba-os/plasma-layout-applied"', setup)
+        self.assertIn('touch "$marker"', setup)
+        self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop", setup)
+        self.assertIn("plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png", setup)
+        self.assertIn("Session=plasma.desktop", build)
+        self.assertIn("/lib/systemd/system/sddm.service", build)
+        self.assertNotIn("xfce4-session", build)
+        self.assertNotIn("lightdm", build.lower())
 
 
 if __name__ == "__main__":

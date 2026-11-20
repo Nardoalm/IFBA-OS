@@ -948,7 +948,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         setting.set_active(0)
         controls.pack_start(setting, False, False, 0)
         action("Abrir configuração selecionada", lambda *_: safe(lambda: json.loads(str(
-            self.proxy.OpenXfceSetting(setting.get_active_id())))))
+            self.proxy.OpenSystemSetting(setting.get_active_id())))))
         dialog.show_all()
         try:
             dialog.run()

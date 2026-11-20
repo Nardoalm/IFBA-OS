@@ -1,0 +1,14 @@
+[kdeglobals][General]
+ColorScheme=IFBA-OS-Dark
+Name=IFBA OS Dark
+
+[kdeglobals][KDE]
+LookAndFeelPackage=org.ifbaos.desktop
+SingleClick=false
+
+[kwinrc][Desktops]
+Number=1
+Rows=1
+
+[plasmarc][Theme]
+name=default

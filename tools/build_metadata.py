@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 
-SYSTEM_VERSION = "0.1.1"
+SYSTEM_VERSION = "0.2.0"
 
 
 def build_info(build_id, commit, date_utc, source_dirty):
@@ -14,7 +14,7 @@ def build_info(build_id, commit, date_utc, source_dirty):
         "schema_version": 1,
         "product": "IFBA OS",
         "system_version": SYSTEM_VERSION,
-        "base": "Ubuntu 24.04 LTS",
+        "base": "Ubuntu 26.04 LTS",
         "architecture": "amd64",
         "build_id": build_id,
         "source_commit": commit,

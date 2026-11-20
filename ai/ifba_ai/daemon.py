@@ -179,8 +179,12 @@ class AssistantObject(dbus.service.Object):
         return json.dumps(self.service.tools.open_url(str(url)), ensure_ascii=False)
 
     @dbus.service.method(INTERFACE, in_signature="s", out_signature="s")
+    def OpenSystemSetting(self, setting):
+        return json.dumps(self.service.tools.open_settings(str(setting)), ensure_ascii=False)
+
+    @dbus.service.method(INTERFACE, in_signature="s", out_signature="s")
     def OpenXfceSetting(self, setting):
-        return json.dumps(self.service.tools.open_xfce_settings(str(setting)), ensure_ascii=False)
+        return json.dumps(self.service.tools.open_settings(str(setting)), ensure_ascii=False)
 
 
 def main():

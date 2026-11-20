@@ -17,12 +17,19 @@ class SystemTools:
     """Small allowlisted operations; mutating file creation needs a one-shot confirmation."""
 
     MAX_FILE_BYTES = 512 * 1024
-    SETTINGS_IDS = {
+    XFCE_SETTINGS_IDS = {
         "display": "xfce-display-settings.desktop",
         "appearance": "xfce-appearance-settings.desktop",
         "keyboard": "xfce-keyboard-settings.desktop",
         "network": "nm-connection-editor.desktop",
         "sound": "pavucontrol.desktop",
+    }
+    KDE_SETTINGS_IDS = {
+        "display": "kcm_kscreen.desktop",
+        "appearance": "kcm_lookandfeel.desktop",
+        "keyboard": "kcm_keyboard.desktop",
+        "network": "kcm_networkmanagement.desktop",
+        "sound": "kcm_pulseaudio.desktop",
     }
 
     def __init__(self, app_provider=None, app_launcher=None, uri_launcher=None,
@@ -97,11 +104,16 @@ class SystemTools:
         self._uri_launcher(url)
         return {"opened": url}
 
-    def open_xfce_settings(self, setting):
-        app_id = self.SETTINGS_IDS.get(setting)
+    def open_settings(self, setting):
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        settings = self.KDE_SETTINGS_IDS if "kde" in desktop or "plasma" in desktop else self.XFCE_SETTINGS_IDS
+        app_id = settings.get(setting)
         if app_id is None:
             raise ToolError("Essa configuração não está na lista permitida.")
         return self.open_app(app_id)
+
+    def open_xfce_settings(self, setting):
+        return self.open_settings(setting)
 
     def grant_directory(self, path):
         if not isinstance(path, str) or not os.path.isabs(path):

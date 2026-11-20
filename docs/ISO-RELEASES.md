@@ -46,6 +46,21 @@ This is additional runtime evidence for the same 0.1.0 ISO; it is not a new buil
 - **Static image evidence:** The exact cached rootfs used for the image contains an enabled NetworkManager system service and a root-owned mode-0600 Ethernet connection profile configured for autoconnect and DHCP. This rules out a missing profile in the build cache but does not show that the running guest loaded or activated it.
 - **Result:** Network failure is reproduced, but its cause remains unresolved. Further terminal input was garbled under high TCG load. No guest-side setting was changed, no ISO was rebuilt, and Firefox/NVIDIA/HTTPS remain untested in this run. The network feature is not marked fixed.
 
+## 0.1.1 — assistant startup and kernel selection fixes, 2026-11-20
+
+- **Artifact:** `output/ifba-os-ubuntu-24.04-amd64-v0.1.1.iso`
+- **Build ID:** `ifba-20261120T151145Z-4c09ec5b71b3`
+- **Source commit:** `4c09ec5b71b330ab6a2dc690b0230ca965efb3d1` (`source_dirty: false`)
+- **Base / architecture:** Ubuntu 24.04 LTS / amd64
+- **Build method:** Docker `ubuntu:24.04` with the existing `ifba-os-build-cache` volume. Build used the committed source in a clean detached worktree.
+- **Build time:** `2026-11-20T15:11:45Z`
+- **Artifact size:** 1,505,392,640 bytes
+- **SHA-256:** `f8b82cd3245b89c45f982197c1d75164fa5e4775562e9a33c69b4a04be83f871`
+- **Changes:** IFBA AI now shows its GTK window before making bounded, asynchronous D-Bus startup calls, so a slow or unavailable assistant service cannot block initial display. ISO construction now copies the active kernel and initramfs symlinks instead of failing when the cached root filesystem contains multiple kernel versions.
+- **Build checks:** Rootfs validation passed; the rootfs imports the GTK/D-Bus assistant modules; `ifba-os-version` reports the embedded version/build/source; ISO 9660 boot structure was inspected. Targeted AI tests passed (13 tests), Python compilation, shell syntax, and `git diff --check` passed.
+- **UTM:** The exact versioned ISO path was attached through the UTM file picker and the VM reached a live XFCE desktop. A 2560×1600 screenshot showed one lower panel, SUAP and AVA launchers, and a browser launcher. The desktop background in this view was Ubuntu blue, not the chosen IFBA wallpaper. The panel network indicator was disconnected. The guest `ifba-os-version` command was not queried.
+- **Open issues:** IFBA AI window launch was not completed in this VM session; network and Firefox HTTPS remain unverified. Wallpaper, menu actions, persistence, graceful reboot, installer, and Plasma migration are not part of this build and remain open. Do not describe the assistant as runtime validated based on source/tests alone.
+
 ## Unversioned legacy artifacts
 
 These hashes and short descriptions are retained from earlier audit records. Those builds predate embedded build metadata; missing IDs, source commits, sizes, or validations are intentionally not inferred.
@@ -64,4 +79,4 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 
 ## Next product version
 
-No next artifact has been built or assigned a version. Increment `SYSTEM_VERSION` in `tools/build_metadata.py` as part of the next evidence-based product change, commit the build inputs, and add a new immutable entry here after recording the resulting artifact metadata.
+Product version `0.2.0` is assigned in the current uncommitted Ubuntu 26.04/Plasma 6 migration inputs. No 0.2.0 ISO, build ID, hash, size, or UTM result exists yet. Commit all build inputs first; then build and add a new immutable entry with the generated manifest and actual VM evidence. Do not alter either 0.1.x record.

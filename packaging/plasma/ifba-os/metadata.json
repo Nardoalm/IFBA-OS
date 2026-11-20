@@ -1,0 +1,11 @@
+{
+  "KPackageStructure": "Plasma/LookAndFeel",
+  "KPlugin": {
+    "Id": "org.ifbaos.desktop",
+    "Name": "IFBA OS Dark",
+    "Description": "Dark graphite desktop defaults for IFBA OS",
+    "Version": "1.0",
+    "License": "GPL-3.0-or-later",
+    "Authors": [{"Name": "IFBA OS Project"}]
+  }
+}
