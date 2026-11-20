@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 
-SYSTEM_VERSION = "0.3.0"
+SYSTEM_VERSION = "0.3.1"
 
 
 def build_info(build_id, commit, date_utc, source_dirty, architecture):
