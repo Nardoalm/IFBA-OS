@@ -20,11 +20,29 @@ class BuildMetadataTests(unittest.TestCase):
             "abcdef1234567890",
             "2026-11-19T12:00:00Z",
             "true",
+            "amd64",
         )
         self.assertEqual(info["build_id"], "ifba-20261119T120000Z-abcdef123456")
         self.assertEqual(info["source_commit"], "abcdef1234567890")
         self.assertTrue(info["source_dirty"])
         self.assertEqual(info["base"], "Ubuntu 26.04 LTS")
+        self.assertEqual(info["architecture"], "amd64")
+
+    def test_arm64_build_metadata_preserves_architecture(self):
+        info = build_metadata.build_info(
+            "ifba-20261119T120000Z-abcdef123456",
+            "abcdef1234567890",
+            "2026-11-19T12:00:00Z",
+            "false",
+            "arm64",
+        )
+        self.assertEqual(info["architecture"], "arm64")
+
+    def test_build_metadata_rejects_unknown_architecture(self):
+        with self.assertRaises(ValueError):
+            build_metadata.build_info(
+                "build-1", "abcdef", "2026-11-19T12:00:00Z", "false", "riscv64"
+            )
 
     def test_version_command_matches_embedded_system_version(self):
         result = subprocess.run(
@@ -43,7 +61,7 @@ class BuildMetadataTests(unittest.TestCase):
             manifest_path = directory / "test.iso.manifest.json"
             build_metadata.write_json(
                 build_path,
-                build_metadata.build_info("build-1", "abcdef", "2026-11-19T12:00:00Z", "false"),
+                build_metadata.build_info("build-1", "abcdef", "2026-11-19T12:00:00Z", "false", "arm64"),
             )
             payload = b"IFBA OS iso fixture\n"
             iso_path.write_bytes(payload)
@@ -60,6 +78,7 @@ class BuildMetadataTests(unittest.TestCase):
                 json.dumps(
                     {
                         "system_version": "0.1.0",
+                        "architecture": "arm64",
                         "build_id": "ifba-build-7",
                         "source_commit": "1234567890abcdef",
                         "build_date_utc": "2026-11-19T12:00:00Z",
@@ -74,6 +93,7 @@ class BuildMetadataTests(unittest.TestCase):
                 text=True,
             )
             self.assertIn("Build ID: ifba-build-7", result.stdout)
+            self.assertIn("Architecture: arm64", result.stdout)
             self.assertIn("Source commit: 1234567890abcdef", result.stdout)
 
     def test_iso_build_has_provenance_and_required_rootfs_guards(self):
@@ -85,6 +105,9 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn("ubuntu:24.04", host_build)
         self.assertIn('v${SYSTEM_VERSION}.iso', host_build)
         self.assertIn('IFBA_ISO_FILENAME="$ISO_FILENAME"', host_build)
+        self.assertIn('docker run --rm --privileged --platform "linux/$ARCH"', host_build)
+        self.assertIn('"$ARCH" != amd64 && "$ARCH" != arm64', host_build)
+        self.assertIn('ifba-os-ubuntu-26.04-${ARCH}-v${SYSTEM_VERSION}.iso', host_build)
         self.assertIn('OUT="/work/output/$ISO_FILENAME"', container_build)
         self.assertNotIn("ubuntu:26.04", host_build)
         for required in (
@@ -100,7 +123,13 @@ class BuildMetadataTests(unittest.TestCase):
             "build-info.json",
         ):
             self.assertIn(required, container_build)
-        self.assertIn('debootstrap --arch=amd64 resolute', container_build)
+        self.assertIn('debootstrap --arch="$IFBA_ARCH" resolute', container_build)
+        self.assertIn("grub-efi-arm64-bin", container_build)
+        self.assertIn("rootfs-plasma-26.04-arm64", container_build)
+        self.assertIn('IFBA_ARCH="$ARCH"', host_build)
+        self.assertIn('ARCHIVE=http://ports.ubuntu.com/ubuntu-ports', container_build)
+        self.assertIn('BOOT_PACKAGES=(grub-efi-arm64-bin)', container_build)
+        self.assertIn('BOOT_PACKAGES=(grub-pc-bin grub-efi-amd64-bin mtools)', container_build)
         self.assertIn('test "$(readlink "$ROOTFS/etc/systemd/system/display-manager.service")" = /lib/systemd/system/sddm.service', container_build)
         self.assertIn('install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup', container_build)
         self.assertIn('"$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"', container_build)

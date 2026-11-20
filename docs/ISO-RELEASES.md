@@ -108,4 +108,4 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 
 ## Next product version
 
-Product version `0.2.1` is the latest built artifact. Assign `0.2.2` in the build inputs and commit those inputs before generating the next ISO. Continue to preserve both 0.2.x artifacts and their records above. The Plasma desktop now visibly starts in UTM, but application behavior, network, styling, and restart persistence still need validation.
+Product version `0.2.1` is the latest built artifact. The next release inputs assign `0.3.0` for the multiarchitecture feature set; commit them before building ARM64. If a separate AMD64 artifact is subsequently built, assign it a distinct semantic product version first and preserve all existing 0.2.x artifacts and records. Network, application behavior, styling and restart persistence still need validation.

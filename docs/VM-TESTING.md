@@ -2,6 +2,14 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## Multiarchitecture UTM plan — 2026-11-20
+
+- **Host:** Apple Silicon MacBook Air M4, 16 GiB RAM, 10 logical CPUs; Docker Desktop reports 8 CPUs/8.2 GiB to the build VM. Host filesystem reported 14 GiB free at the start of this work. The ARM test VM should use 4 vCPUs, 5 GiB RAM and a separate sparse 30 GiB disk, leaving host memory for macOS and Docker.
+- **Existing VM:** UTM identified `Linux` as x86_64/Q35, 4 GiB RAM, Shared/e1000, with `ifba-os-ubuntu-26.04-amd64-v0.2.1.iso` attached. This VM/disk must be preserved for AMD64 comparison.
+- **ARM image:** Build the same live Plasma system with native arm64 packages, official Ubuntu ports archive and ARM64 EFI GRUB. Until the generated image boots in the separate ARM VM, the new architecture remains build work, not supported/validated runtime.
+- **UTM UI incident:** During this audit, the computer-use surface timed out after the existing VM window was closed while attempting to return to the UTM library. The toolbar had become busy/disabled and a follow-up screenshot timed out. No disk or configuration was edited through the VM settings. Re-query UTM before any further VM actions; do not assume whether the guest stopped or remains active. The UI failure has not prevented source/build checks.
+- **Resource/storage constraint:** Docker reports roughly 9.2 GiB of local volumes and the host filesystem has limited free space. Do not prune Docker images/volumes or old ISO artifacts. Check available capacity before producing each additional rootfs/ISO and keep virtual disks sparse.
+
 ## Current UTM network diagnostic — 2026-11-20
 
 - **VM/artifact:** UTM `Linux` remained on the existing x86_64/Q35 guest with 4 GiB RAM, 2 CPUs, a 64 GiB qcow2, e1000, `vmnet-shared` NAT and the 0.1.0 output ISO at boot-index 0. This is not a disposable 30 GiB VM. Host process inspection showed QEMU TCG at roughly 175% CPU; no acceleration or macOS permission setting was changed.

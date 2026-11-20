@@ -116,7 +116,7 @@ class DesktopPackagingTests(unittest.TestCase):
             "systemsettings",
         ):
             self.assertIn(package, build)
-        self.assertIn("debootstrap --arch=amd64 resolute", build)
+        self.assertIn('debootstrap --arch="$IFBA_ARCH" resolute', build)
         self.assertIn("IFBA-OS-Dark.colors", build)
         self.assertIn("IFBA OS Dark", build)
         self.assertIn("org.ifbaos.desktop", build)

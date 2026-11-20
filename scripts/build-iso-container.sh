@@ -1,24 +1,43 @@
 #!/usr/bin/env bash
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
-ROOTFS=/var/cache/ifba-rootfs/rootfs-plasma-26.04
+IFBA_ARCH="${IFBA_ARCH:?IFBA_ARCH must be set by scripts/build-iso.sh}"
+case "$IFBA_ARCH" in
+  amd64)
+    ARCHIVE=http://archive.ubuntu.com/ubuntu
+    BOOT_PACKAGES=(grub-pc-bin grub-efi-amd64-bin mtools)
+    ;;
+  arm64)
+    ARCHIVE=http://ports.ubuntu.com/ubuntu-ports
+    BOOT_PACKAGES=(grub-efi-arm64-bin)
+    ;;
+  *)
+    printf 'Unsupported architecture: %s\n' "$IFBA_ARCH" >&2
+    exit 2
+    ;;
+esac
+if [[ "$IFBA_ARCH" == amd64 ]]; then
+  ROOTFS=/var/cache/ifba-rootfs/rootfs-plasma-26.04
+else
+  ROOTFS=/var/cache/ifba-rootfs/rootfs-plasma-26.04-arm64
+fi
 ISO=/tmp/ifba-iso
 ISO_FILENAME="${IFBA_ISO_FILENAME:?IFBA_ISO_FILENAME must be set by scripts/build-iso.sh}"
 OUT="/work/output/$ISO_FILENAME"
 
 apt-get update
-apt-get install -y --no-install-recommends debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools curl gnupg ca-certificates
+apt-get install -y --no-install-recommends debootstrap squashfs-tools xorriso "${BOOT_PACKAGES[@]}" curl gnupg ca-certificates
 rm -rf "$ISO"
 mkdir -p "$ISO/casper" "$ISO/boot/grub"
 if [[ ! -e "$ROOTFS/etc/os-release" ]]; then
   rm -rf "$ROOTFS"
   mkdir -p "$ROOTFS"
-  debootstrap --arch=amd64 resolute "$ROOTFS" http://archive.ubuntu.com/ubuntu
+  debootstrap --arch="$IFBA_ARCH" resolute "$ROOTFS" "$ARCHIVE"
 fi
-cat > "$ROOTFS/etc/apt/sources.list" <<'SOURCES'
-deb http://archive.ubuntu.com/ubuntu resolute main universe multiverse
-deb http://archive.ubuntu.com/ubuntu resolute-updates main universe multiverse
-deb http://security.ubuntu.com/ubuntu resolute-security main universe multiverse
+cat > "$ROOTFS/etc/apt/sources.list" <<SOURCES
+deb $ARCHIVE resolute main universe multiverse
+deb $ARCHIVE resolute-updates main universe multiverse
+deb $ARCHIVE resolute-security main universe multiverse
 SOURCES
 curl --fail --silent --show-error --location https://packages.mozilla.org/apt/repo-signing-key.gpg --output /tmp/mozilla-archive-keyring.asc
 gpg --show-keys --with-colons /tmp/mozilla-archive-keyring.asc | awk -F: '$1 == "fpr" { print $10; exit }' | grep --quiet '^35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3$'
@@ -229,4 +248,4 @@ menuentry "IFBA OS prototype (live)" {
   initrd /casper/initrd
 }
 GRUB
-grub-mkrescue -volid IFBA_OS_26_04 -o "$OUT" "$ISO"
+grub-mkrescue -volid "IFBA_OS_26_04_${IFBA_ARCH}" -o "$OUT" "$ISO"

@@ -3,13 +3,30 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SYSTEM_VERSION="$(python3 "$ROOT/tools/build_metadata.py" version)"
-ISO_FILENAME="ifba-os-ubuntu-26.04-amd64-v${SYSTEM_VERSION}.iso"
+ARCH=amd64
+if [[ "${1:-}" == "--arch" && -n "${2:-}" ]]; then
+  ARCH="$2"
+  shift 2
+elif [[ $# -gt 0 ]]; then
+  printf 'Usage: %s [--arch amd64|arm64]\n' "$0" >&2
+  exit 2
+fi
+if [[ $# -gt 0 || ( "$ARCH" != amd64 && "$ARCH" != arm64 ) ]]; then
+  printf 'Usage: %s [--arch amd64|arm64]\n' "$0" >&2
+  exit 2
+fi
+ISO_FILENAME="ifba-os-ubuntu-26.04-${ARCH}-v${SYSTEM_VERSION}.iso"
 OUT="$ROOT/output/$ISO_FILENAME"
 BUILD_INFO="$ROOT/output/.ifba-os-build-info.json"
-BUILD_CACHE_VOLUME="${IFBA_BUILD_CACHE_VOLUME:-ifba-os-plasma-build-cache}"
+if [[ "$ARCH" == amd64 ]]; then
+  DEFAULT_BUILD_CACHE_VOLUME=ifba-os-plasma-build-cache
+else
+  DEFAULT_BUILD_CACHE_VOLUME=ifba-os-plasma-build-cache-arm64
+fi
+BUILD_CACHE_VOLUME="${IFBA_BUILD_CACHE_VOLUME:-$DEFAULT_BUILD_CACHE_VOLUME}"
 BUILD_COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
 BUILD_DATE_UTC="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-BUILD_ID="ifba-$(date -u +'%Y%m%dT%H%M%SZ')-${BUILD_COMMIT:0:12}"
+BUILD_ID="ifba-$(date -u +'%Y%m%dT%H%M%SZ')-${ARCH}-${BUILD_COMMIT:0:12}"
 SOURCE_DIRTY=false
 if ! git -C "$ROOT" diff-index --quiet HEAD --; then
   SOURCE_DIRTY=true
@@ -25,9 +42,11 @@ python3 "$ROOT/tools/build_metadata.py" build-info \
   --build-id "$BUILD_ID" \
   --commit "$BUILD_COMMIT" \
   --date-utc "$BUILD_DATE_UTC" \
-  --source-dirty "$SOURCE_DIRTY"
+  --source-dirty "$SOURCE_DIRTY" \
+  --architecture "$ARCH"
 docker volume create --name "$BUILD_CACHE_VOLUME" >/dev/null
-docker run --rm --privileged --platform linux/amd64 \
+docker run --rm --privileged --platform "linux/$ARCH" \
+  -e IFBA_ARCH="$ARCH" \
   -e IFBA_ISO_FILENAME="$ISO_FILENAME" \
   -v "$ROOT:/work" \
   --mount type=volume,src="$BUILD_CACHE_VOLUME",dst=/var/cache/ifba-rootfs \

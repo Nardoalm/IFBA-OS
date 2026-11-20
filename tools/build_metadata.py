@@ -6,16 +6,18 @@ import json
 from pathlib import Path
 
 
-SYSTEM_VERSION = "0.2.1"
+SYSTEM_VERSION = "0.3.0"
 
 
-def build_info(build_id, commit, date_utc, source_dirty):
+def build_info(build_id, commit, date_utc, source_dirty, architecture):
+    if architecture not in ("amd64", "arm64"):
+        raise ValueError("Unsupported architecture: {}".format(architecture))
     return {
         "schema_version": 1,
         "product": "IFBA OS",
         "system_version": SYSTEM_VERSION,
         "base": "Ubuntu 26.04 LTS",
-        "architecture": "amd64",
+        "architecture": architecture,
         "build_id": build_id,
         "source_commit": commit,
         "build_date_utc": date_utc,
@@ -58,6 +60,7 @@ def main(argv=None):
     build_parser.add_argument("--commit", required=True)
     build_parser.add_argument("--date-utc", required=True)
     build_parser.add_argument("--source-dirty", choices=("true", "false"), required=True)
+    build_parser.add_argument("--architecture", choices=("amd64", "arm64"), required=True)
     iso_parser = commands.add_parser("iso-manifest")
     iso_parser.add_argument("--build-info", required=True)
     iso_parser.add_argument("--iso", required=True)
@@ -66,7 +69,7 @@ def main(argv=None):
     if args.command == "version":
         print(SYSTEM_VERSION)
     elif args.command == "build-info":
-        write_json(args.output, build_info(args.build_id, args.commit, args.date_utc, args.source_dirty))
+        write_json(args.output, build_info(args.build_id, args.commit, args.date_utc, args.source_dirty, args.architecture))
     else:
         write_iso_manifest(args.build_info, args.iso, args.output)
 

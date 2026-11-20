@@ -6,12 +6,13 @@
 
 - [ ] **IN_PROGRESS · P0** The detailed audit matrix in [`FINAL-AUDIT.md`](FINAL-AUDIT.md) retains the 0.1.1/XFCE evidence; its KDE runtime update records the latest 0.2.1 desktop. Plasma app/network behavior, guest build ID, persistence and shutdown/restart remain unverified. Track every image in [`ISO-RELEASES.md`](ISO-RELEASES.md).
 
-- [ ] **IN_PROGRESS · P0** Latest built artifact is Ubuntu 26.04/Plasma 6.6 ISO 0.2.1. UTM visibly reaches Plasma with the supplied wallpaper, AVA/IFBA AI/SUAP desktop shortcuts, and one bottom panel. The panel is light and centered; application and network behavior remain unverified. XFCE source is preserved on local `legacy/xfce4`.
+- [ ] **IN_PROGRESS · P0** Latest built artifacts remain Ubuntu 26.04/Plasma 6.6 amd64 ISO 0.2.1. UTM visibly reaches Plasma with supplied wallpaper, AVA/IFBA AI/SUAP shortcuts, and one pale centered panel. Multiarchitecture builder inputs are being implemented for amd64 and arm64; no ARM64 ISO or VM boot is validated yet. App and network behavior remain unverified.
 - [ ] **IN_PROGRESS · P0** Embedded build metadata, guest `ifba-os-version`, external final ISO SHA-256 manifest, and fail-fast rootfs checks are implemented. Version 0.1.0 and its matching host manifest are verified; the guest reached a shell, but guest identity command remains unverified.
 - [ ] **IN_PROGRESS · P0** The legacy XFCE defaults declare one lower panel/workspace and are preserved in `legacy/xfce4`. The active KDE source defines a one-time native Plasma first-run layout. ISO 0.2.1 visibly starts Plasma and shows one bottom panel; its intended styling and workspace count are not validated.
 - [ ] **IN_PROGRESS · P1** The new builder packages an IFBA OS Dark KDE color scheme and native Plasma global-theme layout. Window decorations, system settings appearance, icons, splash/login styling, animations, accessibility, GTK/KDE consistency, and actual app/window appearance remain to be reviewed in UTM.
 - [ ] **IN_PROGRESS · P0** Native SUAP and AVA desktop links use public HTTPS URLs; the rebuilt ISO sets Firefox as default. Confirm link launching and HTTPS in the current graphical session, without logging in.
 - [ ] **IN_PROGRESS · P0** Plasma ISO 0.2.1 now reaches the desktop in UTM. Collect guest build ID, network/route/DNS/HTTPS, Firefox and IFBA AI launch, and restart evidence without using personal credentials. Do not count visually present panel items or shortcuts as proof their actions work.
+- [ ] **IN_PROGRESS · P0** Add matching ARM64 build and UTM test path without replacing the existing AMD64 VM or ISO. Both architectures must produce native package sets, architecture-accurate metadata, bootloader media and their own runtime evidence.
 - [x] **DONE · P2** Keep the Electron welcome-screen prototype separate in `app/`; it is not included or auto-launched by the native XFCE ISO.
 - [x] **DONE · P2** Maintain an educational package candidate list at `config/educational-apps.json`. It is not installed or connected to an installer.
 - [x] **DONE · P2** Use user-supplied SUAP and EaD IFBA images for launcher tiles. This does not establish authorization for institutional endorsement.
@@ -38,6 +39,14 @@
 - [ ] Validate Wayland on UTM and retain X11 as a fallback only if its actual session is available and works. Current live profile is configured for X11 to reduce VM compatibility risk; the Wayland packages are installed by the source build recipe.
 - [ ] Test SDDM, Firefox, IFBA AI, NetworkManager, SUAP/AVA launchers, screen-reader/keyboard paths, persistence and recovery in UTM.
 - [x] Product version `0.2.1` is built from commit `cc43d4e`; hash, package/session inspection and UTM desktop observation are recorded in `ISO-RELEASES.md`.
+
+### Multiarchitecture and performance
+
+- [x] Add one `--arch amd64|arm64` build interface, isolated ARM64 rootfs/cache, architecture-specific archive, bootloader, output filename, build ID and embedded architecture field while preserving the existing AMD64 cache and default command.
+- [ ] Build version 0.3.0 for ARM64, verify UEFI ARM64 payload and boot the new image in a separate native UTM VM.
+- [ ] Build a distinct later version for AMD64 and confirm the existing AMD64 pathway still resolves/builds and the existing VM/artifacts are preserved.
+- [ ] Measure comparable boot, idle CPU/RAM, Dolphin, Firefox, IFBA AI and responsiveness on emulated AMD64 and virtualized ARM64. Do not infer performance from architecture alone.
+- [ ] Validate network/DHCP/DNS/HTTPS, Firefox and IFBA AI in guest sessions before marking them functional.
 
 ### Base system and release engineering
 

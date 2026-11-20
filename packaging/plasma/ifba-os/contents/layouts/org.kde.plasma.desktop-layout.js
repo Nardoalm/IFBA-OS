@@ -1,7 +1,7 @@
 var panel = new Panel
 panel.location = "bottom"
 panel.height = 48
-panel.lengthMode = "fit"
+panel.lengthMode = "fill"
 panel.alignment = "center"
 panel.floating = true
 panel.hiding = "none"

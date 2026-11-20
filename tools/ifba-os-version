@@ -17,6 +17,7 @@ def main():
         return 1
     for label, key in (
         ("IFBA OS", "system_version"),
+        ("Architecture", "architecture"),
         ("Build ID", "build_id"),
         ("Source commit", "source_commit"),
         ("Built at (UTC)", "build_date_utc"),
