@@ -51,6 +51,7 @@ def write_iso_manifest(info_path, iso_path, output_path):
 def main(argv=None):
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("version")
     build_parser = commands.add_parser("build-info")
     build_parser.add_argument("--output", required=True)
     build_parser.add_argument("--build-id", required=True)
@@ -62,7 +63,9 @@ def main(argv=None):
     iso_parser.add_argument("--iso", required=True)
     iso_parser.add_argument("--output", required=True)
     args = parser.parse_args(argv)
-    if args.command == "build-info":
+    if args.command == "version":
+        print(SYSTEM_VERSION)
+    elif args.command == "build-info":
         write_json(args.output, build_info(args.build_id, args.commit, args.date_utc, args.source_dirty))
     else:
         write_iso_manifest(args.build_info, args.iso, args.output)

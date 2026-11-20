@@ -26,6 +26,15 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertTrue(info["source_dirty"])
         self.assertEqual(info["base"], "Ubuntu 26.04 LTS")
 
+    def test_version_command_matches_embedded_system_version(self):
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "tools/build_metadata.py"), "version"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.stdout.strip(), build_metadata.SYSTEM_VERSION)
+
     def test_iso_manifest_records_sha256_and_exact_size(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
@@ -74,6 +83,9 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn("build-info", host_build)
         self.assertIn("iso-manifest", host_build)
         self.assertIn("ubuntu:24.04", host_build)
+        self.assertIn('v${SYSTEM_VERSION}.iso', host_build)
+        self.assertIn('IFBA_ISO_FILENAME="$ISO_FILENAME"', host_build)
+        self.assertIn('OUT="/work/output/$ISO_FILENAME"', container_build)
         self.assertNotIn("ubuntu:26.04", host_build)
         for required in (
             "wallpaper.png",

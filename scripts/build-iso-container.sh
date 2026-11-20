@@ -3,7 +3,8 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 ROOTFS=/var/cache/ifba-rootfs/rootfs-plasma-26.04
 ISO=/tmp/ifba-iso
-OUT=/work/output/ifba-os-ubuntu-26.04-amd64.iso
+ISO_FILENAME="${IFBA_ISO_FILENAME:?IFBA_ISO_FILENAME must be set by scripts/build-iso.sh}"
+OUT="/work/output/$ISO_FILENAME"
 
 apt-get update
 apt-get install -y --no-install-recommends debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools curl gnupg ca-certificates
