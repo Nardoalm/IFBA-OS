@@ -235,3 +235,10 @@
 
 - Host volume now reports 72,299,088 KiB available (about 69 GiB), above the documented 30 GiB build requirement. No files, caches, Docker volumes, ISOs, or VM data were removed to obtain this space.
 - A paired build remains blocked by the official `scripts/build-iso.sh` dirty-worktree guard: current local edits and untracked project files are present. That script requires committed build inputs to embed an immutable source commit. No commit, branch, stash, or provenance bypass was made.
+
+
+## v0.3.3 paired build — 2026-11-21
+
+- Built ARM64 and AMD64 with `./scripts/build-iso.sh --both` from clean detached worktree commit `fedfa208f47a9ee54d4690a64d410c6af287cb45`. The existing `output/` archive/pointers were reused; no historical ISO, VM, Docker volume, or cache was deleted. `latest` now points to the verified v0.3.3 matched pair.
+- Both external manifests report `source_dirty: false`. Release verification passed for hashes, byte sizes, ISO/El Torito structure, architecture labels and embedded boot payload/rootfs checks. ARM64 SHA-256 `e5ff90b8222e31aae53d66b26319879990ab03cab1a2e133c6332cdccc8aaaa7` (1,962,625,024 bytes); AMD64 `326f5781dcccab0affdd2fb27d0f09b56c5c8ec871bdf3c3520039e569468d9e` (2,018,887,680 bytes). Runtime remains unvalidated.
+- UTM displayed its library and the historical VMs. A new ARM64 wizard reached the ISO selection step, but the macOS picker was inaccessible (`noWindowsAvailable`); the unsaved wizard was canceled. Historical VMs remain unchanged. See the latest `VM-TESTING.md` section for exact ISO paths and pending guest checks.

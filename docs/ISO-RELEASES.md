@@ -139,7 +139,7 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 
 ## Next product version
 
-Matched v0.3.2 images are now built for both architectures from the same source commit. Runtime validation remains pending as recorded below; the next product version should be assigned only when a new shared feature set is ready.
+Matched v0.3.3 images are built for both architectures from the same source commit. Their runtime status remains unvalidated until a real guest boot and feature checks are completed.
 
 ## Artifact organization migration — 2026-11-20
 
@@ -169,3 +169,18 @@ At the time of the 2026-11-20 migration, `output/latest/amd64/` pointed to v0.3.
 - **Release pointers:** Both local `output/latest/{arm64,amd64}` pointers now resolve to v0.3.2. `output/latest/release-status.json` records `complete_pair: true` and the shared source commit. Artifacts are local ignored build output, not Git-tracked files.
 - **KScreenLocker:** The derived Plasma shell package and QML are present in both root filesystems, selected by the live/new-user defaults, and preserve KDE’s native authenticator/PAM path. Automated source/package tests passed before the build.
 - **UTM:** Not booted. The existing ARM64 VM remains stopped with historical v0.3.0 media. UTM’s library window became inaccessible to UI automation, so no disposable VM was created; screenshots and live-session acceptance remain pending. See [`VM-TESTING.md`](VM-TESTING.md).
+
+
+## 0.3.3 — NetworkManager, IFBA AI and desktop integration, 2026-11-21
+
+| Architecture | Build ID | Source commit | Build time (UTC) | Size (bytes) | SHA-256 | Build status | Runtime status |
+|---|---|---|---|---:|---|---|---|
+| arm64 | `ifba-20261121T183738Z-arm64-fedfa208f47a` | `fedfa208f47a9ee54d4690a64d410c6af287cb45` | `2026-11-21T18:37:38Z` | 1,962,625,024 | `e5ff90b8222e31aae53d66b26319879990ab03cab1a2e133c6332cdccc8aaaa7` | built and structurally verified | unvalidated |
+| amd64 | `ifba-20261121T184747Z-amd64-fedfa208f47a` | `fedfa208f47a9ee54d4690a64d410c6af287cb45` | `2026-11-21T18:47:47Z` | 2,018,887,680 | `326f5781dcccab0affdd2fb27d0f09b56c5c8ec871bdf3c3520039e569468d9e` | built and structurally verified | unvalidated |
+
+- **Build method:** `./scripts/build-iso.sh --both` from a clean detached worktree at commit `fedfa208f47a9ee54d4690a64d410c6af287cb45`; Ubuntu 24.04 helper containers, official Ubuntu 26.04 archive/Ports and existing per-architecture caches. The existing `output/versions` and `output/latest` were reused; historical ISO files and Docker volumes were preserved. Both manifests record `source_dirty: false`.
+- **Build checks:** Rootfs package/configuration assertions passed for both architectures. The builder generated each ISO, extracted kernel, initrd, SquashFS and GRUB config for comparison, and published only after checks. `release_artifacts.py verify` passed for both manifests; host SHA-256 and byte-size recomputation matched. `file` identifies both as bootable ISO 9660 DOS/MBR media with architecture-specific labels. This is structural validation only, not proof of Linux boot.
+- **Release pointers:** `output/latest/{arm64,amd64}` now resolve to v0.3.3 and `release-status.json` has `complete_pair: true` for the shared commit above.
+- **Warnings:** The helper/container emitted expected service-start/D-Bus notices in chroot, `mksquashfs` warnings for `system.posix_acl_*` xattr prefixes, `xorriso` warnings that the volume ID does not follow ISO 9660 text rules, and initramfs fallback from zstd to gzip. Thonny emitted Python `SyntaxWarning`s. These were non-fatal; package/rootfs and ISO checks completed successfully.
+- **Automated checks:** 95 tests passed, 2 target-image PyQt6 tests skipped. Bash/POSIX shell syntax, Python compilation, JavaScript syntax and `git diff --check` passed on the committed source.
+- **UTM:** A separate ARM64 QEMU wizard was configured with 4096 MiB RAM, four CPU cores and OpenGL disabled. Clicking Browse for the v0.3.3 ISO returned `noWindowsAvailable`; the unsaved wizard was canceled. No VM was created and no existing VM/media was changed. The AMD64 ISO was not attached to a VM. No boot, guest screenshot, desktop, network or Calamares result is claimed. Manual selection paths are in `VM-TESTING.md`.
