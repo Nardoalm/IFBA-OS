@@ -51,14 +51,28 @@ clock.writeConfig("dateDisplayFormat", "1")
 
 var dock = new Panel
 dock.location = "bottom"
-dock.height = 58
+dock.height = 70
 dock.lengthMode = "fit"
 dock.alignment = "center"
 dock.floating = true
-dock.hiding = "autohide"
+dock.hiding = "dodgewindows"
+
+var dockLauncher = dock.addWidget("org.kde.plasma.kickoff")
+dockLauncher.currentConfigGroup = ["General"]
+dockLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-mark-placeholder.png")
 
 var tasks = dock.addWidget("org.kde.plasma.icontasks")
 tasks.currentConfigGroup = ["General"]
-tasks.writeConfig("launchers", "applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:ifba-ai.desktop,applications:systemsettings.desktop")
+tasks.writeConfig("launchers", "applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:ifba-ai.desktop,applications:org.thonny.Thonny.desktop,applications:org.kde.gcompris.desktop,applications:libreoffice-writer.desktop,applications:systemsettings.desktop")
 tasks.writeConfig("maxStripes", 1)
 tasks.writeConfig("showOnlyCurrentScreen", true)
+tasks.writeConfig("showToolTips", true)
+tasks.writeConfig("iconSpacing", 1)
+tasks.writeConfig("groupingStrategy", 1)
+tasks.writeConfig("groupedTaskVisualization", 0)
+tasks.writeConfig("groupPopups", true)
+tasks.writeConfig("sortingStrategy", 1)
+tasks.writeConfig("separateLaunchers", true)
+tasks.writeConfig("taskHoverEffect", false)
+
+dock.addWidget("org.kde.plasma.trash")

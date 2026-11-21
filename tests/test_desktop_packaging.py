@@ -173,10 +173,11 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("ddd d 'de' MMM yyyy", top_layout)
         self.assertIn('clock.writeConfig("use24hFormat", "2")', top_layout)
         self.assertIn('dock.location = "bottom"', layout)
+        self.assertIn('dock.height = 70', layout)
         self.assertIn('dock.lengthMode = "fit"', layout)
         self.assertIn('dock.alignment = "center"', layout)
         self.assertIn('dock.floating = true', layout)
-        self.assertIn('dock.hiding = "autohide"', layout)
+        self.assertIn('dock.hiding = "dodgewindows"', layout)
         self.assertIn('org.kde.plasma.icontasks', layout)
         for favorite in ("firefox.desktop", "org.kde.dolphin.desktop", "org.kde.konsole.desktop",
                          "ifba-ai.desktop", "systemsettings.desktop"):
@@ -185,6 +186,41 @@ class DesktopPackagingTests(unittest.TestCase):
                        "org.kde.plasma.systemtray", "org.kde.plasma.digitalclock",
                        "org.kde.plasma.panelspacer"):
             self.assertIn(widget, layout)
+        dock = layout.split("var dock = new Panel", 1)[1]
+        kickoff_index = dock.index('dock.addWidget("org.kde.plasma.kickoff")')
+        tasks_index = dock.index('dock.addWidget("org.kde.plasma.icontasks")')
+        trash_index = dock.index('dock.addWidget("org.kde.plasma.trash")')
+        self.assertLess(kickoff_index, tasks_index)
+        self.assertLess(tasks_index, trash_index)
+        launcher_line = re.search(r'tasks\.writeConfig\("launchers", "([^"]+)"\)', dock)
+        self.assertIsNotNone(launcher_line)
+        self.assertEqual(
+            launcher_line.group(1).split(","),
+            [
+                "applications:firefox.desktop",
+                "applications:org.kde.dolphin.desktop",
+                "applications:org.kde.konsole.desktop",
+                "applications:ifba-ai.desktop",
+                "applications:org.thonny.Thonny.desktop",
+                "applications:org.kde.gcompris.desktop",
+                "applications:libreoffice-writer.desktop",
+                "applications:systemsettings.desktop",
+            ],
+        )
+        self.assertIn('tasks.writeConfig("showToolTips", true)', dock)
+        self.assertIn('tasks.writeConfig("taskHoverEffect", false)', dock)
+        self.assertIn('tasks.writeConfig("groupingStrategy", 1)', dock)
+        self.assertIn('tasks.writeConfig("sortingStrategy", 1)', dock)
+        self.assertIn('tasks.writeConfig("iconSpacing", 1)', dock)
+        for required_file in (
+            "/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json",
+            "org.kde.plasma.taskmanager.so",
+            "org.kde.plasma.trash.so",
+            "org.thonny.Thonny.desktop",
+            "org.kde.gcompris.desktop",
+            "libreoffice-writer.desktop",
+        ):
+            self.assertIn(required_file, build)
         self.assertIn("LookAndFeelPackage=org.ifbaos.desktop", defaults)
         self.assertIn("[kwinrc][Desktops]\nNumber=1", defaults)
         self.assertIn("ButtonsOnLeft=\nButtonsOnRight=IAX", defaults)

@@ -262,6 +262,13 @@ for applet in org.kde.milou org.kde.plasma.kickoff org.kde.plasma.kicker \
   org.kde.plasma.networkmanagement org.kde.plasma.volume org.kde.plasma.battery; do
   find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so" -print -quit | grep -q .
 done
+test -s "$ROOTFS/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json"
+find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskmanager.so' -print -quit | grep -q .
+find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.trash.so' -print -quit | grep -q .
+for launcher in firefox.desktop org.kde.dolphin.desktop org.kde.konsole.desktop ifba-ai.desktop \
+  org.thonny.Thonny.desktop org.kde.gcompris.desktop libreoffice-writer.desktop systemsettings.desktop; do
+  test -s "$ROOTFS/usr/share/applications/$launcher"
+done
 cmp -s /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
 cmp -s /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
 cmp -s /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
