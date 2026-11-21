@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Id": "org.ifba.os.appdescriptionrunner",
+        "Name": "IFBA application descriptions",
+        "Description": "Find installed applications by their desktop entry descriptions",
+        "Version": "1.0",
+        "License": "GPL-2.0-or-later",
+        "EnabledByDefault": true
+    },
+    "X-Plasma-Runner-Unique-Results": false
+}

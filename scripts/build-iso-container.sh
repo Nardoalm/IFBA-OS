@@ -18,6 +18,10 @@ case "$IFBA_ARCH" in
     exit 2
     ;;
 esac
+KRUNNER_BUILD_PACKAGES=(
+  cmake g++ make extra-cmake-modules qt6-base-dev libkf6coreaddons-dev libkf6i18n-dev \
+  libkf6jobwidgets-dev libkf6kio-dev libkf6runner-dev libkf6service-dev
+)
 if [[ "$IFBA_ARCH" == amd64 ]]; then
   ROOTFS=/var/cache/ifba-rootfs/rootfs-plasma-26.04
 else
@@ -91,6 +95,23 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   polkitd pkexec qemu-guest-agent locales calamares squashfs-tools efibootmgr kdialog \
   python3-pyqt6 thonny libreoffice-writer gcompris-qt \
   "${INSTALLER_BOOT_PACKAGES[@]}"
+chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${KRUNNER_BUILD_PACKAGES[@]}"
+mkdir -p "$ROOTFS/tmp/ifba-app-description-runner"
+cp -R /work/packaging/plasma/ifba-app-description-runner/. "$ROOTFS/tmp/ifba-app-description-runner/"
+chroot "$ROOTFS" cmake -S /tmp/ifba-app-description-runner -B /tmp/ifba-app-description-runner/build \
+  -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=ON
+chroot "$ROOTFS" cmake --build /tmp/ifba-app-description-runner/build --parallel 2
+chroot "$ROOTFS" ctest --test-dir /tmp/ifba-app-description-runner/build --output-on-failure
+chroot "$ROOTFS" cmake --install /tmp/ifba-app-description-runner/build
+rm -rf "$ROOTFS/tmp/ifba-app-description-runner"
+chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get purge -y "${KRUNNER_BUILD_PACKAGES[@]}"
+chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get autoremove --purge -y
+for package in "${KRUNNER_BUILD_PACKAGES[@]}"; do
+  if chroot "$ROOTFS" dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null | grep -qx installed; then
+    printf 'Build-only dependency remains installed: %s\n' "$package" >&2
+    exit 1
+  fi
+done
 chroot "$ROOTFS" /bin/bash -euxc '
   id ubuntu >/dev/null 2>&1 || useradd -m -s /bin/bash -G sudo ubuntu
   passwd -d ubuntu
@@ -343,11 +364,13 @@ for applet in org.kde.milou org.kde.plasma.kickoff org.kde.plasma.kicker \
   org.kde.plasma.networkmanagement org.kde.plasma.volume org.kde.plasma.battery; do
   find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so" -print -quit | grep -q .
 done
+find "$ROOTFS/usr/lib" -path '*/kf6/krunner/ifba_app_description_runner.so' -print -quit | grep -q .
 test -s "$ROOTFS/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json"
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskmanager.so' -print -quit | grep -q .
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.trash.so' -print -quit | grep -q .
 for launcher in firefox.desktop org.kde.dolphin.desktop org.kde.konsole.desktop ifba-ai.desktop \
-  org.thonny.Thonny.desktop org.kde.gcompris.desktop libreoffice-writer.desktop systemsettings.desktop; do
+  org.thonny.Thonny.desktop org.kde.gcompris.desktop libreoffice-writer.desktop systemsettings.desktop \
+  suap-ifba.desktop ava-ifba.desktop; do
   test -s "$ROOTFS/usr/share/applications/$launcher"
 done
 cmp -s /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"

@@ -45,11 +45,15 @@ dock.hiding = "dodgewindows"
 var appLauncher = dock.addWidget("org.kde.plasma.kickoff")
 appLauncher.currentConfigGroup = ["General"]
 appLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")
-appLauncher.writeConfig("favorites", "applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:ifba-ai.desktop,applications:systemsettings.desktop")
+appLauncher.writeConfig("favorites", "applications:ifba-ai.desktop,applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:systemsettings.desktop,applications:suap-ifba.desktop,applications:ava-ifba.desktop")
 appLauncher.writeConfig("systemApplications", "systemsettings.desktop,org.kde.kinfocenter.desktop,org.kde.discover.desktop")
-appLauncher.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")
+appLauncher.writeConfig("systemFavorites", "suspend,logout,reboot,shutdown")
 appLauncher.writeConfig("primaryActions", "3")
 appLauncher.writeConfig("showActionButtonCaptions", "true")
+appLauncher.writeConfig("favoritesDisplay", 0)
+appLauncher.writeConfig("applicationsDisplay", 0)
+appLauncher.writeConfig("appNameFormat", 0)
+appLauncher.writeConfig("alphaSort", true)
 
 var tasks = dock.addWidget("org.kde.plasma.icontasks")
 tasks.currentConfigGroup = ["General"]

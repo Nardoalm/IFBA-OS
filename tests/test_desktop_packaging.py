@@ -225,7 +225,10 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("topPanel.floating = true", top_layout)
         self.assertNotIn('systemMenu.writeConfig("menuLabel", "IFBA OS")', top_layout)
         self.assertIn('appLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")', layout)
-        self.assertIn('appLauncher.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")', layout)
+        self.assertIn('appLauncher.writeConfig("systemFavorites", "suspend,logout,reboot,shutdown")', layout)
+        self.assertIn('appLauncher.writeConfig("favoritesDisplay", 0)', layout)
+        self.assertIn('appLauncher.writeConfig("applicationsDisplay", 0)', layout)
+        self.assertIn('appLauncher.writeConfig("alphaSort", true)', layout)
         self.assertIn('globalMenu.writeConfig("compactView", "true")', top_layout)
         self.assertNotIn("org.kde.plasma.kicker", top_layout)
         self.assertNotIn("org.kde.milou", top_layout)
@@ -280,6 +283,8 @@ class DesktopPackagingTests(unittest.TestCase):
             "org.thonny.Thonny.desktop",
             "org.kde.gcompris.desktop",
             "libreoffice-writer.desktop",
+            "suap-ifba.desktop",
+            "ava-ifba.desktop",
         ):
             self.assertIn(required_file, build)
         self.assertIn("LookAndFeelPackage=org.ifbaos.desktop", defaults)
@@ -317,6 +322,48 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("/lib/systemd/system/sddm.service", build)
         self.assertNotIn("xfce4-session", build)
         self.assertNotIn("lightdm", build.lower())
+
+    def test_kickoff_launcher_uses_native_catalog_grid_and_real_session_actions(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
+        kickoff = layout.split('var appLauncher = dock.addWidget("org.kde.plasma.kickoff")', 1)[1]
+        favorites = re.search(r'appLauncher\.writeConfig\("favorites", "([^"]+)"\)', kickoff)
+        self.assertIsNotNone(favorites)
+        self.assertEqual(favorites.group(1).split(","), [
+            "applications:ifba-ai.desktop",
+            "applications:firefox.desktop",
+            "applications:org.kde.dolphin.desktop",
+            "applications:org.kde.konsole.desktop",
+            "applications:systemsettings.desktop",
+            "applications:suap-ifba.desktop",
+            "applications:ava-ifba.desktop",
+        ])
+        self.assertIn('appLauncher.writeConfig("primaryActions", "3")', kickoff)
+        self.assertIn('appLauncher.writeConfig("systemFavorites", "suspend,logout,reboot,shutdown")', kickoff)
+        self.assertIn('find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so"', build)
+        self.assertIn("org.kde.plasma.kickoff", build)
+        self.assertIn('cp /work/packaging/firefox.desktop /work/packaging/suap-ifba.desktop /work/packaging/ava-ifba.desktop', build)
+
+    def test_kickoff_description_search_runner_is_built_tested_and_installed(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        runner_dir = ROOT / "packaging/plasma/ifba-app-description-runner"
+        cmake = (runner_dir / "CMakeLists.txt").read_text()
+        runner = (runner_dir / "appdescriptionrunner.cpp").read_text()
+        metadata = json.loads((runner_dir / "ifba_app_description_runner.json").read_text())
+
+        self.assertEqual(metadata["KPlugin"]["Id"], "org.ifba.os.appdescriptionrunner")
+        self.assertTrue(metadata["KPlugin"]["EnabledByDefault"])
+        self.assertIn("KF6::Runner", cmake)
+        self.assertIn("find_package(KF6Service REQUIRED)", cmake)
+        self.assertIn("include(CTest)", cmake)
+        self.assertIn("KApplicationTrader::query", runner)
+        self.assertIn("service->comment()", runner)
+        self.assertIn("KIO::ApplicationLauncherJob", runner)
+        self.assertIn('"${KRUNNER_BUILD_PACKAGES[@]}"', build)
+        self.assertIn("ctest --test-dir /tmp/ifba-app-description-runner/build --output-on-failure", build)
+        self.assertIn('apt-get purge -y "${KRUNNER_BUILD_PACKAGES[@]}"', build)
+        self.assertIn("Build-only dependency remains installed", build)
+        self.assertIn("*/kf6/krunner/ifba_app_description_runner.so", build)
 
     def test_plasma_session_setup_applies_panels_only_once(self):
         setup = ROOT / "packaging/plasma/ifba-os-session-setup"
