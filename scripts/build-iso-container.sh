@@ -74,6 +74,7 @@ cleanup_mounts() {
 }
 trap cleanup_mounts EXIT
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get update
+chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --with-new-pkgs
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   linux-image-generic casper plymouth plymouth-themes systemd-sysv \
   plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 \
@@ -257,6 +258,7 @@ done
 for package in "${INSTALLER_BOOT_PACKAGES[@]}"; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
+test "$(chroot "$ROOTFS" dpkg --print-architecture)" = "$IFBA_ARCH"
 test -L "$ROOTFS/etc/systemd/system/default.target"
 test "$(readlink "$ROOTFS/etc/systemd/system/default.target")" = /lib/systemd/system/graphical.target
 test -L "$ROOTFS/etc/systemd/system/display-manager.service"
@@ -276,3 +278,17 @@ menuentry "IFBA OS prototype (live)" {
 }
 GRUB
 grub-mkrescue -volid "IFBA_OS_26_04_${IFBA_ARCH}" -o "$OUT" "$ISO"
+VERIFY_DIR="$(mktemp -d)"
+xorriso -osirrox on -indev "$OUT" \
+  -extract /casper/vmlinuz "$VERIFY_DIR/vmlinuz" \
+  -extract /casper/initrd "$VERIFY_DIR/initrd" \
+  -extract /casper/filesystem.squashfs "$VERIFY_DIR/filesystem.squashfs" \
+  -extract /boot/grub/grub.cfg "$VERIFY_DIR/grub.cfg" \
+  -end
+for file in vmlinuz initrd filesystem.squashfs grub.cfg; do
+  test -s "$VERIFY_DIR/$file"
+done
+unsquashfs -cat "$VERIFY_DIR/filesystem.squashfs" usr/share/ifba-os/build-info.json \
+  > "$VERIFY_DIR/build-info.json"
+cmp -s "$VERIFY_DIR/build-info.json" "$BUILD_INFO_FILE"
+rm -rf "$VERIFY_DIR"

@@ -1,6 +1,6 @@
 # IFBA OS final audit matrix
 
-Audit date: 2026-11-20. This matrix retains the detailed 0.1.1/XFCE audit below; the latest source and Plasma ISO 0.2.1 are summarized in the KDE migration runtime update. A source declaration or mocked test is not runtime evidence. See `VM-TESTING.md` and `ISO-RELEASES.md`.
+Audit date: 2026-11-20. This matrix retains the detailed 0.1.1/XFCE audit below; the latest source and Plasma ISO 0.2.1 are summarized in the KDE migration runtime update. The current source integrity/account/update findings are in [`TECHNICAL-AUDIT.md`](TECHNICAL-AUDIT.md). A source declaration or mocked test is not runtime evidence. See `VM-TESTING.md` and `ISO-RELEASES.md`.
 
 | Requirement | Expected | Observed evidence | Status | Priority / correction or acceptance test |
 |---|---|---|---|---|

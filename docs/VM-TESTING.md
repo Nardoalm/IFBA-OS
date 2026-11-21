@@ -2,6 +2,14 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## Technical release audit — 2026-11-20
+
+- Reproduced and fixed a release-publisher validation gap. The previous verifier accepted arbitrary non-ISO bytes if the sidecar hash and size matched. The updated verifier checks ISO 9660 geometry/root record, El Torito boot catalog, architecture volume label, and AMD64 UEFI entry.
+- `tools/release_artifacts.py list --output output` verified the six existing local artifacts by checksum, size, and image structure. ARM64 v0.3.0 and AMD64 v0.3.1 remain on different source commits, so `latest/release-status.json` correctly remains incomplete.
+- In a disposable Ubuntu 24.04 container, `xorriso` extracted the kernel, initrd, SquashFS and GRUB config from the historical AMD64 v0.3.1 and ARM64 v0.3.0 ISOs. `unsquashfs -cat` read the embedded metadata for both architectures. It confirmed AMD64 `source_dirty: false` and ARM64 `source_dirty: true`, matching their recorded source commits. This is artifact inspection, not a Linux guest boot.
+- Release publication now rejects manifests whose `source_dirty` value is not exactly `false`; the historical ARM64 image remains preserved as-is and unvalidated for runtime.
+- No new ISO or guest VM was created. Host disk free space was about 4 GiB versus the documented 30 GiB build requirement. Fresh UEFI boot, systemd runtime, installation, login, update behavior, ARM64/AMD64 matched release, and performance remain unvalidated. Full scope and severity details: [`TECHNICAL-AUDIT.md`](TECHNICAL-AUDIT.md).
+
 ## IFBA Welcome source runtime — 2026-11-20
 
 - Added the native PyQt6 welcome window and tested it in disposable Ubuntu 26.04 Linux containers under Xvfb, using the distribution's `python3-pyqt6` package. ARM64 reported `arm64`/`aarch64`; AMD64 reported `amd64`/`x86_64`. Both runs opened the actual Qt window, checked the portal, AI, documentation and update sections, and verified the per-user opt-out preference and autostart skip path. Two focused runtime tests passed on each architecture.

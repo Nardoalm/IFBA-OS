@@ -12,7 +12,10 @@ import uuid
 from pathlib import Path
 
 
-NAME = re.compile(r"^ifba-os-ubuntu-(?:24\.04|26\.04)-(amd64|arm64)-v(\d+\.\d+\.\d+)\.iso$")
+NAME = re.compile(r"^ifba-os-ubuntu-(24\.04|26\.04)-(amd64|arm64)-v(\d+\.\d+\.\d+)\.iso$")
+SECTOR_SIZE = 2048
+ISO_PVD_OFFSET = 16 * SECTOR_SIZE
+EL_TORITO_SYSTEM_ID = b"EL TORITO SPECIFICATION"
 
 
 def sha256(path):
@@ -23,13 +26,80 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def validate_bootable_iso(iso, series, arch, version):
+    iso = Path(iso)
+    size = iso.stat().st_size
+    if size < 19 * SECTOR_SIZE or size % SECTOR_SIZE:
+        raise ValueError(f"not a complete ISO 9660 image: {iso}")
+
+    with iso.open("rb") as stream:
+        stream.seek(ISO_PVD_OFFSET)
+        pvd = stream.read(SECTOR_SIZE)
+        if len(pvd) != SECTOR_SIZE or pvd[:7] != b"\x01CD001\x01":
+            raise ValueError(f"missing ISO 9660 primary volume descriptor: {iso}")
+
+        label = pvd[40:72].decode("ascii", "replace").rstrip(" ")
+        expected_label = "IFBA_OS_" + series.replace(".", "_")
+        allowed_labels = {expected_label, expected_label + "_" + arch}
+        if label not in allowed_labels:
+            raise ValueError(f"unexpected ISO volume label {label!r}: {iso}")
+        if tuple(map(int, version.split("."))) >= (0, 3, 0) and label != expected_label + "_" + arch:
+            raise ValueError(f"architecture is missing from ISO volume label: {iso}")
+
+        volume_blocks = int.from_bytes(pvd[80:84], "little")
+        volume_blocks_be = int.from_bytes(pvd[84:88], "big")
+        block_size = int.from_bytes(pvd[128:130], "little")
+        block_size_be = int.from_bytes(pvd[130:132], "big")
+        if (volume_blocks == 0 or volume_blocks != volume_blocks_be
+                or block_size != SECTOR_SIZE or block_size != block_size_be
+                or volume_blocks * block_size > size):
+            raise ValueError(f"invalid ISO volume geometry: {iso}")
+
+        root = pvd[156:190]
+        if len(root) != 34 or root[0] < 34 or root[25] & 0x02 == 0 or root[32:34] != b"\x01\x00":
+            raise ValueError(f"invalid ISO root directory record: {iso}")
+        root_extent = int.from_bytes(root[2:6], "little")
+        root_extent_be = int.from_bytes(root[6:10], "big")
+        root_length = int.from_bytes(root[10:14], "little")
+        root_length_be = int.from_bytes(root[14:18], "big")
+        if (root_extent != root_extent_be or root_length != root_length_be or root_length == 0
+                or root_extent + (root_length + SECTOR_SIZE - 1) // SECTOR_SIZE > volume_blocks):
+            raise ValueError(f"invalid ISO root directory extent: {iso}")
+
+        boot_catalog_lba = None
+        found_terminator = False
+        for _ in range(1, 256):
+            descriptor = stream.read(SECTOR_SIZE)
+            if len(descriptor) != SECTOR_SIZE:
+                break
+            if descriptor[1:6] != b"CD001" or descriptor[6] != 1:
+                raise ValueError(f"invalid ISO volume descriptor sequence: {iso}")
+            if descriptor[0] == 0 and descriptor[7:39].rstrip(b"\x00 ") == EL_TORITO_SYSTEM_ID:
+                boot_catalog_lba = int.from_bytes(descriptor[71:75], "little")
+            if descriptor[0] == 255:
+                found_terminator = True
+                break
+        if boot_catalog_lba is None or not found_terminator or boot_catalog_lba >= volume_blocks:
+            raise ValueError(f"missing El Torito boot record or volume descriptor terminator: {iso}")
+        stream.seek(boot_catalog_lba * SECTOR_SIZE)
+        catalog = stream.read(128)
+        expected_platform = 0xEF if arch == "arm64" else 0x00
+        checksum = sum(int.from_bytes(catalog[i:i + 2], "little") for i in range(0, 32, 2)) & 0xFFFF
+        if (len(catalog) != 128 or catalog[0] != 1 or catalog[1] != expected_platform
+                or catalog[30:32] != b"\x55\xAA" or checksum != 0 or catalog[32] != 0x88):
+            raise ValueError(f"invalid El Torito boot catalog for {arch}: {iso}")
+        if arch == "amd64" and not (catalog[64] == 0x91 and catalog[65] == 0xEF and catalog[96] == 0x88):
+            raise ValueError(f"missing AMD64 UEFI boot entry: {iso}")
+
+
 def inspect(iso, manifest):
     iso, manifest = Path(iso), Path(manifest)
     data = json.loads(manifest.read_text(encoding="utf-8"))
     match = NAME.match(iso.name)
     if not match:
         raise ValueError(f"unsupported ISO filename: {iso.name}")
-    arch, version = match.groups()
+    series, arch, version = match.groups()
+    validate_bootable_iso(iso, series, arch, version)
     artifact = data.get("artifact", {})
     actual_hash = sha256(iso)
     if (data.get("architecture") != arch or data.get("system_version") != version
@@ -166,6 +236,8 @@ def atomic_json(path, data):
 
 def publish(iso, manifest, root):
     data = inspect(iso, manifest)
+    if data.get("source_dirty") is not False:
+        raise ValueError("refusing to publish an artifact without a clean source tree")
     root = Path(root).resolve()
     version_dir = root / "versions" / f"v{data['system_version']}"
     dest = version_dir / data["architecture"]

@@ -114,6 +114,18 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn('ifba-os-ubuntu-26.04-${ARCH}-v${SYSTEM_VERSION}.iso', host_build)
         self.assertIn('OUT="$OUTPUT_DIR/$ISO_FILENAME"', container_build)
         self.assertNotIn("ubuntu:26.04", host_build)
+        self.assertLess(
+            container_build.index('chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get update'),
+            container_build.index("apt-get upgrade -y --with-new-pkgs"),
+        )
+        self.assertLess(
+            container_build.index("apt-get upgrade -y --with-new-pkgs"),
+            container_build.index('chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install'),
+        )
+        self.assertIn('test "$(chroot "$ROOTFS" dpkg --print-architecture)" = "$IFBA_ARCH"', container_build)
+        self.assertIn("xorriso -osirrox on -indev \"$OUT\"", container_build)
+        self.assertIn("unsquashfs -cat", container_build)
+        self.assertIn('cmp -s "$VERIFY_DIR/build-info.json" "$BUILD_INFO_FILE"', container_build)
         for required in (
             "wallpaper.png",
             "IFBA-OS-Dark.colors",

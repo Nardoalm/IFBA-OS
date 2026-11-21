@@ -11,15 +11,59 @@ release = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(release)
 
 
-def make_artifact(root, arch, version, commit="abc123"):
-    name = f"ifba-os-ubuntu-26.04-{arch}-v{version}.iso"
+def make_artifact(root, arch, version, commit="abc123", series="26.04"):
+    name = f"ifba-os-ubuntu-{series}-{arch}-v{version}.iso"
     path = root / name
-    path.write_bytes((arch + version).encode())
+    image = bytearray(32 * release.SECTOR_SIZE)
+    pvd = bytearray(release.SECTOR_SIZE)
+    pvd[:7] = b"\x01CD001\x01"
+    volume_label = "IFBA_OS_" + series.replace(".", "_")
+    if tuple(map(int, version.split("."))) >= (0, 3, 0):
+        volume_label += "_" + arch
+    pvd[40:72] = volume_label.encode("ascii").ljust(32, b" ")
+    pvd[80:84] = (32).to_bytes(4, "little")
+    pvd[84:88] = (32).to_bytes(4, "big")
+    pvd[128:130] = release.SECTOR_SIZE.to_bytes(2, "little")
+    pvd[130:132] = release.SECTOR_SIZE.to_bytes(2, "big")
+    root = bytearray(34)
+    root[0] = 34
+    root[2:6] = (19).to_bytes(4, "little")
+    root[6:10] = (19).to_bytes(4, "big")
+    root[10:14] = release.SECTOR_SIZE.to_bytes(4, "little")
+    root[14:18] = release.SECTOR_SIZE.to_bytes(4, "big")
+    root[25] = 0x02
+    root[28:30] = (1).to_bytes(2, "little")
+    root[30:32] = (1).to_bytes(2, "big")
+    root[32:34] = b"\x01\x00"
+    pvd[156:190] = root
+    boot = bytearray(release.SECTOR_SIZE)
+    boot[:7] = b"\x00CD001\x01"
+    boot[7:39] = release.EL_TORITO_SYSTEM_ID.ljust(32, b"\x00")
+    boot[71:75] = (20).to_bytes(4, "little")
+    catalog = bytearray(release.SECTOR_SIZE)
+    catalog[0] = 1
+    catalog[1] = 0xEF if arch == "arm64" else 0
+    catalog[30:32] = b"\x55\xAA"
+    catalog[32] = 0x88
+    if arch == "amd64":
+        catalog[64:67] = bytes((0x91, 0xEF, 1))
+        catalog[96] = 0x88
+    checksum = sum(int.from_bytes(catalog[i:i + 2], "little") for i in range(0, 32, 2)) & 0xFFFF
+    catalog[28:30] = ((-checksum) & 0xFFFF).to_bytes(2, "little")
+    end = bytearray(release.SECTOR_SIZE)
+    end[:7] = b"\xffCD001\x01"
+    image[16 * release.SECTOR_SIZE:17 * release.SECTOR_SIZE] = pvd
+    image[17 * release.SECTOR_SIZE:18 * release.SECTOR_SIZE] = boot
+    image[18 * release.SECTOR_SIZE:19 * release.SECTOR_SIZE] = end
+    image[19 * release.SECTOR_SIZE:20 * release.SECTOR_SIZE] = bytes(release.SECTOR_SIZE)
+    image[20 * release.SECTOR_SIZE:21 * release.SECTOR_SIZE] = catalog
+    path.write_bytes(image)
     data = {
         "architecture": arch,
         "system_version": version,
         "build_id": f"test-{arch}-{version}",
         "source_commit": commit,
+        "source_dirty": False,
         "status": "unvalidated",
         "artifact": {"file": name, "sha256": release.sha256(path), "size_bytes": path.stat().st_size},
     }
@@ -29,6 +73,63 @@ def make_artifact(root, arch, version, commit="abc123"):
 
 
 class ReleaseArtifactsTests(unittest.TestCase):
+    def test_publish_refuses_artifacts_built_from_dirty_source(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = root / "incoming"
+            source.mkdir()
+            iso, manifest = make_artifact(source, "amd64", "0.3.2")
+            data = json.loads(manifest.read_text())
+            data["source_dirty"] = True
+            manifest.write_text(json.dumps(data))
+
+            with self.assertRaisesRegex(ValueError, "clean source tree"):
+                release.publish(iso, manifest, root)
+            self.assertTrue(iso.is_file())
+            self.assertFalse((root / "versions/v0.3.2/amd64").exists())
+
+    def test_inspect_rejects_self_consistent_manifest_for_non_iso_payload(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            iso, manifest = make_artifact(root, "amd64", "0.3.2")
+            iso.write_bytes(b"not an ISO, with a matching checksum")
+            data = json.loads(manifest.read_text())
+            data["artifact"]["sha256"] = release.sha256(iso)
+            data["artifact"]["size_bytes"] = iso.stat().st_size
+            manifest.write_text(json.dumps(data))
+
+            with self.assertRaisesRegex(ValueError, "not a complete ISO"):
+                release.inspect(iso, manifest)
+
+    def test_inspect_rejects_an_iso_with_a_mismatched_architecture_label(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            iso, manifest = make_artifact(root, "amd64", "0.3.2")
+            with iso.open("r+b") as stream:
+                stream.seek(16 * release.SECTOR_SIZE + 40)
+                stream.write(b"IFBA_OS_26_04_arm64".ljust(32, b" "))
+            data = json.loads(manifest.read_text())
+            data["artifact"]["sha256"] = release.sha256(iso)
+            data["artifact"]["size_bytes"] = iso.stat().st_size
+            manifest.write_text(json.dumps(data))
+
+            with self.assertRaisesRegex(ValueError, "unexpected ISO volume label"):
+                release.inspect(iso, manifest)
+
+    def test_inspect_rejects_amd64_iso_without_a_uefi_boot_entry(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            iso, manifest = make_artifact(root, "amd64", "0.3.2")
+            with iso.open("r+b") as stream:
+                stream.seek(20 * release.SECTOR_SIZE + 64)
+                stream.write(bytes(1))
+            data = json.loads(manifest.read_text())
+            data["artifact"]["sha256"] = release.sha256(iso)
+            manifest.write_text(json.dumps(data))
+
+            with self.assertRaisesRegex(ValueError, "missing AMD64 UEFI"):
+                release.inspect(iso, manifest)
+
     def test_migrate_preserves_hash_and_legacy_path(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -98,12 +199,8 @@ class ReleaseArtifactsTests(unittest.TestCase):
     def test_migration_repairs_known_legacy_filename_metadata_without_changing_iso(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            iso, manifest = make_artifact(root, "amd64", "0.1.0")
+            iso, manifest = make_artifact(root, "amd64", "0.1.0", series="24.04")
             expected_name = "ifba-os-ubuntu-24.04-amd64-v0.1.0.iso"
-            renamed = iso.with_name(expected_name)
-            iso.rename(renamed)
-            Path(str(iso) + ".manifest.json").rename(Path(str(renamed) + ".manifest.json"))
-            iso = renamed
             manifest = Path(str(iso) + ".manifest.json")
             data = json.loads(manifest.read_text())
             data["artifact"]["file"] = "ifba-os-ubuntu-24.04-amd64.iso"
