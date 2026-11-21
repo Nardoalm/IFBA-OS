@@ -2,6 +2,14 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## UTM ARM64 VM creation attempt — 2026-11-20
+
+- Confirmed the existing `Linux` VM remains suspended, x86_64/Q35, 4 GiB RAM, Shared/NAT networking, and attached to the older AMD64 v0.2.1 ISO. It was not modified or deleted.
+- Started a separate Linux QEMU wizard and set 4096 MiB RAM and 4 CPU cores. Apple Virtualization remained off. The wizard had not yet reached disk or network configuration.
+- UTM's **Browse…** control for the boot ISO returned `noWindowsAvailable` from the computer-use layer. The wizard was canceled before saving because the ARM64 media path and guest architecture could not be confirmed. No ARM VM was created and no boot was attempted.
+- Manual action needed: in UTM, create a Linux VM using QEMU, choose **Boot from ISO image**, click **Browse…**, and select `/Users/leonardo/Documents/IFBA-OS/output/versions/v0.3.0/arm64/ifba-os-ubuntu-26.04-arm64-v0.3.0.iso`. Before saving, confirm ARM64 guest architecture, 4 CPUs, 4 GiB RAM, a separate 30 GiB disk and Shared/NAT networking; do not attach or alter the existing AMD64 VM. Once saved, start it and resume the checklist below.
+- This limitation is specific to the native UTM file-picker window. It did not block repository changes, artifact migration, tests, or documentation.
+
 ## Multiarchitecture UTM plan — 2026-11-20
 
 - **Host:** Apple Silicon MacBook Air M4, 16 GiB RAM, 10 logical CPUs; Docker Desktop reports 8 CPUs/8.2 GiB to the build VM. Host filesystem reported 14 GiB free at the start of this work and 9.9 GiB after the ARM64 build. The ARM test VM should use 4 vCPUs, 4 GiB RAM and a separate sparse 30 GiB disk, leaving host memory for macOS and Docker.

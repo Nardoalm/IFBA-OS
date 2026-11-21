@@ -45,6 +45,12 @@ The 0.2.1 UTM screenshot shows the supplied metallic wallpaper, AVA IFBA, IFBA A
 
 Detailed immutable build identities, hashes, tests, and UTM observations are in `ISO-RELEASES.md`. The live ISO is still a prototype; visual desktop startup does not make the migration functionally complete.
 
+## Release artifact organization — 2026-11-20
+
+All six versioned ISO artifacts now reside under `output/versions/vX.Y.Z/{amd64,arm64}/` with per-artifact manifests; root compatibility names and `latest/` use symlinks, so ISO files are not duplicated. The latest AMD64 artifact is v0.3.1 and ARM64 is v0.3.0; their source commits differ and `complete_pair` remains false. No v0.3.2 ISO exists. Artifact hashes and sizes were checked before and after migration. The `--both` source path now holds version/commit constant and isolates build IDs, manifests, and staging output by architecture. See `ISO-RELEASES.md` and `BUILDING.md`.
+
+UTM ARM64 VM creation remains blocked at the native file picker (`noWindowsAvailable`). The attempted unsaved wizard was canceled, and the existing suspended AMD64 VM remains unchanged. No ARM boot was performed; manual ISO selection steps are in `VM-TESTING.md`.
+
 ## Corrective rebuild — 2026-11-19
 
 - Restored Ubuntu Noble's XFCE failsafe session name and process list; retained `SaveOnExit=false` and added regression assertions. This corrects a concrete configuration defect that matched one possible cause of the “Unable to load a failsafe session” error. The popup did not recur, but a usable session was not reached.

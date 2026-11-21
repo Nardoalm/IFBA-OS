@@ -2,7 +2,7 @@
 
 ## Current platform
 
-The latest built Plasma prototype is Ubuntu 26.04 amd64 (ISO 0.2.1); the prior Ubuntu 24.04/XFCE4 implementation remains preserved on `legacy/xfce4`. The current source is being refactored to build one shared Plasma distribution for both amd64 and arm64. Architecture support must be evidenced by distinct manifests and real boot checks. The Electron files in `app/` are a design prototype and are not part of the desktop runtime.
+The active prototype uses Ubuntu 26.04 and KDE Plasma 6 with shared build inputs for AMD64 and ARM64. Historical artifacts are catalogued under `output/versions/`; the newest available images are AMD64 v0.3.1 and ARM64 v0.3.0, from different source commits, so they are not a matched release pair. They are not relabeled v0.3.2. The former Ubuntu 24.04/XFCE4 implementation remains in `legacy/xfce4`. Architecture support requires separate build and real boot evidence. The Electron files in `app/` are a design prototype and are not part of the desktop runtime.
 
 ## KDE migration decision and status
 
@@ -16,7 +16,7 @@ The Plasma package defines the `IFBA OS Dark` color scheme and a first-run panel
 
 ## Multiarchitecture build model
 
-`scripts/build-iso.sh --arch amd64|arm64` invokes one common Plasma build recipe. It varies the Docker host platform, debootstrap architecture, official archive mirror, kernel packages resolved for the target, GRUB EFI packages, rootfs/cache directory, ISO volume label and filename. AMD64 retains BIOS/EFI GRUB and its existing cache; ARM64 uses ARM EFI GRUB and a separate native Docker/cache path. Output manifests identify `amd64` versus `arm64`. A successful container build and ISO structure inspection are necessary but do not establish UTM guest boot; each architecture needs its own VM runtime evidence.
+`scripts/build-iso.sh --both` invokes one common Plasma recipe twice from a clean, fixed source commit and shared product version. It varies Docker platform, debootstrap architecture, archive mirror, native kernel packages, GRUB EFI packages, isolated rootfs/cache, ISO volume label and architecture-specific build ID/manifest. It verifies the fixed HEAD before each architecture and refuses to start from dirty source. The publisher verifies SHA-256/size and stores each ISO under `output/versions/vX.Y.Z/{amd64,arm64}/`; `output/latest/` symlinks avoid large duplicates and `release-status.json` distinguishes a matched pair from mixed historical latest artifacts. A successful container build and ISO structure inspection do not establish UTM guest boot; each architecture needs its own VM runtime evidence.
 
 ## XFCE defaults and precedence
 

@@ -44,8 +44,10 @@
 
 - [x] Add one `--arch amd64|arm64` build interface, isolated ARM64 rootfs/cache, architecture-specific archive, bootloader, output filename, build ID and embedded architecture field while preserving the existing AMD64 cache and default command.
 - [x] Build version 0.3.0 for ARM64 and verify the UEFI ARM64 payload and architecture-specific ISO contents. The build fix installs `mtools` so `grub-mkrescue` can generate the EFI image.
-- [ ] Create a separate native ARM64 UTM VM and boot version 0.3.0. The VM wizard is open but ISO selection is currently blocked by the computer-use layer returning `noWindowsAvailable` for the file picker.
+- [ ] Create a separate native ARM64 UTM VM and boot version 0.3.0. The wizard accepted 4 GiB/4 CPU settings, but the ISO Browse control returned `noWindowsAvailable`; the unsaved wizard was canceled. Manual file-picker selection is recorded in `VM-TESTING.md`.
 - [x] Build distinct AMD64 version 0.3.1 from the shared source and verify its x86_64 UEFI payload, Casper kernel/initrd and SquashFS; existing VM and prior artifacts remain preserved.
+- [x] Organize all six versioned artifacts under `output/versions/vX.Y.Z/{amd64,arm64}/`, verify their hashes and byte sizes, add architecture-specific `latest/` symlinks, and record the unmatched 0.3.0/0.3.1 status. No 0.3.2 ISO has been built.
+- [x] Update `--both` to capture one clean source commit and product version, isolate filenames/build IDs/manifests per architecture, recheck source identity after each container build, and publish complete artifacts without duplicating ISO files.
 - [ ] Measure comparable boot, idle CPU/RAM, Dolphin, Firefox, IFBA AI and responsiveness on emulated AMD64 and virtualized ARM64. Do not infer performance from architecture alone.
 - [ ] Validate network/DHCP/DNS/HTTPS, Firefox and IFBA AI in guest sessions before marking them functional.
 

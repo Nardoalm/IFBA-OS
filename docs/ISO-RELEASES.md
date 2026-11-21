@@ -139,4 +139,21 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 
 ## Next product version
 
-Product version `0.3.1` is the latest built artifact (AMD64); ARM64 `0.3.0` is its architecture counterpart. Neither has guest runtime validation. Assign a new version (`0.3.2` unless release scope changes) before another ISO build. Preserve all existing artifacts and records.
+The latest existing artifacts are AMD64 `0.3.1` and ARM64 `0.3.0`, but they are not a matched release because their source commits differ. Neither has guest runtime validation. Product version `0.3.2` is reserved for the next matched release; no ISO for it has been built. Preserve all existing artifacts and records.
+
+## Artifact organization migration — 2026-11-20
+
+All six versioned ISO artifacts and the unversioned 24.04 AMD64 compatibility alias were SHA-256 and byte-size verified against their manifests before migration. The six versioned artifacts are now stored once under `output/versions/vX.Y.Z/{amd64,arm64}/` with one `manifest.json` per artifact. ISO content hashes remained unchanged after the move. Root-level versioned ISO names and their sidecar manifests are relative symlinks to the archived files, preserving existing local references without copying multi-gigabyte images. The unversioned 24.04 AMD64 compatibility path points to the identical v0.1.1 ISO; its legacy sidecar remains available.
+
+The v0.1.0 manifest had a historical filename mismatch (`artifact.file` named the unversioned 24.04 alias), even though the recorded SHA-256 and size matched the versioned v0.1.0 ISO. During migration, only that JSON filename field was corrected to the exact archived ISO name; no ISO bytes changed. This normalization is covered by a regression test.
+
+| Version / architecture | Build ID | Source commit | ISO SHA-256 | Size (bytes) | Runtime status |
+|---|---|---|---|---:|---|
+| 0.1.0 / amd64 | `ifba-20261119T180608Z-786e4d60b842` | `786e4d60b842f330c2f46189d9ce794df900b57a` | `2f190e1b8b4e842d77e710f1586502cb3d19a90026bf368a2bf5fcd2df1ac344` | 1,362,454,528 | Desktop previously observed; see history above |
+| 0.1.1 / amd64 | `ifba-20261120T151145Z-4c09ec5b71b3` | `4c09ec5b71b330ab6a2dc690b0230ca965efb3d1` | `f8b82cd3245b89c45f982197c1d75164fa5e4775562e9a33c69b4a04be83f871` | 1,505,392,640 | Desktop observed; features listed above remain unverified |
+| 0.2.0 / amd64 | `ifba-20261120T161731Z-f06990135de4` | `f06990135de490fe5de280bf3e7e9dcabf95fd7a` | `9770ffcfa428e2bf219c1159eba978bf719df284255e1485fd26d768ea75896d` | 1,700,597,760 | Splash/black, no desktop in that observation |
+| 0.2.1 / amd64 | `ifba-20261120T164231Z-cc43d4e43747` | `cc43d4e43747a54b84761f5940e2e44583c12520` | `af961e76720e664eb1512485181b277598fa7044a491402dbe163b9698d6c75c` | 1,713,565,696 | Plasma desktop observed; functionality incomplete |
+| 0.3.0 / arm64 | `ifba-20261120T173559Z-arm64-66f71bdac5cc` | `66f71bdac5cc8a08240aa9340627bdfed6095274` (dirty source) | `e9571211d212d0c1990a8058ff76310ebdef2096f30a4e2078addbf27c08dd40` | 1,669,216,256 | Not boot-tested in UTM |
+| 0.3.1 / amd64 | `ifba-20261120T174613Z-amd64-fe3960ea9231` | `fe3960ea923108561caf58e0e5ff4bab31fdbd84` | `ef6039c1a5a103c8ae48cd5396ae939857e347bdf21f3b5c9df93e64d8fd11a4` | 1,715,800,064 | Not runtime-tested |
+
+`output/latest/amd64/` points to v0.3.1; `output/latest/arm64/` points to v0.3.0. `output/latest/release-status.json` records both source commits and `complete_pair: false`. No v0.3.2 ISO exists or is implied by these pointers. These local output artifacts are intentionally ignored by Git; the table preserves their verified identities in tracked documentation.
