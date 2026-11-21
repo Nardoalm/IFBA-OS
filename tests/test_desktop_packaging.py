@@ -3,6 +3,7 @@
 import configparser
 import json
 from pathlib import Path
+import re
 import unittest
 import xml.etree.ElementTree as ET
 
@@ -116,6 +117,7 @@ class DesktopPackagingTests(unittest.TestCase):
             "plasma-session-wayland",
             "plasma-session-x11",
             "kwin-x11",
+            "milou",
             "sddm",
             "dolphin",
             "konsole",
@@ -123,6 +125,9 @@ class DesktopPackagingTests(unittest.TestCase):
             "plasma-nm",
             "plasma-pa",
             "systemsettings",
+            "kinfocenter",
+            "powerdevil",
+            "upower",
         ):
             self.assertIn(package, build)
         self.assertIn('debootstrap --arch="$IFBA_ARCH" resolute', build)
@@ -131,7 +136,41 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("org.ifbaos.desktop", build)
         self.assertEqual(metadata["KPackageStructure"], "Plasma/LookAndFeel")
         self.assertEqual(metadata["KPlugin"]["Id"], "org.ifbaos.desktop")
-        self.assertIn('topPanel.location = "top"', layout)
+        top_layout = layout.split("var dock = new Panel", 1)[0]
+        top_widgets = re.findall(r'topPanel\.addWidget\("([^"]+)"\)', top_layout)
+        self.assertEqual(
+            top_widgets,
+            [
+                "org.kde.plasma.kickoff",
+                "org.kde.plasma.kicker",
+                "org.kde.plasma.appmenu",
+                "org.kde.plasma.panelspacer",
+                "org.kde.milou",
+                "org.kde.plasma.systemtray",
+                "org.kde.plasma.digitalclock",
+            ],
+        )
+        self.assertIn('topPanel.location = "top"', top_layout)
+        self.assertIn("topPanel.height = 36", top_layout)
+        self.assertIn("topPanel.floating = true", top_layout)
+        self.assertIn('systemMenu.writeConfig("menuLabel", "IFBA OS")', top_layout)
+        self.assertIn('file:///usr/share/ifba-os/assets/icons/ifba-mark-placeholder.png', top_layout)
+        self.assertIn('systemMenu.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")', top_layout)
+        self.assertIn("systemsettings.desktop,org.kde.kinfocenter.desktop", top_layout)
+        self.assertIn("applications:org.kde.kinfocenter.desktop", top_layout)
+        self.assertIn("applications:systemsettings.desktop", top_layout)
+        self.assertIn('globalMenu.writeConfig("compactView", "false")', top_layout)
+        self.assertIn('search = topPanel.addWidget("org.kde.milou")', top_layout)
+        for tray_item in (
+            "org.kde.plasma.notifications",
+            "org.kde.plasma.networkmanagement",
+            "org.kde.plasma.volume",
+            "org.kde.plasma.battery",
+        ):
+            self.assertIn(tray_item, top_layout)
+        self.assertIn('clock.writeConfig("dateFormat", "custom")', top_layout)
+        self.assertIn("ddd d 'de' MMM yyyy", top_layout)
+        self.assertIn('clock.writeConfig("use24hFormat", "2")', top_layout)
         self.assertIn('dock.location = "bottom"', layout)
         self.assertIn('dock.lengthMode = "fit"', layout)
         self.assertIn('dock.alignment = "center"', layout)
@@ -155,6 +194,20 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('touch "$marker"', setup)
         self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop", setup)
         self.assertIn("plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png", setup)
+        self.assertIn('cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/etc/skel/.config/autostart/"', build)
+        self.assertIn('find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so"', build)
+        for applet in (
+            "org.kde.milou",
+            "org.kde.plasma.kickoff",
+            "org.kde.plasma.kicker",
+            "org.kde.plasma.appmenu",
+            "org.kde.plasma.systemtray",
+            "org.kde.plasma.notifications",
+            "org.kde.plasma.networkmanagement",
+            "org.kde.plasma.volume",
+            "org.kde.plasma.battery",
+        ):
+            self.assertIn(applet, build)
         self.assertIn("Session=plasmax11.desktop", build)
         self.assertIn("/lib/systemd/system/sddm.service", build)
         self.assertNotIn("xfce4-session", build)

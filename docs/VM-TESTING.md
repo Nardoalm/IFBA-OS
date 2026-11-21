@@ -2,6 +2,13 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## Plasma top bar source update — 2026-11-20
+
+- Updated only the top-panel portion of the Plasma Look-and-Feel layout. It now uses native Kickoff for the IFBA OS logo/system actions, Kicker for the categorized app menu, AppMenu for applications that export a global menu, Milou for search, Plasma System Tray for notification/network/audio/battery indicators, and Digital Clock for a Portuguese regional date with 24-hour time. The bottom panel and wallpaper settings were left unchanged.
+- Added explicit Ubuntu package dependencies and build guards for Milou, KInfoCenter, PowerDevil/UPower, and the applet plugin files needed by the bar. The per-user Look-and-Feel setup remains installed in `/etc/skel` autostart so first login applies the layout after reboot for new accounts.
+- Source checks: `node --check` on the layout, focused panel/build contract tests, full repository test suite, and `bash -n` on the ISO build script. These checks validate the source and package declarations only.
+- Graphics acceptance is **pending**. UTM has a running ARM VM with historical v0.3.0 media; that image does not contain this layout update. The host's `utmctl list` returned macOS Automation `OSStatus -1743`; this run did not obtain guest screenshots or reliable input. No new ISO was built because the host had about 4.2 GiB free versus the documented 30 GiB build requirement. Therefore no claim is made about rendered widgets, system-menu actions, Wayland/X11 behavior, or scaling at different resolutions.
+
 ## Technical release audit — 2026-11-20
 
 - Reproduced and fixed a release-publisher validation gap. The previous verifier accepted arbitrary non-ISO bytes if the sidecar hash and size matched. The updated verifier checks ISO 9660 geometry/root record, El Torito boot catalog, architecture volume label, and AMD64 UEFI entry.

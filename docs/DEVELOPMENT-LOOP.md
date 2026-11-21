@@ -1,5 +1,12 @@
 # Development loop record
 
+## IFBA OS top bar — 2026-11-20
+
+- **Objective:** Implement only the Plasma 6 top bar while preserving the existing bottom panel and wallpaper.
+- **Changes:** The native layout now places IFBA-branded Kickoff/system actions, Kicker app categories, AppMenu, Milou search, real notification/network/audio/battery tray applets, and a pt-BR 24-hour clock in a 36 px floating panel. Explicit package and multiarch plugin-path guards cover the corresponding Ubuntu 26.04 applets and KInfoCenter.
+- **Checks:** Focused panel packaging test, full unit suite, layout JavaScript syntax, build-script Bash syntax, and Ubuntu package file-list checks for AMD64 and ARM64.
+- **Runtime status:** Pending. The running UTM ARM VM uses historical v0.3.0 media; `utmctl list` returns macOS Automation `OSStatus -1743` in this session. No guest screenshot or different-resolution interaction was captured, and no new ISO was built because the host has about 4.2 GiB free versus the documented 30 GiB requirement.
+
 ## Plasma visual layout candidate — 2026-11-20
 
 - **Objective:** Improve only the KDE Plasma 6 presentation using native applets, panels and KWin settings while retaining IFBA identity and the existing Plasma desktop.
