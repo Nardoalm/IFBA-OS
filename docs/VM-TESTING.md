@@ -2,6 +2,14 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## IFBA Welcome source runtime — 2026-11-20
+
+- Added the native PyQt6 welcome window and tested it in disposable Ubuntu 26.04 Linux containers under Xvfb, using the distribution's `python3-pyqt6` package. ARM64 reported `arm64`/`aarch64`; AMD64 reported `amd64`/`x86_64`. Both runs opened the actual Qt window, checked the portal, AI, documentation and update sections, and verified the per-user opt-out preference and autostart skip path. Two focused runtime tests passed on each architecture.
+- The complete repository suite passed 79 tests on the macOS development host; the two PyQt6 runtime tests are skipped there because native PyQt6 is unavailable. Python compilation, educational-app JSON parsing, build-script Bash syntax, and `git diff --check` passed.
+- Runtime scope: Xvfb is an X11 virtual display, not a KDE Plasma session. This verifies the Linux/PyQt application process and window, not Plasma's `/etc/xdg/autostart`, menu integration, Wayland rendering, visual appearance, launcher, closing/reopening in a desktop session, or session persistence.
+- No ISO was built or modified. The host did not provide an accessible Plasma guest; prior UTM checks document the existing VM limitation. The new Welcome source is therefore not present in the historical ISO artifacts. First-login KDE, launcher, Wayland, and visual acceptance remain pending a rebuilt disposable VM.
+- No public website was visited, academic credentials/API used, or IFBA AI/NVIDIA request made.
+
 ## Calamares installer candidate — 2026-11-20
 
 - Source review confirmed the active Ubuntu 26.04/Plasma build uses a shared passwordless `ubuntu` live account with SDDM autologin. The candidate install sequence explicitly removes that account and home, removes its SDDM autologin file, and purges Casper before rebuilding initramfs.

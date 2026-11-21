@@ -1,5 +1,5 @@
 [
-  {"id":"thony","name":"Thonny","category":"Programming","package":"thonny","license":"MIT","source":"Ubuntu archive","status":"candidate"},
+  {"id":"thonny","name":"Thonny","category":"Programming","package":"thonny","license":"MIT","source":"Ubuntu archive","status":"installed"},
   {"id":"git","name":"Git","category":"Programming","package":"git","license":"GPL-2.0-or-later","source":"Ubuntu archive","status":"candidate"},
   {"id":"python3","name":"Python 3","category":"Programming","package":"python3","license":"PSF-2.0","source":"Ubuntu archive","status":"candidate"},
   {"id":"arduino","name":"Arduino IDE","category":"Programming","package":"arduino","license":"verify per package version","source":"Ubuntu archive","status":"review"},
@@ -7,7 +7,7 @@
   {"id":"inkscape","name":"Inkscape","category":"Creative","package":"inkscape","license":"GPL-2.0-or-later","source":"Ubuntu archive","status":"candidate"},
   {"id":"blender","name":"Blender","category":"Creative","package":"blender","license":"GPL-3.0-or-later","source":"Ubuntu archive","status":"candidate"},
   {"id":"audacity","name":"Audacity","category":"Creative","package":"audacity","license":"GPL-3.0-or-later","source":"Ubuntu archive","status":"candidate"},
-  {"id":"libreoffice","name":"LibreOffice","category":"Office","package":"libreoffice","license":"MPL-2.0 / LGPL-3.0-or-later","source":"Ubuntu archive","status":"candidate"},
-  {"id":"gcompris","name":"GCompris","category":"Learning","package":"gcompris-qt","license":"GPL-3.0-or-later","source":"Ubuntu archive","status":"candidate"},
+  {"id":"libreoffice","name":"LibreOffice Writer","category":"Office","package":"libreoffice-writer","license":"MPL-2.0 / LGPL-3.0-or-later","source":"Ubuntu archive","status":"installed"},
+  {"id":"gcompris","name":"GCompris","category":"Learning","package":"gcompris-qt","license":"GPL-3.0-or-later","source":"Ubuntu archive","status":"installed"},
   {"id":"scratch","name":"Scratch Desktop","category":"Learning","package":"scratch","license":"verify availability and license","source":"Ubuntu archive","status":"review"}
 ]

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=IFBA OS Welcome
+Exec=/usr/bin/ifba-welcome --autostart
+TryExec=/usr/bin/ifba-welcome
+OnlyShowIn=KDE;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

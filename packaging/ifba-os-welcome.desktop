@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Boas-vindas do IFBA OS
+Name[pt_BR]=Boas-vindas do IFBA OS
+Comment=Acesse portais, ferramentas e documentação do IFBA OS
+Exec=/usr/bin/ifba-welcome
+TryExec=/usr/bin/ifba-welcome
+Icon=applications-education
+Terminal=false
+Categories=Education;System;Utility;
+OnlyShowIn=KDE;
+StartupNotify=true

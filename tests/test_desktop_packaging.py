@@ -206,6 +206,32 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertLess(sequence.index("shellprocess"), sequence.index("users"))
         self.assertLess(sequence.index("users"), sequence.index("displaymanager"))
 
+    def test_ifba_welcome_is_packaged_as_a_kde_first_session_app(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        source = (ROOT / "welcome/ifba_welcome.py").read_text()
+        desktop = configparser.ConfigParser(interpolation=None)
+        desktop.read(ROOT / "packaging/ifba-os-welcome.desktop")
+        autostart = configparser.ConfigParser(interpolation=None)
+        autostart.read(ROOT / "packaging/ifba-os-welcome-autostart.desktop")
+        tools = json.loads((ROOT / "config/educational-apps.json").read_text())
+        installed_tools = {item["package"] for item in tools if item["status"] == "installed"}
+
+        self.assertIn("python3-pyqt6", build)
+        self.assertIn("/work/welcome/ifba_welcome.py", build)
+        self.assertIn("/etc/xdg/autostart/ifba-os-welcome.desktop", build)
+        self.assertIn("thonny libreoffice-writer gcompris-qt", build)
+        self.assertTrue({"thonny", "libreoffice-writer", "gcompris-qt"}.issubset(installed_tools))
+        self.assertEqual(desktop["Desktop Entry"]["Exec"], "/usr/bin/ifba-welcome")
+        self.assertEqual(desktop["Desktop Entry"]["OnlyShowIn"], "KDE;")
+        self.assertEqual(autostart["Desktop Entry"]["Exec"], "/usr/bin/ifba-welcome --autostart")
+        self.assertIn("https://suap.ifba.edu.br/", source)
+        self.assertIn("https://ava.ifba.edu.br/", source)
+        self.assertIn("--mode", source)
+        self.assertIn("showAtLogin", source)
+        self.assertIn("Não mostrar novamente ao entrar", source)
+        self.assertNotIn("suap.ifba.edu.br/api", source)
+        self.assertNotIn("ava.ifba.edu.br/api", source)
+
 
 if __name__ == "__main__":
     unittest.main()
