@@ -4,6 +4,8 @@
 
 ## Current implementation
 
+- [ ] **IN_PROGRESS · P1** The supplied green-wave wallpaper is configured for KScreenLocker in the live account and new-user defaults. Real guest rendering is pending; the authentication layout still uses Plasma's native UI and needs a Plasma 6.6 `Plasma/Shell` implementation plus PAM/runtime validation before any custom form is claimed.
+
 - [ ] **IN_PROGRESS · P0** The detailed audit matrix in [`FINAL-AUDIT.md`](FINAL-AUDIT.md) retains the 0.1.1/XFCE evidence; its KDE runtime update records the latest 0.2.1 desktop. Plasma app/network behavior, guest build ID, persistence and shutdown/restart remain unverified. Track every image in [`ISO-RELEASES.md`](ISO-RELEASES.md).
 
 - [ ] **IN_PROGRESS · P0** Latest builds are Ubuntu 26.04/Plasma 6.6 ARM64 ISO 0.3.0 and AMD64 ISO 0.3.1 (hashes and boot files recorded in `ISO-RELEASES.md`). Their architecture-specific UEFI payloads are present, but neither new artifact has guest runtime validation. Existing UTM AMD64 VM remains preserved on 0.2.1. App and network behavior remain unverified.

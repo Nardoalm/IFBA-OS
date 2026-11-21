@@ -134,6 +134,14 @@ NETWORK
 chmod 0600 "$ROOTFS/etc/NetworkManager/system-connections/ifba-wired.nmconnection"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/backgrounds/ifba-os/wallpaper.png"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/ifba-os/assets/wallpapers/"
+install -D -m 0644 /work/assets/wallpapers/ifba-os-lockscreen.png \
+  "$ROOTFS/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png"
+install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
+  "$ROOTFS/etc/skel/.config/kscreenlockerrc"
+install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
+  "$ROOTFS/home/ubuntu/.config/kscreenlockerrc"
+install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
+  "$ROOTFS/etc/xdg/kscreenlockerrc"
 cp -R /work/assets/icons/. "$ROOTFS/usr/share/ifba-os/assets/icons/"
 cp -R /work/ai/ifba_ai "$ROOTFS/usr/lib/python3/dist-packages/"
 cp /work/packaging/ifba-ai-ui "$ROOTFS/usr/bin/ifba-ai-ui"
@@ -249,7 +257,7 @@ umount "$ROOTFS/proc" 2>/dev/null || true
 umount -R "$ROOTFS/sys" 2>/dev/null || true
 rm -f "$RESOLV_TARGET"
 install -D -m 0644 "$BUILD_INFO_FILE" "$ROOTFS/usr/share/ifba-os/build-info.json"
-for file in /usr/share/ifba-os/build-info.json /usr/share/backgrounds/ifba-os/wallpaper.png /usr/share/color-schemes/IFBA-OS-Dark.colors /etc/skel/.config/kdeglobals /etc/sddm.conf.d/10-ifba-os.conf /usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json /usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js /usr/share/applications/org.kde.kinfocenter.desktop /usr/bin/firefox /usr/bin/ifba-ai-ui /usr/bin/ifba-welcome /usr/share/applications/ifba-ai.desktop /usr/share/applications/ifba-os-welcome.desktop /etc/xdg/autostart/ifba-os-welcome.desktop /usr/share/doc/ifba-os/welcome.html /usr/share/applications/ifba-os-installer.desktop /usr/bin/ifba-os-installer /usr/lib/python3/dist-packages/ifba_ai/ui.py /usr/share/applications/suap-ifba.desktop /usr/share/applications/ava-ifba.desktop /usr/local/bin/ifba-os-plasma-session-setup /etc/NetworkManager/system-connections/ifba-wired.nmconnection /etc/calamares/settings.conf /etc/calamares/modules/partition.conf /etc/calamares/modules/unpackfs.conf /etc/calamares/modules/removeuser.conf /etc/calamares/modules/shellprocess.conf /etc/calamares/modules/locale.conf /etc/calamares/modules/keyboard.conf /etc/calamares/modules/users.conf /etc/calamares/modules/displaymanager.conf /etc/calamares/modules/initramfs.conf /etc/calamares/modules/bootloader.conf /etc/calamares/branding/ifba-os/branding.desc; do
+for file in /usr/share/ifba-os/build-info.json /usr/share/backgrounds/ifba-os/wallpaper.png /usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png /etc/skel/.config/kscreenlockerrc /home/ubuntu/.config/kscreenlockerrc /etc/xdg/kscreenlockerrc /usr/share/color-schemes/IFBA-OS-Dark.colors /etc/skel/.config/kdeglobals /etc/sddm.conf.d/10-ifba-os.conf /usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json /usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js /usr/share/applications/org.kde.kinfocenter.desktop /usr/bin/firefox /usr/bin/ifba-ai-ui /usr/bin/ifba-welcome /usr/share/applications/ifba-ai.desktop /usr/share/applications/ifba-os-welcome.desktop /etc/xdg/autostart/ifba-os-welcome.desktop /usr/share/doc/ifba-os/welcome.html /usr/share/applications/ifba-os-installer.desktop /usr/bin/ifba-os-installer /usr/lib/python3/dist-packages/ifba_ai/ui.py /usr/share/applications/suap-ifba.desktop /usr/share/applications/ava-ifba.desktop /usr/local/bin/ifba-os-plasma-session-setup /etc/NetworkManager/system-connections/ifba-wired.nmconnection /etc/calamares/settings.conf /etc/calamares/modules/partition.conf /etc/calamares/modules/unpackfs.conf /etc/calamares/modules/removeuser.conf /etc/calamares/modules/shellprocess.conf /etc/calamares/modules/locale.conf /etc/calamares/modules/keyboard.conf /etc/calamares/modules/users.conf /etc/calamares/modules/displaymanager.conf /etc/calamares/modules/initramfs.conf /etc/calamares/modules/bootloader.conf /etc/calamares/branding/ifba-os/branding.desc; do
   test -s "$ROOTFS$file"
 done
 for file in metadata.desktop IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do

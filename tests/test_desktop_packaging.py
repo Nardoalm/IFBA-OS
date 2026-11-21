@@ -29,6 +29,19 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("/usr/share/plymouth/themes/ifba-os/", build)
         self.assertIn("/work/assets/plymouth/ifba-os-startup.png", build)
 
+    def test_lock_screen_uses_selected_wallpaper_for_live_and_new_users(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        config = (ROOT / "packaging/plasma/ifba-os-lockscreen.conf").read_text()
+        wallpaper = ROOT / "assets/wallpapers/ifba-os-lockscreen.png"
+
+        self.assertTrue(wallpaper.is_file())
+        self.assertIn("/work/assets/wallpapers/ifba-os-lockscreen.png", build)
+        self.assertIn("/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png", build)
+        self.assertIn("$ROOTFS/etc/skel/.config/kscreenlockerrc", build)
+        self.assertIn("$ROOTFS/home/ubuntu/.config/kscreenlockerrc", build)
+        self.assertIn("WallpaperPlugin=org.kde.image", config)
+        self.assertIn("Image=/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png", config)
+
     def test_live_home_permissions_and_guest_diagnostics_are_packaged(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
         self.assertIn("chown -R ubuntu:ubuntu /home/ubuntu", build)
