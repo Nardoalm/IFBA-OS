@@ -29,7 +29,7 @@ AnimationSpeed=2
 blurEnabled=true
 
 [kwinrc][Effect-Blur]
-BlurStrength=3
+BlurStrength=2
 
 [kwinrc][Effect-PresentWindows]
 BorderActivate=9

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Perfil visual do IFBA OS
+Name[pt_BR]=Perfil visual do IFBA OS
+Comment=Escolha entre efeitos leves, equilibrados ou avançados do KWin
+Comment[pt_BR]=Escolha entre efeitos leves, equilibrados ou avançados do KWin
+Exec=ifba-visual-profile-dialog
+Icon=preferences-desktop-display
+Terminal=false
+Categories=Settings;DesktopSettings;
+StartupNotify=true

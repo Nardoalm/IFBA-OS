@@ -1,0 +1,8 @@
+[General]
+showlogo=shown
+logo=/usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png
+showClock=true
+type=image
+color=#22C55E
+fontSize=10
+background=/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png

@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+if ! command -v kdialog >/dev/null 2>&1; then
+  printf 'O seletor visual requer kdialog. Use ifba-visual-profile leve|equilibrado|avancado.\n' >&2
+  exit 1
+fi
+
+choice=$(kdialog --title 'Aparência e desempenho' --menu \
+  'Selecione o perfil de efeitos do KWin:' \
+  leve 'Leve — sem blur, menor uso gráfico' \
+  equilibrado 'Equilibrado — blur moderado' \
+  avancado 'Avançado — blur mais intenso' \
+  2>/dev/null) || exit 0
+  exec /usr/bin/ifba-visual-profile "$choice"

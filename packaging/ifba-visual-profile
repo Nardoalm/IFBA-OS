@@ -1,0 +1,60 @@
+#!/bin/sh
+# Apply an explicitly selected KWin visual profile for the current user.
+set -eu
+
+usage() {
+  printf 'Uso: ifba-visual-profile {leve|equilibrado|avancado|status}\n' >&2
+}
+
+if [ "$#" -ne 1 ]; then
+  usage
+  exit 2
+fi
+
+profile=$1
+case "$profile" in
+  status)
+    if command -v kreadconfig6 >/dev/null 2>&1; then
+      enabled=$(kreadconfig6 --file kwinrc --group Plugins --key blurEnabled --default false)
+      strength=$(kreadconfig6 --file kwinrc --group Effect-Blur --key BlurStrength --default 0)
+      printf 'blur=%s\nblur_strength=%s\n' "$enabled" "$strength"
+      exit 0
+    fi
+    printf 'kreadconfig6 não está disponível nesta sessão.\n' >&2
+    exit 1
+    ;;
+  leve)
+    blur=false
+    strength=0
+    ;;
+  equilibrado)
+    blur=true
+    strength=2
+    ;;
+  avancado)
+    blur=true
+    strength=4
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac
+
+if ! command -v kwriteconfig6 >/dev/null 2>&1; then
+  printf 'kwriteconfig6 não está disponível nesta sessão.\n' >&2
+  exit 1
+fi
+
+# These are user-invoked, current-user KWin settings. Do not use sudo, edit
+# other users' files, or change animation/accessibility preferences.
+kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled "$blur"
+kwriteconfig6 --file kwinrc --group Effect-Blur --key BlurStrength "$strength"
+
+if command -v qdbus6 >/dev/null 2>&1 && qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1; then
+  :
+else
+  printf 'Perfil salvo; KWin aplicará a alteração ao reconfigurar ou iniciar novamente.\n' >&2
+fi
+
+printf 'Perfil visual %s aplicado (blur=%s, intensidade=%s).\n' "$profile" "$blur" "$strength"

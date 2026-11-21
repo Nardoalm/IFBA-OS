@@ -181,6 +181,10 @@ if cmp -s "$ROOTFS/home/ubuntu/.bashrc" "$ROOTFS/etc/skel/.bashrc"; then
 fi
 install -D -m 0644 /work/packaging/konsole/IFBA\ Terminal.profile \
   "$ROOTFS/usr/share/konsole/IFBA Terminal.profile"
+install -D -m 0755 /work/packaging/ifba-visual-profile "$ROOTFS/usr/bin/ifba-visual-profile"
+install -D -m 0755 /work/packaging/ifba-visual-profile-dialog "$ROOTFS/usr/bin/ifba-visual-profile-dialog"
+install -D -m 0644 /work/packaging/ifba-visual-profile.desktop \
+  "$ROOTFS/usr/share/applications/ifba-visual-profile.desktop"
 install -D -m 0644 /work/packaging/konsole/IFBA\ Glass.colorscheme \
   "$ROOTFS/usr/share/konsole/IFBA Glass.colorscheme"
 for home_root in "$ROOTFS/etc/skel" "$ROOTFS/home/ubuntu"; do
@@ -224,6 +228,8 @@ install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
   "$ROOTFS/home/ubuntu/.config/kscreenlockerrc"
 install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
   "$ROOTFS/etc/xdg/kscreenlockerrc"
+install -D -m 0644 /work/packaging/sddm/ifba-theme.conf.user \
+  "$ROOTFS/usr/share/sddm/themes/breeze/theme.conf.user"
 cp -R /work/assets/icons/. "$ROOTFS/usr/share/ifba-os/assets/icons/"
 cp -R /work/ai/ifba_ai "$ROOTFS/usr/lib/python3/dist-packages/"
 cp /work/packaging/ifba-ai-ui "$ROOTFS/usr/bin/ifba-ai-ui"
@@ -351,8 +357,14 @@ for file in \
   test -s "$ROOTFS$file"
 done
 test -s "$ROOTFS/usr/share/ifba-os/ifba-welcome.qss"
+test -x "$ROOTFS/usr/bin/ifba-visual-profile"
+test -x "$ROOTFS/usr/bin/ifba-visual-profile-dialog"
+test -s "$ROOTFS/usr/share/applications/ifba-visual-profile.desktop"
+test -s "$ROOTFS/usr/share/sddm/themes/breeze/theme.conf.user"
 for file in /etc/NetworkManager/conf.d/10-globally-managed-devices.conf \
   /etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf \
+  /usr/bin/ifba-visual-profile /usr/bin/ifba-visual-profile-dialog \
+  /usr/share/applications/ifba-visual-profile.desktop \
   /usr/share/konsole/IFBA\ Terminal.profile /usr/share/konsole/IFBA\ Glass.colorscheme \
   /usr/share/dbus-1/services/org.ifba.OS.AI.service /usr/lib/systemd/user/ifba-ai.service; do
   test -s "$ROOTFS$file"
