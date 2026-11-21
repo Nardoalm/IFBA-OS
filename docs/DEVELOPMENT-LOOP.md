@@ -1,5 +1,13 @@
 # Development loop record
 
+## Plasma visual layout candidate — 2026-11-20
+
+- **Objective:** Improve only the KDE Plasma 6 presentation using native applets, panels and KWin settings while retaining IFBA identity and the existing Plasma desktop.
+- **Changes:** Replaced the full-width bottom-only layout source with a 34 px top bar (Kickoff, system tray, date/clock) and a centered floating bottom task panel with the five requested favorites, including System Settings. Kept the existing IFBA wallpaper/look-and-feel, configured one virtual desktop, compact left-side Breeze window buttons, centered placement, the built-in Overview trigger and moderate KWin animation speed. Session setup retains its per-user first-application marker to preserve later user edits.
+- **Checks:** Plasma layout JavaScript `node --check`, 12 packaging tests, shell syntax and `git diff --check` passed. These do not emulate Plasma or prove the panel properties are accepted at runtime.
+- **VM status:** UTM is inaccessible in this execution context (`utmctl list` returned macOS Automation `OSStatus -1743`); the host has no Plasma or qdbus runtime. No ISO rebuild, screenshot, scaling/reboot, visual comparison or applet interaction test was performed. Record the layout as a candidate pending guest validation, not as a completed macOS-like desktop.
+- **Scope:** No IFBA AI backend, network configuration or ISO artifact was modified.
+
 ## Iteration 16 — 2026-11-20
 
 - **Objective:** Continue the final audit from the live UTM guest, investigate the disconnected network, and verify remaining app/runtime claims without guessing at VM state.

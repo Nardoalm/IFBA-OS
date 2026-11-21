@@ -45,6 +45,12 @@ The 0.2.1 UTM screenshot shows the supplied metallic wallpaper, AVA IFBA, IFBA A
 
 Detailed immutable build identities, hashes, tests, and UTM observations are in `ISO-RELEASES.md`. The live ISO is still a prototype; visual desktop startup does not make the migration functionally complete.
 
+## Plasma 6 visual layout candidate — 2026-11-20
+
+Source now declares a compact top panel and a centered, floating native task panel with Firefox, Dolphin, Konsole, IFBA AI, and System Settings. Kickoff remains the keyboard-searchable categorized launcher; academic SUAP/AVA favorites are available there. The system tray and date/clock sit in the top panel; System Settings is pinned in Kickoff and the task panel. KWin defaults set one virtual desktop, compact Breeze window controls on the left, centered placement, the built-in Overview activation, and moderate animation speed. The official project wallpaper remains the desktop background. No third-party dock or Plasma global menu is installed.
+
+This is **static source/build configuration only**: `node --check` validates the layout JavaScript and packaging tests assert the configuration, but neither proves Plasma accepted the layout. UTM could not be queried from this macOS session (`utmctl list` returned Automation `OSStatus -1743`); no fresh screenshot or real session interaction is available. Dock length/auto-hide, applet settings, graphical rounding/transparency, top panel indicators, scaling, GTK/Qt parity, animation behavior and persistence are pending real ARM64 and AMD64 session checks. See `VM-TESTING.md`.
+
 ## Release artifact organization — 2026-11-20
 
 All six versioned ISO artifacts now reside under `output/versions/vX.Y.Z/{amd64,arm64}/` with per-artifact manifests; root compatibility names and `latest/` use symlinks, so ISO files are not duplicated. The latest AMD64 artifact is v0.3.1 and ARM64 is v0.3.0; their source commits differ and `complete_pair` remains false. No v0.3.2 ISO exists. Artifact hashes and sizes were checked before and after migration. The `--both` source path now holds version/commit constant and isolates build IDs, manifests, and staging output by architecture. See `ISO-RELEASES.md` and `BUILDING.md`.

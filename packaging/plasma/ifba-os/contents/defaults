@@ -1,6 +1,7 @@
 [kdeglobals][General]
 ColorScheme=IFBA-OS-Dark
 Name=IFBA OS Dark
+Font=Noto Sans,10,-1,5,50,0,0,0,0,0
 
 [kdeglobals][KDE]
 LookAndFeelPackage=org.ifbaos.desktop
@@ -9,6 +10,24 @@ SingleClick=false
 [kwinrc][Desktops]
 Number=1
 Rows=1
+
+[kwinrc][Windows]
+Placement=Centered
+TitlebarDoubleClickCommand=Maximize
+
+[kwinrc][org.kde.kdecoration2]
+ButtonsOnLeft=MXIA
+ButtonsOnRight=
+BorderSize=Tiny
+
+[kwinrc][Compositing]
+AnimationSpeed=2
+
+[kwinrc][Effect-PresentWindows]
+BorderActivate=9
+
+[kwinrc][Effect-Overview]
+BorderActivate=9
 
 [plasmarc][Theme]
 name=breeze-dark

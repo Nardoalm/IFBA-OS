@@ -130,11 +130,25 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("org.ifbaos.desktop", build)
         self.assertEqual(metadata["KPackageStructure"], "Plasma/LookAndFeel")
         self.assertEqual(metadata["KPlugin"]["Id"], "org.ifbaos.desktop")
-        self.assertIn("panel.floating = true", layout)
+        self.assertIn('topPanel.location = "top"', layout)
+        self.assertIn('dock.location = "bottom"', layout)
+        self.assertIn('dock.lengthMode = "fit"', layout)
+        self.assertIn('dock.alignment = "center"', layout)
+        self.assertIn('dock.floating = true', layout)
+        self.assertIn('dock.hiding = "autohide"', layout)
+        self.assertIn('org.kde.plasma.icontasks', layout)
+        for favorite in ("firefox.desktop", "org.kde.dolphin.desktop", "org.kde.konsole.desktop",
+                         "ifba-ai.desktop", "systemsettings.desktop"):
+            self.assertIn(favorite, layout)
         for widget in ("org.kde.plasma.kickoff", "org.kde.plasma.icontasks",
-                       "org.kde.plasma.systemtray", "org.kde.plasma.digitalclock"):
+                       "org.kde.plasma.systemtray", "org.kde.plasma.digitalclock",
+                       "org.kde.plasma.panelspacer"):
             self.assertIn(widget, layout)
         self.assertIn("LookAndFeelPackage=org.ifbaos.desktop", defaults)
+        self.assertIn("[kwinrc][Desktops]\nNumber=1", defaults)
+        self.assertIn("ButtonsOnLeft=MXIA", defaults)
+        self.assertIn("AnimationSpeed=2", defaults)
+        self.assertIn("[kwinrc][Effect-Overview]", defaults)
         setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
         self.assertIn('marker="$HOME/.config/ifba-os/plasma-layout-applied"', setup)
         self.assertIn('touch "$marker"', setup)

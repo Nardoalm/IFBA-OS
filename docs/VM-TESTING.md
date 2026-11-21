@@ -10,6 +10,15 @@ Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual d
 - Runtime status: **pending**. The development host is macOS arm64 with no GTK3 `gi`, Python D-Bus bindings, `DISPLAY`, `WAYLAND_DISPLAY`, or session bus. `utmctl list` failed with macOS Automation `OSStatus -1743`, so no Linux VM could be inspected or booted. The only available ARM64 ISO is historical v0.3.0 (source commit `66f71bdac5cc8a08240aa9340627bdfed6095274`), which predates this fix. No new ISO was built and no launcher, terminal, close/reopen, KDE session, NVIDIA API, or post-run journal test is claimed.
 - To complete acceptance, rebuild a candidate from a committed source state and boot it in a separate ARM64 KDE VM. Verify initial menu and desktop launches, terminal invocation, second invocation after close, persistence of history, keyring setup/errors, service logs, streaming with a real authorized key only, and no credential leakage. Do not declare the graphical criterion complete until the window remains usable in the guest.
 
+## Plasma 6 macOS-inspired layout candidate — 2026-11-20
+
+- Updated only Plasma presentation inputs: the native Plasma 6 look-and-feel layout now declares a compact top panel with Kickoff, system tray, date/clock, and a System Settings launcher, plus a centered floating bottom panel with the five requested task launchers. The existing native Plasma panel/task applets are used; no external dock or global-menu promise is made.
+- The Plasma defaults retain one virtual desktop and the project wallpaper, set a compact Breeze decoration with left-side close/minimize/maximize controls, centered new windows, and moderate KWin animation speed. The built-in Overview effect's top-left activation is configured. All remain user-adjustable through Plasma settings/shortcuts.
+- The session setup applies the project's look-and-feel and wallpaper once per user, retaining the existing marker so later logins do not overwrite user-customized favorites or panels. `/etc/skel` keeps the initial setup available to future accounts; the live user's config remains ephemeral across a live reboot.
+- Static validation: the layout JavaScript passes `node --check`; the packaging test subset passes (12 tests); the session/build shell syntax and `git diff --check` pass.
+- Visual/runtime status: **pending**. This host lacks `plasmashell` and `qdbus6`. `utmctl list` returned macOS Automation `OSStatus -1743`; no VM screenshot, screen-resolution scaling check, launcher interaction, animation check, or post-reboot persistence test was possible. The exact dock behavior, applet properties, rendered colors/rounding and icon sizes must be inspected in the target Plasma 6 session before calling the design complete.
+- No ISO was built or altered, and no network or IFBA AI code was modified.
+
 ## UTM ARM64 VM creation attempt — 2026-11-20
 
 - Confirmed the existing `Linux` VM remains suspended, x86_64/Q35, 4 GiB RAM, Shared/NAT networking, and attached to the older AMD64 v0.2.1 ISO. It was not modified or deleted.
