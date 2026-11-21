@@ -1,0 +1,13 @@
+---
+componentName: ifba-os
+welcomeStyleCalamares: false
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 900px,600px
+windowPlacement: center
+sidebar: widget
+navigation: widget
+strings:
+  productName: IFBA OS
+  shortProductName: IFBA OS
+  bootloaderEntryName: IFBA OS

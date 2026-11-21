@@ -104,6 +104,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('cp -L "$ROOTFS/boot/initrd.img" "$ISO/casper/initrd"', build)
         self.assertNotIn('cp "$ROOTFS/boot/vmlinuz-"*', build)
         self.assertNotIn('cp "$ROOTFS/boot/initrd.img-"*', build)
+        self.assertNotIn('mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -processors "$(nproc)" -e boot', build)
 
     def test_plasma_builder_uses_only_ubuntu_26_04_desktop_components(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
@@ -158,6 +159,52 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("/lib/systemd/system/sddm.service", build)
         self.assertNotIn("xfce4-session", build)
         self.assertNotIn("lightdm", build.lower())
+
+    def test_calamares_is_configured_for_uefi_manual_partitions_and_safe_user_setup(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        settings = (ROOT / "packaging/calamares/settings.conf").read_text()
+        partition = (ROOT / "packaging/calamares/partition.conf").read_text()
+        users = (ROOT / "packaging/calamares/users.conf").read_text()
+        cleanup = (ROOT / "packaging/calamares/shellprocess.conf").read_text()
+        bootloader = (ROOT / "packaging/calamares/bootloader.conf").read_text()
+        removeuser = (ROOT / "packaging/calamares/removeuser.conf").read_text()
+        launcher = (ROOT / "packaging/ifba-os-installer").read_text()
+        desktop = configparser.ConfigParser(interpolation=None)
+        desktop.read(ROOT / "packaging/ifba-os-installer.desktop")
+
+        self.assertIn("prompt-install: true", settings)
+        self.assertIn("initialPartitioningChoice: none", partition)
+        self.assertIn("allowManualPartitioning: true", partition)
+        self.assertIn("alwaysShowPartitionLabels: true", partition)
+        self.assertIn("requiredStorage: 25.0", partition)
+        self.assertIn("mountPoint: /boot/efi", partition)
+        self.assertIn("efiBootloaderId: ubuntu", bootloader)
+        self.assertIn("username: ubuntu", removeuser)
+        self.assertIn("- removeuser\n      - shellprocess", settings)
+        self.assertIn("rm -f /etc/sddm.conf.d/10-ifba-os.conf", cleanup)
+        self.assertIn("rm -f /etc/sudoers.d/90-casper", cleanup)
+        self.assertIn("rm -f /usr/share/applications/ifba-os-installer.desktop /usr/share/applications/calamares.desktop", cleanup)
+        self.assertIn("dpkg --purge casper", cleanup)
+        self.assertIn("doAutologin: false", users)
+        self.assertIn("setRootPassword: false", users)
+        self.assertIn("minLength: 8", users)
+        self.assertIn("- sudo", users)
+        self.assertIn('autologinGroup: ""', users)
+        self.assertIn('sudoersGroup: ""', users)
+        self.assertIn("/sys/firmware/efi", launcher)
+        self.assertIn("filesystem.squashfs", launcher)
+        self.assertEqual(desktop["Desktop Entry"]["Exec"], "/usr/bin/ifba-os-installer")
+        self.assertIn("grub-efi-amd64-signed", build)
+        self.assertIn("grub-efi-arm64-signed", build)
+
+    def test_calamares_target_extraction_and_cleanup_precede_initramfs_and_users(self):
+        settings = (ROOT / "packaging/calamares/settings.conf").read_text()
+        sequence = settings.split("  - exec:", 1)[1].split("  - show:", 1)[0]
+        self.assertLess(sequence.index("unpackfs"), sequence.index("removeuser"))
+        self.assertLess(sequence.index("removeuser"), sequence.index("shellprocess"))
+        self.assertLess(sequence.index("shellprocess"), sequence.index("initramfs"))
+        self.assertLess(sequence.index("shellprocess"), sequence.index("users"))
+        self.assertLess(sequence.index("users"), sequence.index("displaymanager"))
 
 
 if __name__ == "__main__":

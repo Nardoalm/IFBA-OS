@@ -2,6 +2,13 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## Calamares installer candidate — 2026-11-20
+
+- Source review confirmed the active Ubuntu 26.04/Plasma build uses a shared passwordless `ubuntu` live account with SDDM autologin. The candidate install sequence explicitly removes that account and home, removes its SDDM autologin file, and purges Casper before rebuilding initramfs.
+- The package build is configured for Calamares and architecture-matched signed GRUB/shim on `amd64` and `arm64`. The launcher requires UEFI, warns that installation is unvalidated, and the partition page starts with no action selected. These are source/package checks only.
+- The current UTM VM uses an existing 64 GiB virtual disk. It was not selected as an install target or modified. Host free space was about 3.5 GiB, below the documented 30 GiB build requirement, so no candidate ISO or disposable installation VM was created.
+- **Pending:** build both architecture images; launch Calamares in fresh live sessions; install only to new disposable UEFI virtual disks; reboot and log in on both architectures; collect sanitized Calamares, boot, and SDDM logs. The current output ISOs are unchanged and do not contain the installer candidate.
+
 ## IFBA AI relaunch fix — 2026-11-20
 
 - Source diagnosis: `packaging/ifba-ai.desktop` points to `/usr/bin/ifba-ai-ui`, a Python 3 module launcher installed alongside `ifba_ai` under `/usr/lib/python3/dist-packages`. The Plasma image build installs `python3-dbus`, `python3-gi`, GTK 3 introspection, Secret Service, and GTK/GDK runtime libraries. The GTK application uses `org.ifba.OS.Assistant`, which is single-instance by default.

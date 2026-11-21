@@ -6,10 +6,12 @@ case "$IFBA_ARCH" in
   amd64)
     ARCHIVE=http://archive.ubuntu.com/ubuntu
     BOOT_PACKAGES=(grub-pc-bin grub-efi-amd64-bin mtools)
+    INSTALLER_BOOT_PACKAGES=(grub-efi-amd64-signed shim-signed)
     ;;
   arm64)
     ARCHIVE=http://ports.ubuntu.com/ubuntu-ports
     BOOT_PACKAGES=(grub-efi-arm64-bin mtools)
+    INSTALLER_BOOT_PACKAGES=(grub-efi-arm64-signed shim-signed)
     ;;
   *)
     printf 'Unsupported architecture: %s\n' "$IFBA_ARCH" >&2
@@ -84,7 +86,8 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   libnss3 libatk1.0-0 libatk-bridge2.0-0t64 libcups2t64 libasound2t64 \
   libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libdrm2 \
   libxkbcommon0 libpango-1.0-0 firefox firefox-l10n-pt-br sudo dbus-x11 \
-  polkitd pkexec qemu-guest-agent locales
+  polkitd pkexec qemu-guest-agent locales calamares squashfs-tools efibootmgr kdialog \
+  "${INSTALLER_BOOT_PACKAGES[@]}"
 chroot "$ROOTFS" /bin/bash -euxc '
   id ubuntu >/dev/null 2>&1 || useradd -m -s /bin/bash -G sudo ubuntu
   passwd -d ubuntu
@@ -140,11 +143,24 @@ cp /work/packaging/org.ifba.OS.AI.service "$ROOTFS/usr/share/dbus-1/services/"
 cp /work/packaging/ifba-ai.service "$ROOTFS/usr/lib/systemd/user/"
 ln -sfn ../ifba-ai.service "$ROOTFS/usr/lib/systemd/user/default.target.wants/ifba-ai.service"
 cp /work/packaging/firefox.desktop /work/packaging/suap-ifba.desktop /work/packaging/ava-ifba.desktop "$ROOTFS/usr/share/applications/"
+mkdir -p "$ROOTFS/etc/calamares/modules" "$ROOTFS/etc/calamares/branding/ifba-os"
+cp /work/packaging/calamares/settings.conf "$ROOTFS/etc/calamares/settings.conf"
+cp /work/packaging/calamares/partition.conf /work/packaging/calamares/unpackfs.conf \
+  /work/packaging/calamares/removeuser.conf /work/packaging/calamares/shellprocess.conf \
+  /work/packaging/calamares/locale.conf /work/packaging/calamares/keyboard.conf \
+  /work/packaging/calamares/users.conf /work/packaging/calamares/displaymanager.conf \
+  /work/packaging/calamares/initramfs.conf /work/packaging/calamares/bootloader.conf \
+  "$ROOTFS/etc/calamares/modules/"
+cp /work/packaging/calamares/branding.desc "$ROOTFS/etc/calamares/branding/ifba-os/branding.desc"
+cp /work/packaging/ifba-os-installer "$ROOTFS/usr/bin/ifba-os-installer"
+chmod 0755 "$ROOTFS/usr/bin/ifba-os-installer"
+cp /work/packaging/ifba-os-installer.desktop "$ROOTFS/usr/share/applications/"
 cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop"
 cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
 cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/etc/skel/Desktop/SUAP.desktop"
 cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/etc/skel/Desktop/AVA-IFBA.desktop"
 cp /work/packaging/ifba-ai.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop"
+cp /work/packaging/ifba-os-installer.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop"
 cp /work/packaging/ifba-ai.desktop "$ROOTFS/etc/skel/Desktop/IFBA-AI.desktop"
 chmod +x "$ROOTFS/home/ubuntu/Desktop/"*.desktop "$ROOTFS/etc/skel/Desktop/"*.desktop
 cat > "$ROOTFS/usr/share/color-schemes/IFBA-OS-Dark.colors" <<'COLORS'
@@ -221,7 +237,7 @@ umount "$ROOTFS/proc" 2>/dev/null || true
 umount -R "$ROOTFS/sys" 2>/dev/null || true
 rm -f "$RESOLV_TARGET"
 install -D -m 0644 "$BUILD_INFO_FILE" "$ROOTFS/usr/share/ifba-os/build-info.json"
-for file in /usr/share/ifba-os/build-info.json /usr/share/backgrounds/ifba-os/wallpaper.png /usr/share/color-schemes/IFBA-OS-Dark.colors /etc/skel/.config/kdeglobals /etc/sddm.conf.d/10-ifba-os.conf /usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json /usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js /usr/bin/firefox /usr/bin/ifba-ai-ui /usr/share/applications/ifba-ai.desktop /usr/lib/python3/dist-packages/ifba_ai/ui.py /usr/share/applications/suap-ifba.desktop /usr/share/applications/ava-ifba.desktop /usr/local/bin/ifba-os-plasma-session-setup /etc/NetworkManager/system-connections/ifba-wired.nmconnection; do
+for file in /usr/share/ifba-os/build-info.json /usr/share/backgrounds/ifba-os/wallpaper.png /usr/share/color-schemes/IFBA-OS-Dark.colors /etc/skel/.config/kdeglobals /etc/sddm.conf.d/10-ifba-os.conf /usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json /usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js /usr/bin/firefox /usr/bin/ifba-ai-ui /usr/share/applications/ifba-ai.desktop /usr/share/applications/ifba-os-installer.desktop /usr/bin/ifba-os-installer /usr/lib/python3/dist-packages/ifba_ai/ui.py /usr/share/applications/suap-ifba.desktop /usr/share/applications/ava-ifba.desktop /usr/local/bin/ifba-os-plasma-session-setup /etc/NetworkManager/system-connections/ifba-wired.nmconnection /etc/calamares/settings.conf /etc/calamares/modules/partition.conf /etc/calamares/modules/unpackfs.conf /etc/calamares/modules/removeuser.conf /etc/calamares/modules/shellprocess.conf /etc/calamares/modules/locale.conf /etc/calamares/modules/keyboard.conf /etc/calamares/modules/users.conf /etc/calamares/modules/displaymanager.conf /etc/calamares/modules/initramfs.conf /etc/calamares/modules/bootloader.conf /etc/calamares/branding/ifba-os/branding.desc; do
   test -s "$ROOTFS$file"
 done
 cmp -s /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
@@ -229,7 +245,10 @@ cmp -s /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasm
 cmp -s /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
 test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
-for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 sddm dolphin konsole plasma-discover systemsettings; do
+for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 sddm dolphin konsole plasma-discover systemsettings calamares squashfs-tools efibootmgr kdialog; do
+  chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
+done
+for package in "${INSTALLER_BOOT_PACKAGES[@]}"; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
 test -L "$ROOTFS/etc/systemd/system/default.target"
@@ -240,7 +259,7 @@ test -L "$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.servi
 chroot "$ROOTFS" dpkg-query -W plasma-workspace libqt6core6t64 kwin-wayland kwin-x11 sddm
 cp -L "$ROOTFS/boot/vmlinuz" "$ISO/casper/vmlinuz"
 cp -L "$ROOTFS/boot/initrd.img" "$ISO/casper/initrd"
-mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -processors "$(nproc)" -e boot
+mksquashfs "$ROOTFS" "$ISO/casper/filesystem.squashfs" -comp xz -b 1M -processors "$(nproc)"
 du -sx --block-size=1 "$ROOTFS" | cut -f1 > "$ISO/casper/filesystem.size"
 cat > "$ISO/boot/grub/grub.cfg" <<'GRUB'
 set timeout=5

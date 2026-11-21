@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+show_error() {
+  /usr/bin/kdialog --title "IFBA OS Installer" --error "$1"
+}
+
+if [[ ! -d /sys/firmware/efi ]]; then
+  show_error "O instalador requer inicialização UEFI. Reinicie a mídia live no modo UEFI."
+  exit 1
+fi
+
+if [[ ! -r /cdrom/casper/filesystem.squashfs ]]; then
+  show_error "A imagem live do IFBA OS não foi encontrada em /cdrom/casper."
+  exit 1
+fi
+
+if ! /usr/bin/kdialog --title "IFBA OS Installer — experimental" \
+  --warningyesno "Este fluxo ainda não foi validado por uma instalação em disco virtual descartável, reinicialização e login. Não selecione discos reais nem discos que contenham dados. Continue apenas em uma VM com disco virtual descartável."; then
+  exit 0
+fi
+
+exec /usr/bin/pkexec /usr/bin/calamares

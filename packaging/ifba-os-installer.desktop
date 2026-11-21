@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Instalar IFBA OS (experimental)
+Name[pt_BR]=Instalar IFBA OS (experimental)
+Comment=Fluxo de instalação ainda não validado em disco descartável
+Exec=/usr/bin/ifba-os-installer
+TryExec=/usr/bin/ifba-os-installer
+Icon=system-software-install
+Terminal=false
+Categories=System;
+StartupNotify=true
