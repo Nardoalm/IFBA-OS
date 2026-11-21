@@ -8,6 +8,12 @@ Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual d
 - The QML uses KScreenLocker's `authenticator.startAuthenticating()` and `authenticator.respond()` flow, retains PAM error/success handling, and gates shutdown, reboot, user switching, and battery UI on the real `SessionManagement`/Breeze component state. It does not implement an alternate authentication service.
 - Static package tests and QML source checks pass, but graphical acceptance is **pending**. No new ISO has been booted with this implementation. UTM's ARM64 VM remains attached to historical v0.3.0 media; lock/unlock, real PAM success/failure, QML runtime errors, multiple resolutions, CPU/memory use, and screenshots have not been validated.
 
+### Build follow-up — 2026-11-21
+
+- Built matched Ubuntu 26.04 / Plasma 6.6 v0.3.2 images from source commit `7d5b1507c028c3e7e6aca8237f548815c539ca38`; both manifests have `source_dirty: false`. ISO 9660, boot catalog, kernel/initrd, SquashFS and embedded metadata checks completed successfully for both architectures.
+- Runtime validation remains **pending**. The existing UTM `Versao ARM` VM is stopped and remains attached to historical ARM64 v0.3.0 media. The UTM window became inaccessible to the UI automation when opening its library, so the new ISO was not attached and the original VM was not modified. No lock-screen screenshots or real-session observations were captured.
+- Consequently Super+L, idle lock, clock rendering, PAM success and rejection, repeated lock/unlock, resolution/scaling, session restart, QML logs, CPU/memory, and visual comparison remain unvalidated. The release manifests intentionally retain `runtime_status: unvalidated`.
+
 ## Plasma top bar source update — 2026-11-20
 
 - Updated only the top-panel portion of the Plasma Look-and-Feel layout. It now uses native Kickoff for the IFBA OS logo/system actions, Kicker for the categorized app menu, AppMenu for applications that export a global menu, Milou for search, Plasma System Tray for notification/network/audio/battery indicators, and Digital Clock for a Portuguese regional date with 24-hour time. The bottom panel and wallpaper settings were left unchanged.

@@ -139,7 +139,7 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 
 ## Next product version
 
-The latest existing artifacts are AMD64 `0.3.1` and ARM64 `0.3.0`, but they are not a matched release because their source commits differ. Neither has guest runtime validation. Product version `0.3.2` is reserved for the next matched release; no ISO for it has been built. Preserve all existing artifacts and records.
+Matched v0.3.2 images are now built for both architectures from the same source commit. Runtime validation remains pending as recorded below; the next product version should be assigned only when a new shared feature set is ready.
 
 ## Artifact organization migration — 2026-11-20
 
@@ -156,4 +156,16 @@ The v0.1.0 manifest had a historical filename mismatch (`artifact.file` named th
 | 0.3.0 / arm64 | `ifba-20261120T173559Z-arm64-66f71bdac5cc` | `66f71bdac5cc8a08240aa9340627bdfed6095274` (dirty source) | `e9571211d212d0c1990a8058ff76310ebdef2096f30a4e2078addbf27c08dd40` | 1,669,216,256 | Not boot-tested in UTM |
 | 0.3.1 / amd64 | `ifba-20261120T174613Z-amd64-fe3960ea9231` | `fe3960ea923108561caf58e0e5ff4bab31fdbd84` | `ef6039c1a5a103c8ae48cd5396ae939857e347bdf21f3b5c9df93e64d8fd11a4` | 1,715,800,064 | Not runtime-tested |
 
-`output/latest/amd64/` points to v0.3.1; `output/latest/arm64/` points to v0.3.0. `output/latest/release-status.json` records both source commits and `complete_pair: false`. No v0.3.2 ISO exists or is implied by these pointers. These local output artifacts are intentionally ignored by Git; the table preserves their verified identities in tracked documentation.
+At the time of the 2026-11-20 migration, `output/latest/amd64/` pointed to v0.3.1 and `output/latest/arm64/` to v0.3.0, with `complete_pair: false`. The subsequent v0.3.2 build updated these local pointers as documented below. ISO artifacts remain ignored by Git; this table preserves historical identities in tracked documentation.
+
+## 0.3.2 — Matched KScreenLocker build, 2026-11-21
+
+| Architecture | Build ID | Source commit | Build time (UTC) | Size (bytes) | SHA-256 | Build status | Runtime status |
+|---|---|---|---|---:|---|---|---|
+| arm64 | `ifba-20261121T034012Z-arm64-7d5b1507c028` | `7d5b1507c028c3e7e6aca8237f548815c539ca38` | `2026-11-21T03:40:12Z` | 1,974,886,400 | `b47e26dbe181e8648fe21334c74818608accb747a59ad8a508d925b978f3afaa` | built and structurally verified | unvalidated |
+| amd64 | `ifba-20261121T034321Z-amd64-7d5b1507c028` | `7d5b1507c028c3e7e6aca8237f548815c539ca38` | `2026-11-21T03:43:21Z` | 2,031,228,928 | `c6eca00164b599547125c77565b57f744c3197457550e9670d3638a6661eafc4` | built and structurally verified | unvalidated |
+
+- **Build method:** Ubuntu 24.04 container helpers and the project’s architecture-specific Plasma rootfs caches. The images embed matching committed source state (`source_dirty: false`). ISO verification confirmed architecture-specific volume labels, boot catalog, kernel/initrd, SquashFS and release metadata.
+- **Release pointers:** Both local `output/latest/{arm64,amd64}` pointers now resolve to v0.3.2. `output/latest/release-status.json` records `complete_pair: true` and the shared source commit. Artifacts are local ignored build output, not Git-tracked files.
+- **KScreenLocker:** The derived Plasma shell package and QML are present in both root filesystems, selected by the live/new-user defaults, and preserve KDE’s native authenticator/PAM path. Automated source/package tests passed before the build.
+- **UTM:** Not booted. The existing ARM64 VM remains stopped with historical v0.3.0 media. UTM’s library window became inaccessible to UI automation, so no disposable VM was created; screenshots and live-session acceptance remain pending. See [`VM-TESTING.md`](VM-TESTING.md).
