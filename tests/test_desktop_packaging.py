@@ -203,6 +203,11 @@ class DesktopPackagingTests(unittest.TestCase):
             "systemsettings",
             "kinfocenter",
             "powerdevil",
+            "power-profiles-daemon",
+            "bluedevil",
+            "bluez",
+            "libspa-0.2-bluetooth",
+            "kscreen",
             "upower",
         ):
             self.assertIn(package, build)
@@ -217,6 +222,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(top_widgets, [
             "org.kde.plasma.appmenu",
             "org.kde.plasma.panelspacer",
+            "org.ifbaos.controlcenter",
             "org.kde.plasma.systemtray",
             "org.kde.plasma.digitalclock",
         ])
@@ -364,6 +370,54 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('apt-get purge -y "${KRUNNER_BUILD_PACKAGES[@]}"', build)
         self.assertIn("Build-only dependency remains installed", build)
         self.assertIn("*/kf6/krunner/ifba_app_description_runner.so", build)
+
+    def test_control_center_is_a_native_plasmoid_installed_and_added_once(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
+        package = ROOT / "packaging/plasma/ifba-control-center"
+        metadata = json.loads((package / "metadata.json").read_text())
+        qml = (package / "contents/ui/main.qml").read_text()
+
+        self.assertEqual(metadata["KPackageStructure"], "Plasma/Applet")
+        self.assertEqual(metadata["KPlugin"]["Id"], "org.ifbaos.controlcenter")
+        self.assertIn('topPanel.addWidget("org.ifbaos.controlcenter")', layout)
+        self.assertEqual(layout.count('topPanel.addWidget("org.ifbaos.controlcenter")'), 1)
+        self.assertIn("ifba-control-center/metadata.json", build)
+        self.assertIn("ifba-control-center/contents/ui/main.qml", build)
+        self.assertIn("qt6-declarative-dev-tools", build)
+        self.assertIn("/usr/lib/qt6/bin/qmlformat /tmp/ifba-control-center-check/main.qml", build)
+        self.assertIn("/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/metadata.json", build)
+        self.assertIn("/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/main.qml", build)
+        self.assertIn("org.kde.plasma.private.brightnesscontrolplugin", qml)
+        self.assertIn("org.kde.plasma.private.batterymonitor", qml)
+        self.assertIn("org.kde.plasma.private.volume", qml)
+        self.assertIn("org.kde.plasma.networkmanagement", qml)
+        self.assertIn("org.kde.bluezqt", qml)
+        self.assertIn("org.kde.plasma.private.mpris", qml)
+        self.assertIn("Notifications.Globals.toggleDoNotDisturbMode()", qml)
+        self.assertIn("visible: root.bluetoothAvailable", qml)
+        self.assertIn("visible: brightness.isBrightnessAvailable || nightLight.available", qml)
+        self.assertIn("visible: battery.hasBatteries", qml)
+        self.assertIn("enabled: root.currentPlayer && root.currentPlayer.canGoNext", qml)
+        self.assertIn("Keys.onEscapePressed", qml)
+        self.assertIn("Accessible.name", qml)
+        self.assertIn('openSystemSettings("kcm_networkmanagement")', qml)
+        self.assertIn('openSystemSettings("kcm_bluetooth")', qml)
+        self.assertIn('openSystemSettings("kcm_kscreen")', qml)
+        self.assertIn('openSystemSettings("kcm_about-distro")', qml)
+        self.assertNotRegex(qml, r"\b(?:sudo|pkexec|QProcess|system)\s*\(")
+
+    def test_control_center_controls_use_live_hardware_capabilities(self):
+        qml = (ROOT / "packaging/plasma/ifba-control-center/contents/ui/main.qml").read_text()
+        self.assertIn("networkDevices.wirelessDeviceAvailable && networkState.wirelessHwEnabled", qml)
+        self.assertIn("BluezQt.Manager.adapters.length > 0", qml)
+        self.assertIn("Context.state === Context.State.Ready", qml)
+        self.assertIn("sinkFilterModel.count > 0", qml)
+        self.assertIn("brightness.setBrightness(displayName", qml)
+        self.assertIn("powerProfiles.profiles.length > 0", qml)
+        self.assertIn("!!root.currentPlayer", qml)
+        self.assertIn("NetworkManagement.NetworkStatus", qml)
+        self.assertIn("BluezQt.Manager.connectedDevices", qml)
 
     def test_plasma_session_setup_applies_panels_only_once(self):
         setup = ROOT / "packaging/plasma/ifba-os-session-setup"

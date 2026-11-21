@@ -2,6 +2,13 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## Control Center source update — 2026-11-21
+
+- Added the `org.ifbaos.controlcenter` Plasma applet to the top-panel layout and image packaging. It reads network status and Wi-Fi control from NetworkManager, adapter/device state from BlueZ, outputs/volume from Plasma Audio, brightness and night-light inhibition from PowerDevil/KWin, available battery/profile state, Plasma Do Not Disturb, and MPRIS players/actions.
+- Added `bluedevil`, `bluez`, `libspa-0.2-bluetooth`, `kscreen`, and `power-profiles-daemon`; devices and controls are gated by current native API availability. KDE configuration buttons launch their KCMs. No shell or privileged operation is issued by the UI.
+- `qmlformat` parsed `packaging/plasma/ifba-control-center/contents/ui/main.qml`; all 27 `test_desktop_packaging.py` tests passed; shell syntax, panel JavaScript syntax, metadata JSON, and `git diff --check` passed. This is parser/static packaging evidence, not a live QML import or runtime test.
+- No ISO build or UTM session was run. No screenshot was captured. Actual Wi-Fi/Ethernet, Bluetooth, PipeWire, display brightness, night light, battery, power profiles, DND and MPRIS behavior, popup blur/transparency, and multiple-monitor appearance remain unvalidated in a Plasma guest.
+
 ## Source correction pass — 2026-11-21
 
 - **NetworkManager source:** the build now shadows Ubuntu's same-named global unmanaged-device snippet, adds a `device` match for `type:ethernet` with `managed=1`, retains DHCPv4/v6 autoconnect without a fixed interface name, and masks systemd-networkd service/socket. These settings are in the SquashFS copied by Calamares. Three automated regression tests cover precedence declaration, Ethernet matching, DHCP profile permissions, and install-source persistence. No guest state was changed or checked.

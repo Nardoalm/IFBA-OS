@@ -19,7 +19,7 @@ case "$IFBA_ARCH" in
     ;;
 esac
 KRUNNER_BUILD_PACKAGES=(
-  cmake g++ make extra-cmake-modules qt6-base-dev libkf6coreaddons-dev libkf6i18n-dev \
+  cmake g++ make extra-cmake-modules qt6-base-dev qt6-declarative-dev-tools libkf6coreaddons-dev libkf6i18n-dev \
   libkf6jobwidgets-dev libkf6kio-dev libkf6runner-dev libkf6service-dev
 )
 if [[ "$IFBA_ARCH" == amd64 ]]; then
@@ -84,7 +84,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou \
   sddm sddm-theme-breeze breeze-gtk-theme breeze-icon-theme breeze-cursor-theme \
   dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter \
-  powerdevil upower fastfetch \
+  powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth kscreen fastfetch \
   xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter fonts-noto-core \
   xdg-desktop-portal-kde xdg-desktop-portal-gtk \
   python3-dbus python3-gi gir1.2-gtk-3.0 gnome-keyring libpam-gnome-keyring \
@@ -96,6 +96,10 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   python3-pyqt6 thonny libreoffice-writer gcompris-qt \
   "${INSTALLER_BOOT_PACKAGES[@]}"
 chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${KRUNNER_BUILD_PACKAGES[@]}"
+mkdir -p "$ROOTFS/tmp/ifba-control-center-check"
+cp /work/packaging/plasma/ifba-control-center/contents/ui/main.qml "$ROOTFS/tmp/ifba-control-center-check/main.qml"
+chroot "$ROOTFS" /usr/lib/qt6/bin/qmlformat /tmp/ifba-control-center-check/main.qml >/dev/null
+rm -rf "$ROOTFS/tmp/ifba-control-center-check"
 mkdir -p "$ROOTFS/tmp/ifba-app-description-runner"
 cp -R /work/packaging/plasma/ifba-app-description-runner/. "$ROOTFS/tmp/ifba-app-description-runner/"
 chroot "$ROOTFS" cmake -S /tmp/ifba-app-description-runner -B /tmp/ifba-app-description-runner/build \
@@ -300,6 +304,10 @@ install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/home/ubunt
 install -D -m 0644 /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
+install -D -m 0644 /work/packaging/plasma/ifba-control-center/metadata.json \
+  "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/metadata.json"
+install -D -m 0644 /work/packaging/plasma/ifba-control-center/contents/ui/main.qml \
+  "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/main.qml"
 python3 /work/tools/package_plasma_lockscreen.py "$ROOTFS" \
   /work/packaging/plasma/ifbaos-shell/contents/lockscreen
 for decoration_file in metadata.desktop IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do
@@ -366,6 +374,8 @@ for applet in org.kde.milou org.kde.plasma.kickoff org.kde.plasma.kicker \
 done
 find "$ROOTFS/usr/lib" -path '*/kf6/krunner/ifba_app_description_runner.so' -print -quit | grep -q .
 test -s "$ROOTFS/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json"
+test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/metadata.json"
+test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/main.qml"
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskmanager.so' -print -quit | grep -q .
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.trash.so' -print -quit | grep -q .
 for launcher in firefox.desktop org.kde.dolphin.desktop org.kde.konsole.desktop ifba-ai.desktop \
@@ -382,7 +392,7 @@ cmp -s /work/packaging/plasma/ifbaos-shell/contents/lockscreen/LockScreenUi.qml 
   "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreenUi.qml"
 test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
-for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil upower calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
+for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth kscreen calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
 for package in "${INSTALLER_BOOT_PACKAGES[@]}"; do

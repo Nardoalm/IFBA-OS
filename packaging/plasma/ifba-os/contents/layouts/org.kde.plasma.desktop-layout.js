@@ -19,6 +19,8 @@ var spacer = topPanel.addWidget("org.kde.plasma.panelspacer")
 spacer.currentConfigGroup = ["General"]
 spacer.writeConfig("expanding", true)
 
+topPanel.addWidget("org.ifbaos.controlcenter")
+
 var tray = topPanel.addWidget("org.kde.plasma.systemtray")
 tray.currentConfigGroup = ["General"]
 tray.writeConfig("extraItems", "org.kde.plasma.notifications,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.battery")
