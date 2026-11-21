@@ -232,3 +232,10 @@ This prototype has no installer, disk persistence, real educational-app installe
 - The observed desktop field was a solid Ubuntu-blue background, so the user-selected IFBA wallpaper is not considered applied in this run. The tray showed a disconnected network indicator.
 - IFBA AI was present as a panel launcher in the build, but the app was not opened in this check. Firefox was also not launched. No AI key, NVIDIA request, SUAP/AVA login, or host Wi-Fi credential was used.
 - No guest-side version command, network diagnostics, settings persistence, session restart, or shutdown test was performed. The build's `ifba-os-version` and static rootfs validation are not a substitute for those runtime checks.
+
+### Aurorae window-decoration implementation — 2026-11-20
+
+- The UTM `Versao ARM` window was accessible through the host UI, and a Linux graphical session was visible at 2560×1600 with Firefox showing an existing browser page and a full-width bottom panel. This is evidence of an accessible old guest session only; no version/boot identity was collected, so it is not identified as an image containing the current Plasma build.
+- The current source adds the IFBA Aurorae decoration and its build integration, but the attached guest was not modified and no rebuilt ISO was available. The visible Firefox window did not expose the new Aurorae controls or frame. Therefore titlebar appearance, window state transitions, move/resize, application-specific decoration behavior, and resolution scaling remain unvalidated.
+- `utmctl list` returned macOS Automation `OSStatus -1743` from the command-line session. The guest remained unchanged. The build host volume had 3.9 GB free, below the 30 GB build requirement in `BUILDING.md`; no ISO was generated for this change.
+- No claims are made about live behavior in Dolphin, Konsole, Firefox, GTK client-side decorations, Wayland, or AMD64. Repeat those checks with an ISO containing this commit and record minimize, maximize, restore, close, move, and resize outcomes before treating the decoration as graphically accepted.

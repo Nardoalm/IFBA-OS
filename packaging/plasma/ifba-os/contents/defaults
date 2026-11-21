@@ -16,8 +16,10 @@ Placement=Centered
 TitlebarDoubleClickCommand=Maximize
 
 [kwinrc][org.kde.kdecoration2]
-ButtonsOnLeft=MXIA
-ButtonsOnRight=
+ButtonsOnLeft=
+ButtonsOnRight=IAX
+library=org.kde.kwin.aurorae
+theme=__aurorae__svg__IFBA-Window
 BorderSize=Tiny
 
 [kwinrc][Compositing]

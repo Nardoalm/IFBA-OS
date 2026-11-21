@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <g id="decoration-topleft">
+    <path d="M0 14V12A12 12 0 0 1 12 0H14V14Z" fill="#202628"/>
+    <path d="M0 14V12A12 12 0 0 1 12 0" fill="none" stroke="#30383B" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-top">
+    <path d="M0 0H100V14H0Z" fill="#202628"/>
+    <path d="M0 .75H100" fill="none" stroke="#30383B" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-topright">
+    <path d="M0 0H2A12 12 0 0 1 14 12V14H0Z" fill="#202628"/>
+    <path d="M0 .75H2A12 12 0 0 1 13.25 12" fill="none" stroke="#30383B" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-left">
+    <rect x="0" y="0" width="2" height="100" fill="#101416"/>
+    <path d="M.75 0V100" stroke="#30383B" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-right">
+    <rect x="0" y="0" width="2" height="100" fill="#101416"/>
+    <path d="M1.25 0V100" stroke="#30383B" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-bottomleft">
+    <path d="M0 0H14V2A12 12 0 0 1 2 14H0Z" fill="#101416"/>
+    <path d="M0 0V2A12 12 0 0 0 12 13.25" fill="none" stroke="#30383B" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-bottom">
+    <rect x="0" y="0" width="100" height="2" fill="#101416"/>
+    <path d="M0 1.25H100" stroke="#30383B" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-bottomright">
+    <path d="M0 0H14V14H12A12 12 0 0 1 0 2Z" fill="#101416"/>
+    <path d="M14 0V2A12 12 0 0 1 2 13.25" fill="none" stroke="#30383B" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-center"><rect width="100" height="100" fill="#101416" fill-opacity="0"/></g>
+  <g id="decoration-inactive-topleft">
+    <path d="M0 14V12A12 12 0 0 1 12 0H14V14Z" fill="#202628"/>
+    <path d="M0 14V12A12 12 0 0 1 12 0" fill="none" stroke="#30383B" stroke-opacity=".65" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-inactive-top">
+    <path d="M0 0H100V14H0Z" fill="#202628"/>
+    <path d="M0 .75H100" fill="none" stroke="#30383B" stroke-opacity=".65" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-inactive-topright">
+    <path d="M0 0H2A12 12 0 0 1 14 12V14H0Z" fill="#202628"/>
+    <path d="M0 .75H2A12 12 0 0 1 13.25 12" fill="none" stroke="#30383B" stroke-opacity=".65" stroke-width="1.5"/>
+  </g>
+  <g id="decoration-inactive-left"><rect width="2" height="100" fill="#101416"/><path d="M.75 0V100" stroke="#30383B" stroke-opacity=".65" stroke-width="1.5"/></g>
+  <g id="decoration-inactive-right"><rect width="2" height="100" fill="#101416"/><path d="M1.25 0V100" stroke="#30383B" stroke-opacity=".65" stroke-width="1.5"/></g>
+  <g id="decoration-inactive-bottomleft"><path d="M0 0H14V2A12 12 0 0 1 2 14H0Z" fill="#101416"/><path d="M0 0V2A12 12 0 0 0 12 13.25" fill="none" stroke="#30383B" stroke-opacity=".65" stroke-width="1.5"/></g>
+  <g id="decoration-inactive-bottom"><rect width="100" height="2" fill="#101416"/><path d="M0 1.25H100" stroke="#30383B" stroke-opacity=".65" stroke-width="1.5"/></g>
+  <g id="decoration-inactive-bottomright"><path d="M0 0H14V14H12A12 12 0 0 1 0 2Z" fill="#101416"/><path d="M14 0V2A12 12 0 0 1 2 13.25" fill="none" stroke="#30383B" stroke-opacity=".65" stroke-width="1.5"/></g>
+  <g id="decoration-inactive-center"><rect width="100" height="100" fill="#101416" fill-opacity="0"/></g>
+  <g id="decoration-maximized-center"><rect width="100" height="100" fill="#101416" fill-opacity="0"/></g>
+  <g id="decoration-maximized-inactive-center"><rect width="100" height="100" fill="#101416" fill-opacity="0"/></g>
+</svg>

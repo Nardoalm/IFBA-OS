@@ -77,7 +77,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get update
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --with-new-pkgs
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   linux-image-generic casper plymouth plymouth-themes systemd-sysv \
-  plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 milou \
+  plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou \
   sddm sddm-theme-breeze breeze-gtk-theme breeze-icon-theme breeze-cursor-theme \
   dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter \
   powerdevil upower \
@@ -218,6 +218,10 @@ install -D -m 0644 "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/etc/xdg/kdeglo
 install -D -m 0644 /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
+for decoration_file in metadata.desktop IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do
+  install -D -m 0644 "/work/packaging/plasma/window-decoration/IFBA-Window/$decoration_file" \
+    "$ROOTFS/usr/share/aurorae/themes/IFBA-Window/$decoration_file"
+done
 install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup "$ROOTFS/usr/local/bin/ifba-os-plasma-session-setup"
 chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-plasma-session-setup"
 cat > "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" <<'AUTOSTART'
@@ -248,6 +252,11 @@ install -D -m 0644 "$BUILD_INFO_FILE" "$ROOTFS/usr/share/ifba-os/build-info.json
 for file in /usr/share/ifba-os/build-info.json /usr/share/backgrounds/ifba-os/wallpaper.png /usr/share/color-schemes/IFBA-OS-Dark.colors /etc/skel/.config/kdeglobals /etc/sddm.conf.d/10-ifba-os.conf /usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json /usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js /usr/share/applications/org.kde.kinfocenter.desktop /usr/bin/firefox /usr/bin/ifba-ai-ui /usr/bin/ifba-welcome /usr/share/applications/ifba-ai.desktop /usr/share/applications/ifba-os-welcome.desktop /etc/xdg/autostart/ifba-os-welcome.desktop /usr/share/doc/ifba-os/welcome.html /usr/share/applications/ifba-os-installer.desktop /usr/bin/ifba-os-installer /usr/lib/python3/dist-packages/ifba_ai/ui.py /usr/share/applications/suap-ifba.desktop /usr/share/applications/ava-ifba.desktop /usr/local/bin/ifba-os-plasma-session-setup /etc/NetworkManager/system-connections/ifba-wired.nmconnection /etc/calamares/settings.conf /etc/calamares/modules/partition.conf /etc/calamares/modules/unpackfs.conf /etc/calamares/modules/removeuser.conf /etc/calamares/modules/shellprocess.conf /etc/calamares/modules/locale.conf /etc/calamares/modules/keyboard.conf /etc/calamares/modules/users.conf /etc/calamares/modules/displaymanager.conf /etc/calamares/modules/initramfs.conf /etc/calamares/modules/bootloader.conf /etc/calamares/branding/ifba-os/branding.desc; do
   test -s "$ROOTFS$file"
 done
+for file in metadata.desktop IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do
+  cmp -s "/work/packaging/plasma/window-decoration/IFBA-Window/$file" \
+    "$ROOTFS/usr/share/aurorae/themes/IFBA-Window/$file"
+done
+find "$ROOTFS/usr/lib" -path '*/qt6/plugins/org.kde.kdecoration3/org.kde.kwin.aurorae.so' -print -quit | grep -q .
 for applet in org.kde.milou org.kde.plasma.kickoff org.kde.plasma.kicker \
   org.kde.plasma.appmenu org.kde.plasma.systemtray org.kde.plasma.notifications \
   org.kde.plasma.networkmanagement org.kde.plasma.volume org.kde.plasma.battery; do
@@ -258,7 +267,7 @@ cmp -s /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasm
 cmp -s /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
 test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
-for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 milou sddm dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil upower calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
+for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil upower calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
 for package in "${INSTALLER_BOOT_PACKAGES[@]}"; do

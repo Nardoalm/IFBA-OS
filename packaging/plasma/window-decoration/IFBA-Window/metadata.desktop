@@ -1,0 +1,9 @@
+[DesktopEntry]
+Name=IFBA OS Window Frame
+Comment=Native Aurorae decoration with graphite surfaces and IFBA green accents
+X-KDE-PluginInfo-Name=IFBA-Window
+X-KDE-PluginInfo-Author=IFBA OS Community
+X-KDE-PluginInfo-Email=
+X-KDE-PluginInfo-Website=https://github.com/Nardoalm/IFBA-OS
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-License=GPL-3.0-or-later

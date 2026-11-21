@@ -117,6 +117,7 @@ class DesktopPackagingTests(unittest.TestCase):
             "plasma-session-wayland",
             "plasma-session-x11",
             "kwin-x11",
+            "kwin-style-aurorae",
             "milou",
             "sddm",
             "dolphin",
@@ -186,7 +187,9 @@ class DesktopPackagingTests(unittest.TestCase):
             self.assertIn(widget, layout)
         self.assertIn("LookAndFeelPackage=org.ifbaos.desktop", defaults)
         self.assertIn("[kwinrc][Desktops]\nNumber=1", defaults)
-        self.assertIn("ButtonsOnLeft=MXIA", defaults)
+        self.assertIn("ButtonsOnLeft=\nButtonsOnRight=IAX", defaults)
+        self.assertIn("library=org.kde.kwin.aurorae", defaults)
+        self.assertIn("theme=__aurorae__svg__IFBA-Window", defaults)
         self.assertIn("AnimationSpeed=2", defaults)
         self.assertIn("[kwinrc][Effect-Overview]", defaults)
         setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
@@ -212,6 +215,39 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("/lib/systemd/system/sddm.service", build)
         self.assertNotIn("xfce4-session", build)
         self.assertNotIn("lightdm", build.lower())
+
+    def test_ifba_aurorae_decoration_is_installed_and_has_native_window_controls(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        theme_dir = ROOT / "packaging/plasma/window-decoration/IFBA-Window"
+        metadata = configparser.ConfigParser(interpolation=None)
+        metadata.read(theme_dir / "metadata.desktop")
+        theme = configparser.ConfigParser(interpolation=None)
+        theme.read(theme_dir / "IFBA-Windowrc")
+        frame_ids = {
+            node.attrib.get("id")
+            for node in ET.parse(theme_dir / "decoration.svg").iter()
+        }
+
+        self.assertEqual(metadata["DesktopEntry"]["x-kde-plugininfo-name"], "IFBA-Window")
+        self.assertEqual(theme["General"]["rightbuttons"], "IAX")
+        self.assertEqual(theme["Layout"]["titleheight"], "34")
+        self.assertEqual(theme["Layout"]["buttonwidthclose"], "42")
+        self.assertEqual(theme["Layout"]["buttonheight"], "34")
+        for frame in ("decoration-top", "decoration-inactive-top", "decoration-maximized-center"):
+            self.assertIn(frame, frame_ids)
+        for button, path in (("minimize", "M14 17H28"), ("maximize", "#42C96A"),
+                             ("restore", "#42C96A"), ("close", "#EF5960")):
+            button_ids = {
+                node.attrib.get("id")
+                for node in ET.parse(theme_dir / f"{button}.svg").iter()
+            }
+            self.assertIn("active-center", button_ids)
+            self.assertIn("hover-center", button_ids)
+            self.assertIn("inactive-center", button_ids)
+            self.assertIn(path, (theme_dir / f"{button}.svg").read_text())
+        self.assertIn("kwin-style-aurorae", build)
+        self.assertIn("/usr/share/aurorae/themes/IFBA-Window", build)
+        self.assertIn("org.kde.kdecoration3/org.kde.kwin.aurorae.so", build)
 
     def test_calamares_is_configured_for_uefi_manual_partitions_and_safe_user_setup(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
