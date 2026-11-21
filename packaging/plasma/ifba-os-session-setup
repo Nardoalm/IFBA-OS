@@ -1,9 +1,25 @@
 #!/bin/sh
 set -eu
-marker="$HOME/.config/ifba-os/plasma-layout-applied"
-[ -e "$marker" ] && exit 0
-mkdir -p "$(dirname "$marker")"
-command -v plasma-apply-lookandfeel >/dev/null 2>&1 || exit 0
-plasma-apply-lookandfeel --apply org.ifbaos.desktop || exit 0
-plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png || exit 0
-touch "$marker"
+state_dir="$HOME/.config/ifba-os"
+legacy_marker="$state_dir/plasma-layout-applied"
+layout_marker="$state_dir/plasma-layout-applied-v2"
+wallpaper_marker="$state_dir/plasma-wallpaper-attempted-v2"
+mkdir -p "$state_dir"
+
+# Do not migrate old profiles through a new defaults pass: those users may
+# already have customized panels, favorites, colors, or wallpaper.
+if [ -e "$legacy_marker" ] && [ ! -e "$layout_marker" ]; then
+  touch "$layout_marker" "$wallpaper_marker"
+  exit 0
+fi
+
+if [ ! -e "$layout_marker" ]; then
+  command -v plasma-apply-lookandfeel >/dev/null 2>&1 || exit 0
+  plasma-apply-lookandfeel --apply org.ifbaos.desktop || exit 0
+  touch "$layout_marker"
+fi
+
+if [ ! -e "$wallpaper_marker" ]; then
+  touch "$wallpaper_marker"
+  plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png || exit 0
+fi

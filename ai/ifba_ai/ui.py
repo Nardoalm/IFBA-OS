@@ -36,6 +36,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.set_position(Gtk.WindowPosition.CENTER)
         self.proxy = None
         self.bus = None
+        self.service_connection_started = False
         self.current_conversation = None
         self.generating = False
         self.last_visual_context = None
@@ -44,7 +45,6 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.highlight_restore_source = None
         self.local_tools = SystemTools()
         self._build()
-        self._connect_service()
 
     def _build(self):
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -126,13 +126,19 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.visual_button.set_sensitive(False)
         self.visual_button.connect("clicked", self._capture_visual)
         header.pack_start(self.visual_button)
-        self.status = Gtk.Label(label="Conectando ao serviço do assistente…")
+        status_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.status = Gtk.Label(label="Preparando o assistente…")
         self.status.set_xalign(0)
         self.status.set_margin_start(18)
         self.status.set_margin_end(18)
         self.status.set_margin_top(8)
         self.status.set_margin_bottom(8)
-        root.pack_end(self.status, False, False, 0)
+        status_row.pack_start(self.status, True, True, 0)
+        self.retry_service_button = Gtk.Button(label="Tentar novamente")
+        self.retry_service_button.set_no_show_all(True)
+        self.retry_service_button.connect("clicked", self._retry_service)
+        status_row.pack_end(self.retry_service_button, False, False, 0)
+        root.pack_end(status_row, False, False, 0)
 
     def _build_settings(self):
         page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
@@ -267,6 +273,11 @@ class AssistantWindow(Gtk.ApplicationWindow):
         )
 
     def _connect_service(self):
+        if self.service_connection_started:
+            return False
+        self.service_connection_started = True
+        self.retry_service_button.hide()
+        self.status.set_text("Conectando ao serviço do assistente…")
         try:
             DBusGMainLoop(set_as_default=True)
             self.bus = dbus.SessionBus()
@@ -283,8 +294,16 @@ class AssistantWindow(Gtk.ApplicationWindow):
             )
         except Exception:
             self._on_service_error()
+        return False
+
+    def _retry_service(self, *_args):
+        self.service_connection_started = False
+        self.proxy = None
+        self.bus = None
+        self._connect_service()
 
     def _on_service_status(self, configured, store_available, _model):
+        self.retry_service_button.hide()
         if not store_available:
             self.status.set_text("Cofre indisponível ou bloqueado. Desbloqueie-o na sessão antes de salvar uma chave.")
         else:
@@ -319,6 +338,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
     def _on_service_error(self, *_details):
         self.status.set_text("O assistente abriu, mas o serviço local não respondeu. Verifique a sessão D-Bus e tente novamente.")
         self.stack.set_visible_child_name("settings")
+        self.retry_service_button.show()
 
     def _load_settings(self, serialized=None):
         values = json.loads(str(serialized if serialized is not None else self.proxy.GetSettings()))
@@ -999,6 +1019,7 @@ class AssistantApplication(Gtk.Application):
                 window = AssistantWindow(self)
                 window.show_all()
             window.present()
+            GLib.idle_add(window._connect_service)
         except Exception:
             sys.stderr.write("Não foi possível abrir a janela do IFBA AI:\n")
             traceback.print_exc(file=sys.stderr)

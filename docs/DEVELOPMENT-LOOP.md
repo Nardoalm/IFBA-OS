@@ -1,5 +1,22 @@
 # Development loop record
 
+## Build and UTM follow-up — 2026-11-21
+
+- Found that matched v0.3.2 artifacts already exist despite stale statements in `BUILDING.md`, `FINAL-AUDIT.md`, and `PROJECT-ROADMAP.md`; verified both manifests, SHA-256 values and ISO structures, then corrected those documents.
+- UTM CLI access is restored. The historical ARM VM is running v0.3.0 and the historical AMD64 VM is suspended on v0.2.1. A separate ARM64 VM wizard was started for the v0.3.2 image, but the macOS ISO file picker returned `noWindowsAvailable`; the unsaved wizard was canceled without changing either VM.
+- The v0.3.2 artifacts are from source commit `7d5b150`, before the current uncommitted Ethernet, AI startup and Konsole changes. The official builder refuses dirty source. The latest host reading is 27,153,748 KiB free (about 25.9 GiB), 4.104 GiB below the documented 30 GiB requirement; Docker's own overlay reported about 199 GiB free. No cache volume or historical image was removed.
+- `release_artifacts.py verify` passed for both existing v0.3.2 ISOs; the full suite passed 95 tests with 2 target-image-only skips. No new ISO was generated and no guest runtime test was claimed. Current changes need a committed v0.3.3 source state, at least 30 GiB host free, and manual ISO selection in a new native ARM64 UTM VM before runtime validation.
+
+## Correction pass — 2026-11-21
+
+- **Scope:** Continue from the pending NetworkManager build-script edit, then address IFBA AI activation, Plasma defaults, Konsole Glass and evidence documentation. Existing user changes and historical artifacts were left intact.
+- **Network source:** Shadowed Ubuntu's restrictive same-named global device rule, explicitly enabled all Ethernet device types (including virtio), retained the generic DHCP keyfile, and masked systemd-networkd to avoid backend overlap. Calamares copies the complete SquashFS root, so the settings are present in its install source.
+- **IFBA AI:** Deferred session-bus connection until after the GTK window is shown/presented, and added a user-triggered retry on service errors. The current desktop entry, executable wrapper, Python module, package dependencies, D-Bus activation file and hardened user service were retained.
+- **Plasma/terminal:** Added non-destructive first-login marker migration, enabled KWin blur where available, removed the placeholder-mark reference, and added `IFBA Terminal`, `IFBA Glass`, a high-opacity fallback, per-user prompt and on-demand `fastfetch`. Per-user profile, color-scheme, default-profile and shell settings are guarded against replacing existing user files.
+- **Checks:** Focused networking/desktop tests passed (24); full suite passed (95, 2 skipped for target-image PyQt6); Bash, POSIX shell, Python compilation, Plasma layout JavaScript and `git diff --check` passed.
+- **Runtime/build:** No ISO built: 27 GiB available is below the documented 30 GiB requirement. UTM is inaccessible here (`utmctl list`: `OSStatus -1743`, no VM entries), so there are no new screenshots or runtime claims. Rebuild both architectures and validate real networking, GTK launch, Plasma visuals, Konsole blur/fallback and user persistence in separate guests.
+- **Branding/documentation review:** The placeholder mark was not proven to match the authorized official asset and is no longer selected by the panel. No documents were deleted: roadmap/audit provide summaries while technical, release, security, architecture and VM records hold distinct detail. Past image statuses were not changed.
+
 ## IFBA OS top bar — 2026-11-20
 
 - **Objective:** Implement only the Plasma 6 top bar while preserving the existing bottom panel and wallpaper.
@@ -208,3 +225,13 @@
 - **Build workflow:** `scripts/build-iso.sh --both` uses one clean HEAD/version, architecture-specific staging names, build IDs and manifests, checks source cleanliness after each container build, and only advances latest after a matched pair passes validation. The container publisher refuses overwrites and publishes from a verified staging directory.
 - **Validation:** All 73 tests passed with `PYTHONPATH=ai`; `bash -n` passed for both build scripts, all six archived ISO hashes/sizes and manifests verified, and `git diff --check` passed before final review. No ISO build was run because 0.3.2 has no built architecture artifacts yet and a build is not needed to organize or test the publisher.
 - **UTM:** Attempted a fresh QEMU Linux ARM VM, set 4096 MiB and four cores, then canceled before save because UTM's native ISO Browse control returned `noWindowsAvailable`. No ARM VM was created and no boot is claimed. The suspended AMD64 VM on v0.2.1 remains unchanged. Manual picker steps are in `VM-TESTING.md`.
+
+## UTM verification follow-up — 2026-11-21 16:58 UTC
+
+- `utmctl list` observed the historical ARM VM started and the historical AMD64 VM stopped; neither was modified. UTM screen capture failed with `SCStreamErrorDomain Code=-3811`, so no guest console or screenshot was available.
+- Verified manifests for both existing v0.3.2 ISOs from commit `7d5b1507c028c3e7e6aca8237f548815c539ca38`. They do not contain current uncommitted fixes and remain `runtime_status: unvalidated`. No new ISO or guest runtime validation is claimed.
+
+## Storage recheck — 2026-11-21 17:00 UTC
+
+- Host volume now reports 72,299,088 KiB available (about 69 GiB), above the documented 30 GiB build requirement. No files, caches, Docker volumes, ISOs, or VM data were removed to obtain this space.
+- A paired build remains blocked by the official `scripts/build-iso.sh` dirty-worktree guard: current local edits and untracked project files are present. That script requires committed build inputs to embed an immutable source commit. No commit, branch, stash, or provenance bypass was made.

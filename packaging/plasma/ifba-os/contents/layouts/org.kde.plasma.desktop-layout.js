@@ -10,8 +10,6 @@ topPanel.hiding = "none"
 
 var systemMenu = topPanel.addWidget("org.kde.plasma.kickoff")
 systemMenu.currentConfigGroup = ["General"]
-systemMenu.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-mark-placeholder.png")
-systemMenu.writeConfig("menuLabel", "IFBA OS")
 systemMenu.writeConfig("favorites", "applications:org.kde.kinfocenter.desktop,applications:systemsettings.desktop,applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:ifba-ai.desktop,applications:suap-ifba.desktop,applications:ava-ifba.desktop")
 systemMenu.writeConfig("systemApplications", "systemsettings.desktop,org.kde.kinfocenter.desktop,org.kde.discover.desktop")
 systemMenu.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")
@@ -59,7 +57,6 @@ dock.hiding = "dodgewindows"
 
 var dockLauncher = dock.addWidget("org.kde.plasma.kickoff")
 dockLauncher.currentConfigGroup = ["General"]
-dockLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-mark-placeholder.png")
 
 var tasks = dock.addWidget("org.kde.plasma.icontasks")
 tasks.currentConfigGroup = ["General"]

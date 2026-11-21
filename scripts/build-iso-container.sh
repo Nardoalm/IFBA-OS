@@ -80,7 +80,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou \
   sddm sddm-theme-breeze breeze-gtk-theme breeze-icon-theme breeze-cursor-theme \
   dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter \
-  powerdevil upower \
+  powerdevil upower fastfetch \
   xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter \
   xdg-desktop-portal-kde xdg-desktop-portal-gtk \
   python3-dbus python3-gi gir1.2-gtk-3.0 gnome-keyring libpam-gnome-keyring \
@@ -114,10 +114,28 @@ chroot "$ROOTFS" /bin/bash -euxc '
   rm -rf /var/lib/apt/lists/* /tmp/*
 '
 mkdir -p "$ROOTFS/etc/systemd/system/multi-user.target.wants" "$ROOTFS/etc/NetworkManager/system-connections" \
+  "$ROOTFS/etc/NetworkManager/conf.d" \
   "$ROOTFS/usr/local/bin" "$ROOTFS/usr/lib/python3/dist-packages" \
   "$ROOTFS/usr/lib/systemd/user/default.target.wants" "$ROOTFS/usr/share/dbus-1/services"
 ln -sfn /lib/systemd/system/qemu-guest-agent.service "$ROOTFS/etc/systemd/system/multi-user.target.wants/qemu-guest-agent.service"
 ln -sfn /usr/lib/systemd/system/NetworkManager.service "$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
+rm -f "$ROOTFS/etc/systemd/system/multi-user.target.wants/systemd-networkd.service" \
+  "$ROOTFS/etc/systemd/system/sockets.target.wants/systemd-networkd.socket"
+ln -sfn /dev/null "$ROOTFS/etc/systemd/system/systemd-networkd.service"
+ln -sfn /dev/null "$ROOTFS/etc/systemd/system/systemd-networkd.socket"
+# Ubuntu's vendor 10-globally-managed-devices.conf marks everything except
+# Wi-Fi/cellular unmanaged. Override its same-named drop-in, then explicitly
+# manage Ethernet without relying on interface names. This matches enp0s1,
+# virtio, e1000, and physical Ethernet while preserving Wi-Fi policy.
+cat > "$ROOTFS/etc/NetworkManager/conf.d/10-globally-managed-devices.conf" <<'NMCONF'
+[keyfile]
+unmanaged-devices=
+NMCONF
+cat > "$ROOTFS/etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf" <<'NMDEVICE'
+[device-ifba-managed-ethernet]
+match-device=type:ethernet
+managed=1
+NMDEVICE
 cat > "$ROOTFS/etc/NetworkManager/system-connections/ifba-wired.nmconnection" <<'NETWORK'
 [connection]
 id=IFBA OS Ethernet
@@ -132,6 +150,45 @@ method=auto
 method=auto
 NETWORK
 chmod 0600 "$ROOTFS/etc/NetworkManager/system-connections/ifba-wired.nmconnection"
+LIVE_BASHRC_IS_SKELETON=0
+if cmp -s "$ROOTFS/home/ubuntu/.bashrc" "$ROOTFS/etc/skel/.bashrc"; then
+  LIVE_BASHRC_IS_SKELETON=1
+fi
+install -D -m 0644 /work/packaging/konsole/IFBA\ Terminal.profile \
+  "$ROOTFS/usr/share/konsole/IFBA Terminal.profile"
+install -D -m 0644 /work/packaging/konsole/IFBA\ Glass.colorscheme \
+  "$ROOTFS/usr/share/konsole/IFBA Glass.colorscheme"
+for home_root in "$ROOTFS/etc/skel" "$ROOTFS/home/ubuntu"; do
+  if [[ "$home_root" == "$ROOTFS/etc/skel" || ! -e "$home_root/.local/share/konsole/IFBA Terminal.profile" ]]; then
+    install -D -m 0644 /work/packaging/konsole/IFBA\ Terminal.profile \
+      "$home_root/.local/share/konsole/IFBA Terminal.profile"
+  fi
+  if [[ "$home_root" == "$ROOTFS/etc/skel" || ! -e "$home_root/.local/share/konsole/IFBA Glass.colorscheme" ]]; then
+    install -D -m 0644 /work/packaging/konsole/IFBA\ Glass.colorscheme \
+      "$home_root/.local/share/konsole/IFBA Glass.colorscheme"
+  fi
+  if [[ ! -e "$home_root/.config/konsolerc" ]]; then
+    install -D -m 0644 /dev/null "$home_root/.config/konsolerc"
+    cat > "$home_root/.config/konsolerc" <<'KONSOLE'
+[Desktop Entry]
+DefaultProfile=IFBA Terminal.profile
+KONSOLE
+  fi
+  if [[ ! -e "$home_root/.bashrc" ]]; then
+    touch "$home_root/.bashrc"
+  fi
+  if ! grep -q 'ifba-prompt.sh' "$home_root/.bashrc" && \
+    { [[ "$home_root" == "$ROOTFS/etc/skel" ]] || [[ "$LIVE_BASHRC_IS_SKELETON" == 1 ]]; }; then
+    cat >> "$home_root/.bashrc" <<'BASHRC'
+
+if [ -r "$HOME/.local/share/ifba-os/ifba-prompt.sh" ]; then
+  . "$HOME/.local/share/ifba-os/ifba-prompt.sh"
+fi
+BASHRC
+  fi
+  install -D -m 0644 /work/packaging/ifba-prompt.sh \
+    "$home_root/.local/share/ifba-os/ifba-prompt.sh"
+done
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/backgrounds/ifba-os/wallpaper.png"
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/ifba-os/assets/wallpapers/"
 install -D -m 0644 /work/assets/wallpapers/ifba-os-lockscreen.png \
@@ -265,6 +322,17 @@ install -D -m 0644 "$BUILD_INFO_FILE" "$ROOTFS/usr/share/ifba-os/build-info.json
 for file in /usr/share/ifba-os/build-info.json /usr/share/backgrounds/ifba-os/wallpaper.png /usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png /etc/skel/.config/kscreenlockerrc /home/ubuntu/.config/kscreenlockerrc /etc/xdg/kscreenlockerrc /etc/xdg/plasmashellrc /etc/skel/.config/plasmashellrc /home/ubuntu/.config/plasmashellrc /usr/share/color-schemes/IFBA-OS-Dark.colors /etc/skel/.config/kdeglobals /etc/sddm.conf.d/10-ifba-os.conf /usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json /usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js /usr/share/plasma/shells/org.ifbaos.plasma/metadata.json /usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreen.qml /usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreenUi.qml /usr/share/applications/org.kde.kinfocenter.desktop /usr/bin/firefox /usr/bin/ifba-ai-ui /usr/bin/ifba-welcome /usr/share/applications/ifba-ai.desktop /usr/share/applications/ifba-os-welcome.desktop /etc/xdg/autostart/ifba-os-welcome.desktop /usr/share/doc/ifba-os/welcome.html /usr/share/applications/ifba-os-installer.desktop /usr/bin/ifba-os-installer /usr/lib/python3/dist-packages/ifba_ai/ui.py /usr/share/applications/suap-ifba.desktop /usr/share/applications/ava-ifba.desktop /usr/local/bin/ifba-os-plasma-session-setup /etc/NetworkManager/system-connections/ifba-wired.nmconnection /etc/calamares/settings.conf /etc/calamares/modules/partition.conf /etc/calamares/modules/unpackfs.conf /etc/calamares/modules/removeuser.conf /etc/calamares/modules/shellprocess.conf /etc/calamares/modules/locale.conf /etc/calamares/modules/keyboard.conf /etc/calamares/modules/users.conf /etc/calamares/modules/displaymanager.conf /etc/calamares/modules/initramfs.conf /etc/calamares/modules/bootloader.conf /etc/calamares/branding/ifba-os/branding.desc; do
   test -s "$ROOTFS$file"
 done
+for file in /etc/NetworkManager/conf.d/10-globally-managed-devices.conf \
+  /etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf \
+  /usr/share/konsole/IFBA\ Terminal.profile /usr/share/konsole/IFBA\ Glass.colorscheme \
+  /usr/share/dbus-1/services/org.ifba.OS.AI.service /usr/lib/systemd/user/ifba-ai.service; do
+  test -s "$ROOTFS$file"
+done
+grep -q '^unmanaged-devices=$' "$ROOTFS/etc/NetworkManager/conf.d/10-globally-managed-devices.conf"
+grep -q '^match-device=type:ethernet$' "$ROOTFS/etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf"
+grep -q '^managed=1$' "$ROOTFS/etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf"
+test -L "$ROOTFS/etc/systemd/system/systemd-networkd.service"
+test "$(readlink "$ROOTFS/etc/systemd/system/systemd-networkd.service")" = /dev/null
 for file in metadata.desktop IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do
   cmp -s "/work/packaging/plasma/window-decoration/IFBA-Window/$file" \
     "$ROOTFS/usr/share/aurorae/themes/IFBA-Window/$file"
@@ -291,7 +359,7 @@ cmp -s /work/packaging/plasma/ifbaos-shell/contents/lockscreen/LockScreenUi.qml 
   "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreenUi.qml"
 test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
-for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil upower calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
+for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil upower calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
 for package in "${INSTALLER_BOOT_PACKAGES[@]}"; do

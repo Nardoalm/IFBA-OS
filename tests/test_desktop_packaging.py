@@ -104,6 +104,57 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("timeout=5", ui)
         self.assertIn("self.status.set_text(\"O assistente abriu, mas o serviço local não respondeu.", ui)
 
+    def test_assistant_presents_window_before_connecting_to_session_bus(self):
+        ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
+        activation = ui.split("    def do_activate(self):", 1)[1].split("    def do_startup(self):", 1)[0]
+        self.assertLess(activation.index("window.show_all()"), activation.index("window.present()"))
+        self.assertLess(activation.index("window.present()"), activation.index("GLib.idle_add(window._connect_service)"))
+        self.assertIn('self.retry_service_button = Gtk.Button(label="Tentar novamente")', ui)
+        self.assertIn('self.retry_service_button.connect("clicked", self._retry_service)', ui)
+        self.assertIn("self.service_connection_started = False", ui)
+
+    def test_ai_launch_files_and_user_service_are_packaged_with_runtime_dependencies(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        launcher = configparser.ConfigParser(interpolation=None)
+        launcher.read(ROOT / "packaging/ifba-ai.desktop")
+        service = configparser.ConfigParser(interpolation=None)
+        service.read(ROOT / "packaging/ifba-ai.service")
+        dbus_service = configparser.ConfigParser(interpolation=None)
+        dbus_service.read(ROOT / "packaging/org.ifba.OS.AI.service")
+
+        self.assertEqual(launcher["Desktop Entry"]["Exec"], "/usr/bin/ifba-ai-ui")
+        self.assertIn("python3-dbus python3-gi gir1.2-gtk-3.0", build)
+        self.assertIn("dbus-x11", build)
+        self.assertIn("/usr/lib/systemd/user/", build)
+        self.assertIn("/usr/share/dbus-1/services/", build)
+        self.assertEqual(service["Service"]["Type"], "dbus")
+        self.assertEqual(service["Service"]["BusName"], "org.ifba.OS.AI")
+        self.assertEqual(dbus_service["D-BUS Service"]["SystemdService"], "ifba-ai.service")
+
+    def test_konsole_glass_is_default_for_new_users_without_replacing_existing_user_settings(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        profile = configparser.ConfigParser(interpolation=None)
+        profile.read(ROOT / "packaging/konsole/IFBA Terminal.profile")
+        colors = configparser.ConfigParser(interpolation=None)
+        colors.read(ROOT / "packaging/konsole/IFBA Glass.colorscheme")
+        prompt = (ROOT / "packaging/ifba-prompt.sh").read_text()
+
+        self.assertEqual(profile["General"]["Name"], "IFBA Terminal")
+        self.assertEqual(profile["Appearance"]["ColorScheme"], "IFBA Glass")
+        self.assertEqual(colors["General"]["Description"], "IFBA Glass")
+        self.assertGreater(float(colors["General"]["Opacity"]), 0.9)
+        self.assertEqual(colors["Background"]["Transparency"], "12")
+        self.assertIn("fastfetch", build)
+        self.assertIn("! -e \"$home_root/.config/konsolerc\"", build)
+        self.assertIn("! -e \"$home_root/.local/share/konsole/IFBA Terminal.profile\"", build)
+        self.assertIn("PROMPT_COMMAND=__ifba_set_prompt", prompt)
+        self.assertNotIn("fastfetch\\n", prompt)
+
+    def test_plasma_branding_does_not_display_the_noncompliant_placeholder_mark(self):
+        layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
+        self.assertNotIn("ifba-mark-placeholder.png", layout)
+        self.assertNotIn('writeConfig("menuLabel", "IFBA OS")', layout)
+
     def test_assistant_relaunch_activates_the_existing_window(self):
         ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
         self.assertIn("Gio.ApplicationFlags.HANDLES_COMMAND_LINE", ui)
@@ -167,8 +218,8 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('topPanel.location = "top"', top_layout)
         self.assertIn("topPanel.height = 36", top_layout)
         self.assertIn("topPanel.floating = true", top_layout)
-        self.assertIn('systemMenu.writeConfig("menuLabel", "IFBA OS")', top_layout)
-        self.assertIn('file:///usr/share/ifba-os/assets/icons/ifba-mark-placeholder.png', top_layout)
+        self.assertNotIn('systemMenu.writeConfig("menuLabel", "IFBA OS")', top_layout)
+        self.assertNotIn('file:///usr/share/ifba-os/assets/icons/ifba-mark-placeholder.png', top_layout)
         self.assertIn('systemMenu.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")', top_layout)
         self.assertIn("systemsettings.desktop,org.kde.kinfocenter.desktop", top_layout)
         self.assertIn("applications:org.kde.kinfocenter.desktop", top_layout)
@@ -242,8 +293,12 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("AnimationSpeed=2", defaults)
         self.assertIn("[kwinrc][Effect-Overview]", defaults)
         setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
-        self.assertIn('marker="$HOME/.config/ifba-os/plasma-layout-applied"', setup)
-        self.assertIn('touch "$marker"', setup)
+        self.assertIn('legacy_marker="$state_dir/plasma-layout-applied"', setup)
+        self.assertIn('layout_marker="$state_dir/plasma-layout-applied-v2"', setup)
+        self.assertIn('wallpaper_marker="$state_dir/plasma-wallpaper-attempted-v2"', setup)
+        self.assertIn('touch "$layout_marker"', setup)
+        self.assertLess(setup.index('touch "$wallpaper_marker"'), setup.index("plasma-apply-wallpaperimage"))
+        self.assertIn('if [ -e "$legacy_marker" ] && [ ! -e "$layout_marker" ]; then', setup)
         self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop", setup)
         self.assertIn("plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png", setup)
         self.assertIn('cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/etc/skel/.config/autostart/"', build)
