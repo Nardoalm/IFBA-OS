@@ -339,8 +339,8 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(theme["Layout"]["buttonheight"], "34")
         for frame in ("decoration-top", "decoration-inactive-top", "decoration-maximized-center"):
             self.assertIn(frame, frame_ids)
-        for button, path in (("minimize", "M14 17H28"), ("maximize", "#42C96A"),
-                             ("restore", "#42C96A"), ("close", "#EF5960")):
+        for button, path in (("minimize", "M14 17H28"), ("maximize", "#22C55E"),
+                             ("restore", "#22C55E"), ("close", "#F87171")):
             button_ids = {
                 node.attrib.get("id")
                 for node in ET.parse(theme_dir / f"{button}.svg").iter()

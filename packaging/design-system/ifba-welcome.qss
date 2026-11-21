@@ -1,0 +1,21 @@
+/* Generated from packaging/design-system/tokens.json. */
+QMainWindow, QScrollArea, QWidget#welcomeContent { background: #080E0B; color: #F1F5F2; }
+QFrame#hero { background: #101A15; border: 1px solid #33443A; border-radius: 12px; }
+QLabel#identity { color: #080E0B; background: #22C55E; border-radius: 8px; font-weight: 700; letter-spacing: 1px; }
+QLabel#heroTitle { font-size: 16pt; font-weight: 700; color: #F1F5F2; }
+QLabel#heroSubtitle, QLabel#sectionHint { color: #94A39A; }
+QLabel#versionBadge { color: #F1F5F2; background: #192820; border: 1px solid #33443A; border-radius: 8px; padding: 6px 10px; }
+QLabel#sectionTitle { color: #F1F5F2; font-size: 12pt; font-weight: 650; }
+QFrame#card { background: #101A15; border: 1px solid #33443A; border-radius: 12px; }
+QLabel#cardTitle { color: #F1F5F2; font-size: 12pt; font-weight: 650; }
+QLabel#cardDescription, QLabel#emptyState { color: #94A39A; }
+QPushButton { color: #F1F5F2; background: #192820; border: 1px solid #33443A; border-radius: 8px; padding: 8px 12px; }
+QPushButton:hover { background: #24382B; border-color: #4ADE80; }
+QPushButton:pressed { background: #101A15; }
+QPushButton:focus { border: 2px solid #4ADE80; }
+QPushButton#primaryButton { color: #080E0B; background: #22C55E; border: 1px solid #22C55E; font-weight: 650; min-width: 110px; }
+QPushButton#primaryButton:hover { background: #16A34A; }
+QCheckBox { color: #94A39A; spacing: 8px; }
+QCheckBox::indicator { width: 17px; height: 17px; }
+QCheckBox::indicator:checked { background: #22C55E; border: 1px solid #4ADE80; border-radius: 6px; }
+QCheckBox::indicator:unchecked { background: #192820; border: 1px solid #33443A; border-radius: 6px; }

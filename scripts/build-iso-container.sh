@@ -81,7 +81,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   sddm sddm-theme-breeze breeze-gtk-theme breeze-icon-theme breeze-cursor-theme \
   dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter \
   powerdevil upower fastfetch \
-  xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter \
+  xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter fonts-noto-core \
   xdg-desktop-portal-kde xdg-desktop-portal-gtk \
   python3-dbus python3-gi gir1.2-gtk-3.0 gnome-keyring libpam-gnome-keyring \
   libsecret-tools python3-xlib python3-pyatspi at-spi2-core gir1.2-atspi-2.0 \
@@ -96,7 +96,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
   passwd -d ubuntu
   mkdir -p /etc/sddm.conf.d /usr/share/backgrounds/ifba-os /usr/share/ifba-os/assets/wallpapers \
     /usr/share/ifba-os/assets/icons /usr/share/color-schemes /etc/xdg/autostart \
-    /usr/share/plasma/look-and-feel \
+    /usr/share/plasma/look-and-feel /etc/gtk-3.0 /etc/gtk-4.0 \
     /etc/skel/Desktop /etc/skel/.config/autostart /etc/skel/.config/ifba-ai \
     /etc/skel/.local/share/ifba-ai /etc/skel/.cache/ifba-ai \
     /home/ubuntu/Desktop /home/ubuntu/.config/autostart /home/ubuntu/.config/ifba-ai \
@@ -212,6 +212,8 @@ cp /work/packaging/ifba-ai.service "$ROOTFS/usr/lib/systemd/user/"
 ln -sfn ../ifba-ai.service "$ROOTFS/usr/lib/systemd/user/default.target.wants/ifba-ai.service"
 cp /work/packaging/firefox.desktop /work/packaging/suap-ifba.desktop /work/packaging/ava-ifba.desktop "$ROOTFS/usr/share/applications/"
 cp /work/welcome/ifba_welcome.py "$ROOTFS/usr/bin/ifba-welcome"
+install -D -m 0644 /work/packaging/design-system/ifba-welcome.qss \
+  "$ROOTFS/usr/share/ifba-os/ifba-welcome.qss"
 chmod 0755 "$ROOTFS/usr/bin/ifba-welcome"
 cp /work/packaging/ifba-os-welcome.desktop "$ROOTFS/usr/share/applications/"
 cp /work/packaging/ifba-os-welcome-autostart.desktop "$ROOTFS/etc/xdg/autostart/ifba-os-welcome.desktop"
@@ -236,49 +238,40 @@ cp /work/packaging/ifba-ai.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop"
 cp /work/packaging/ifba-os-installer.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop"
 cp /work/packaging/ifba-ai.desktop "$ROOTFS/etc/skel/Desktop/IFBA-AI.desktop"
 chmod +x "$ROOTFS/home/ubuntu/Desktop/"*.desktop "$ROOTFS/etc/skel/Desktop/"*.desktop
-cat > "$ROOTFS/usr/share/color-schemes/IFBA-OS-Dark.colors" <<'COLORS'
-[General]
-Name=IFBA OS Dark
-ColorScheme=IFBA OS Dark
-[Colors:Window]
-BackgroundNormal=25,27,29
-BackgroundAlternate=34,37,39
-ForegroundNormal=238,239,240
-ForegroundInactive=154,158,160
-[Colors:View]
-BackgroundNormal=19,21,23
-BackgroundAlternate=30,32,34
-ForegroundNormal=238,239,240
-ForegroundInactive=154,158,160
-[Colors:Button]
-BackgroundNormal=38,41,43
-BackgroundAlternate=47,50,52
-ForegroundNormal=238,239,240
-[Colors:Selection]
-BackgroundNormal=48,135,70
-BackgroundAlternate=39,117,59
-ForegroundNormal=255,255,255
-[Colors:Tooltip]
-BackgroundNormal=35,38,40
-BackgroundAlternate=42,45,47
-ForegroundNormal=238,239,240
-[WM]
-activeBackground=25,27,29
-activeForeground=255,255,255
-inactiveBackground=34,37,39
-inactiveForeground=183,186,188
-COLORS
+install -D -m 0644 /work/packaging/color-schemes/IFBA-OS-Dark.colors \
+  "$ROOTFS/usr/share/color-schemes/IFBA-OS-Dark.colors"
+install -D -m 0644 /work/packaging/gtk/gtk.css "$ROOTFS/etc/gtk-3.0/gtk.css"
+install -D -m 0644 /work/packaging/gtk/gtk.css "$ROOTFS/etc/gtk-4.0/gtk.css"
+install -D -m 0644 /work/packaging/gtk/settings.ini "$ROOTFS/etc/gtk-3.0/settings.ini"
+install -D -m 0644 /work/packaging/gtk/settings.ini "$ROOTFS/etc/gtk-4.0/settings.ini"
+for home_root in "$ROOTFS/etc/skel" "$ROOTFS/home/ubuntu"; do
+  if [[ ! -e "$home_root/.config/gtk-3.0/gtk.css" ]]; then
+    install -D -m 0644 /work/packaging/gtk/gtk.css "$home_root/.config/gtk-3.0/gtk.css"
+  fi
+  if [[ ! -e "$home_root/.config/gtk-4.0/gtk.css" ]]; then
+    install -D -m 0644 /work/packaging/gtk/gtk.css "$home_root/.config/gtk-4.0/gtk.css"
+  fi
+  if [[ ! -e "$home_root/.config/gtk-3.0/settings.ini" ]]; then
+    install -D -m 0644 /work/packaging/gtk/settings.ini "$home_root/.config/gtk-3.0/settings.ini"
+  fi
+  if [[ ! -e "$home_root/.config/gtk-4.0/settings.ini" ]]; then
+    install -D -m 0644 /work/packaging/gtk/settings.ini "$home_root/.config/gtk-4.0/settings.ini"
+  fi
+done
 cat > "$ROOTFS/etc/skel/.config/kdeglobals" <<'KDEGLOBALS'
 [General]
 ColorScheme=IFBA-OS-Dark
 Name=IFBA OS Dark
+Font=Inter,10,-1,5,50,0,0,0,0,0
 [Icons]
 Theme=breeze-dark
 [KDE]
 LookAndFeelPackage=org.ifbaos.desktop
 SingleClick=false
 KDEGLOBALS
-cp "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/home/ubuntu/.config/kdeglobals"
+if [[ ! -e "$ROOTFS/home/ubuntu/.config/kdeglobals" ]]; then
+  cp "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/home/ubuntu/.config/kdeglobals"
+fi
 install -D -m 0644 "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/etc/xdg/kdeglobals"
 install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/etc/xdg/plasmashellrc"
 install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/etc/skel/.config/plasmashellrc"
@@ -319,9 +312,9 @@ umount "$ROOTFS/proc" 2>/dev/null || true
 umount -R "$ROOTFS/sys" 2>/dev/null || true
 rm -f "$RESOLV_TARGET"
 install -D -m 0644 "$BUILD_INFO_FILE" "$ROOTFS/usr/share/ifba-os/build-info.json"
-for file in /usr/share/ifba-os/build-info.json /usr/share/backgrounds/ifba-os/wallpaper.png /usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png /etc/skel/.config/kscreenlockerrc /home/ubuntu/.config/kscreenlockerrc /etc/xdg/kscreenlockerrc /etc/xdg/plasmashellrc /etc/skel/.config/plasmashellrc /home/ubuntu/.config/plasmashellrc /usr/share/color-schemes/IFBA-OS-Dark.colors /etc/skel/.config/kdeglobals /etc/sddm.conf.d/10-ifba-os.conf /usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json /usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js /usr/share/plasma/shells/org.ifbaos.plasma/metadata.json /usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreen.qml /usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreenUi.qml /usr/share/applications/org.kde.kinfocenter.desktop /usr/bin/firefox /usr/bin/ifba-ai-ui /usr/bin/ifba-welcome /usr/share/applications/ifba-ai.desktop /usr/share/applications/ifba-os-welcome.desktop /etc/xdg/autostart/ifba-os-welcome.desktop /usr/share/doc/ifba-os/welcome.html /usr/share/applications/ifba-os-installer.desktop /usr/bin/ifba-os-installer /usr/lib/python3/dist-packages/ifba_ai/ui.py /usr/share/applications/suap-ifba.desktop /usr/share/applications/ava-ifba.desktop /usr/local/bin/ifba-os-plasma-session-setup /etc/NetworkManager/system-connections/ifba-wired.nmconnection /etc/calamares/settings.conf /etc/calamares/modules/partition.conf /etc/calamares/modules/unpackfs.conf /etc/calamares/modules/removeuser.conf /etc/calamares/modules/shellprocess.conf /etc/calamares/modules/locale.conf /etc/calamares/modules/keyboard.conf /etc/calamares/modules/users.conf /etc/calamares/modules/displaymanager.conf /etc/calamares/modules/initramfs.conf /etc/calamares/modules/bootloader.conf /etc/calamares/branding/ifba-os/branding.desc; do
   test -s "$ROOTFS$file"
 done
+test -s "$ROOTFS/usr/share/ifba-os/ifba-welcome.qss"
 for file in /etc/NetworkManager/conf.d/10-globally-managed-devices.conf \
   /etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf \
   /usr/share/konsole/IFBA\ Terminal.profile /usr/share/konsole/IFBA\ Glass.colorscheme \

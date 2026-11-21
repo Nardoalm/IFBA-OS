@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="42" height="34" viewBox="0 0 42 34">
-  <g id="active-center"><rect x="1" y="1" width="40" height="32" rx="8" fill="#173923"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#42C96A" stroke-width="2.5"/></g>
-  <g id="inactive-center" opacity=".58"><rect x="1" y="1" width="40" height="32" rx="8" fill="#173923"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#42C96A" stroke-width="2.5"/></g>
-  <g id="hover-center"><rect x="1" y="1" width="40" height="32" rx="8" fill="#1D4B2C"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#5BE581" stroke-width="2.5"/></g>
-  <g id="hover-inactive-center" opacity=".78"><rect x="1" y="1" width="40" height="32" rx="8" fill="#1D4B2C"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#5BE581" stroke-width="2.5"/></g>
-  <g id="pressed-center"><rect x="1" y="1" width="40" height="32" rx="8" fill="#102B19"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#42C96A" stroke-width="2.5"/></g>
+  <g id="active-center"><rect x="1" y="1" width="40" height="32" rx="8" fill="#192820"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#22C55E" stroke-width="2.5"/></g>
+  <g id="inactive-center" opacity=".58"><rect x="1" y="1" width="40" height="32" rx="8" fill="#192820"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#22C55E" stroke-width="2.5"/></g>
+  <g id="hover-center"><rect x="1" y="1" width="40" height="32" rx="8" fill="#24382B"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#4ADE80" stroke-width="2.5"/></g>
+  <g id="hover-inactive-center" opacity=".78"><rect x="1" y="1" width="40" height="32" rx="8" fill="#24382B"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#4ADE80" stroke-width="2.5"/></g>
+  <g id="pressed-center"><rect x="1" y="1" width="40" height="32" rx="8" fill="#101A15"/><rect x="13" y="9" width="16" height="16" rx="2.5" fill="none" stroke="#22C55E" stroke-width="2.5"/></g>
 </svg>

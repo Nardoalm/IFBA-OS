@@ -1,6 +1,6 @@
 [Appearance]
 ColorScheme=IFBA Glass
-Font=Monospace,10,-1,5,50,0,0,0,0,0
+Font=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
 
 [General]
 Command=/bin/bash -l

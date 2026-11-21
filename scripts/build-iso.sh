@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SYSTEM_VERSION="$(python3 "$ROOT/tools/build_metadata.py" version)"
+python3 "$ROOT/tools/generate_design_system.py" --check
 ARCHES=()
 if [[ "${1:-}" == "--both" && $# -eq 1 ]]; then
   ARCHES=(arm64 amd64)

@@ -32,6 +32,7 @@ from PyQt6.QtWidgets import (
 CONFIG_RELATIVE_PATH = Path("ifba-os") / "welcome.ini"
 DOCS_PATH = Path("/usr/share/doc/ifba-os/welcome.html")
 BUILD_INFO_PATH = Path("/usr/share/ifba-os/build-info.json")
+STYLE_PATH = Path("/usr/share/ifba-os/ifba-welcome.qss")
 
 ACADEMIC_PORTALS = (
     ("SUAP", "Portal público do IFBA", "https://suap.ifba.edu.br/"),
@@ -91,6 +92,13 @@ def system_version() -> str:
     return ""
 
 
+def load_style() -> str:
+    try:
+        return STYLE_PATH.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
 def start_detached(program: str, arguments: tuple[str, ...] = ()) -> bool:
     result = QProcess.startDetached(program, list(arguments))
     return result[0] if isinstance(result, tuple) else bool(result)
@@ -105,7 +113,7 @@ class WelcomeWindow(QMainWindow):
         self.resize(1020, 760)
         self.setObjectName("welcomeWindow")
         self._buttons: dict[str, QPushButton] = {}
-        self.setStyleSheet(STYLE)
+        self.setStyleSheet(load_style())
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
@@ -285,30 +293,6 @@ class WelcomeWindow(QMainWindow):
             return
         if not start_detached(discover, ("--mode", "update")):
             QMessageBox.warning(self, "Atualizações", "Não foi possível abrir o Discover.")
-
-
-STYLE = """
-QMainWindow, QScrollArea, QWidget#welcomeContent { background: #171a1c; color: #eef0ef; }
-QFrame#hero { background: #202527; border: 1px solid #303638; border-radius: 18px; }
-QLabel#identity { color: #ffffff; background: #287342; border-radius: 11px; font-weight: 700; letter-spacing: 1px; }
-QLabel#heroTitle { font-size: 27px; font-weight: 700; color: #f5f6f5; }
-QLabel#heroSubtitle, QLabel#sectionHint { color: #b5bcba; }
-QLabel#versionBadge { color: #d6e7db; background: #293b31; border: 1px solid #42684e; border-radius: 10px; padding: 6px 10px; }
-QLabel#sectionTitle { color: #f0f2f1; font-size: 17px; font-weight: 650; }
-QFrame#card { background: #202527; border: 1px solid #303638; border-radius: 14px; }
-QLabel#cardTitle { color: #f4f6f5; font-size: 15px; font-weight: 650; }
-QLabel#cardDescription, QLabel#emptyState { color: #b5bcba; }
-QPushButton { color: #eef0ef; background: #303638; border: 1px solid #46504d; border-radius: 9px; padding: 8px 13px; }
-QPushButton:hover { background: #394640; border-color: #5d8669; }
-QPushButton:pressed { background: #24392b; }
-QPushButton:focus { border: 2px solid #62a875; }
-QPushButton#primaryButton { color: white; background: #287342; border: 1px solid #3a8c56; font-weight: 650; min-width: 110px; }
-QPushButton#primaryButton:hover { background: #32834e; }
-QCheckBox { color: #c9cfcc; spacing: 9px; }
-QCheckBox::indicator { width: 17px; height: 17px; }
-QCheckBox::indicator:checked { background: #287342; border: 1px solid #62a875; border-radius: 4px; }
-QCheckBox::indicator:unchecked { background: #202527; border: 1px solid #74807a; border-radius: 4px; }
-"""
 
 
 def main(argv: list[str] | None = None) -> int:

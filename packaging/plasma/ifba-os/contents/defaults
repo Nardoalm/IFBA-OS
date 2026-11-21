@@ -1,7 +1,7 @@
 [kdeglobals][General]
 ColorScheme=IFBA-OS-Dark
 Name=IFBA OS Dark
-Font=Noto Sans,10,-1,5,50,0,0,0,0,0
+Font=Inter,10,-1,5,50,0,0,0,0,0
 
 [kdeglobals][KDE]
 LookAndFeelPackage=org.ifbaos.desktop
