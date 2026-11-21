@@ -2,6 +2,14 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## IFBA AI relaunch fix — 2026-11-20
+
+- Source diagnosis: `packaging/ifba-ai.desktop` points to `/usr/bin/ifba-ai-ui`, a Python 3 module launcher installed alongside `ifba_ai` under `/usr/lib/python3/dist-packages`. The Plasma image build installs `python3-dbus`, `python3-gi`, GTK 3 introspection, Secret Service, and GTK/GDK runtime libraries. The GTK application uses `org.ifba.OS.Assistant`, which is single-instance by default.
+- Root cause fixed: subsequent launch requests could be routed to the existing single GTK application instance, but the application did not implement command-line activation. Its activation handler also always constructed a new window instead of presenting an existing one. The app now handles command-line requests and presents its current window; UI construction exceptions print a traceback to stderr rather than disappearing silently.
+- Automated validation: 47 focused assistant/packaging tests pass; Python compilation and `git diff --check` pass. These are source checks only.
+- Runtime status: **pending**. The development host is macOS arm64 with no GTK3 `gi`, Python D-Bus bindings, `DISPLAY`, `WAYLAND_DISPLAY`, or session bus. `utmctl list` failed with macOS Automation `OSStatus -1743`, so no Linux VM could be inspected or booted. The only available ARM64 ISO is historical v0.3.0 (source commit `66f71bdac5cc8a08240aa9340627bdfed6095274`), which predates this fix. No new ISO was built and no launcher, terminal, close/reopen, KDE session, NVIDIA API, or post-run journal test is claimed.
+- To complete acceptance, rebuild a candidate from a committed source state and boot it in a separate ARM64 KDE VM. Verify initial menu and desktop launches, terminal invocation, second invocation after close, persistence of history, keyring setup/errors, service logs, streaming with a real authorized key only, and no credential leakage. Do not declare the graphical criterion complete until the window remains usable in the guest.
+
 ## UTM ARM64 VM creation attempt — 2026-11-20
 
 - Confirmed the existing `Linux` VM remains suspended, x86_64/Q35, 4 GiB RAM, Shared/NAT networking, and attached to the older AMD64 v0.2.1 ISO. It was not modified or deleted.

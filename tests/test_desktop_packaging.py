@@ -90,6 +90,14 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("timeout=5", ui)
         self.assertIn("self.status.set_text(\"O assistente abriu, mas o serviço local não respondeu.", ui)
 
+    def test_assistant_relaunch_activates_the_existing_window(self):
+        ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
+        self.assertIn("Gio.ApplicationFlags.HANDLES_COMMAND_LINE", ui)
+        self.assertIn("def do_command_line(self, command_line):", ui)
+        self.assertIn("window = self.get_active_window()", ui)
+        self.assertIn("window.present()", ui)
+        self.assertIn("traceback.print_exc(file=sys.stderr)", ui)
+
     def test_iso_build_uses_active_kernel_and_initrd_symlinks(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
         self.assertIn('cp -L "$ROOTFS/boot/vmlinuz" "$ISO/casper/vmlinuz"', build)

@@ -4,15 +4,20 @@ import json
 import base64
 import os
 import sys
+import traceback
 
 try:
     import dbus
     import gi
     gi.require_version("Gtk", "3.0")
     from dbus.mainloop.glib import DBusGMainLoop
-    from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, Pango
+    from gi.repository import Gdk, GdkPixbuf, GLib, Gio, Gtk, Pango
 except ImportError:
     sys.stderr.write("A interface exige GTK 3 e D-Bus Python instalados.\n")
+    raise SystemExit(1)
+except Exception:
+    sys.stderr.write("Não foi possível iniciar GTK/D-Bus do IFBA AI:\n")
+    traceback.print_exc(file=sys.stderr)
     raise SystemExit(1)
 
 
@@ -977,7 +982,27 @@ class AssistantWindow(Gtk.ApplicationWindow):
 
 class AssistantApplication(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id="org.ifba.OS.Assistant", flags=0)
+        # Gtk.Application is single-instance by default. HANDLES_COMMAND_LINE
+        # makes later menu/desktop/terminal invocations activate the existing
+        # window instead of silently exiting without presenting it.
+        super().__init__(application_id="org.ifba.OS.Assistant",
+                         flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+
+    def do_command_line(self, command_line):
+        self.activate()
+        return 0
+
+    def do_activate(self):
+        try:
+            window = self.get_active_window()
+            if window is None:
+                window = AssistantWindow(self)
+                window.show_all()
+            window.present()
+        except Exception:
+            sys.stderr.write("Não foi possível abrir a janela do IFBA AI:\n")
+            traceback.print_exc(file=sys.stderr)
+            raise
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -993,12 +1018,6 @@ class AssistantApplication(Gtk.Application):
         except (GLib.Error, TypeError):
             # Keep the assistant usable if the optional packaged theme is absent.
             pass
-
-    def do_activate(self):
-        window = AssistantWindow(self)
-        window.show_all()
-        window.present()
-
 
 def main():
     AssistantApplication().run(sys.argv)
