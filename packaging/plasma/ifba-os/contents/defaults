@@ -33,3 +33,6 @@ BorderActivate=9
 
 [plasmarc][Theme]
 name=breeze-dark
+
+[plasmashellrc][Shell]
+ShellPackage=org.ifbaos.plasma

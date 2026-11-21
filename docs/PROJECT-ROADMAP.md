@@ -4,7 +4,7 @@
 
 ## Current implementation
 
-- [ ] **IN_PROGRESS · P1** The supplied green-wave wallpaper is configured for KScreenLocker in the live account and new-user defaults. Real guest rendering is pending; the authentication layout still uses Plasma's native UI and needs a Plasma 6.6 `Plasma/Shell` implementation plus PAM/runtime validation before any custom form is claimed.
+- [ ] **IN_PROGRESS · P1** The supplied green-wave wallpaper and custom Plasma 6.6 `Plasma/Shell` lock-screen QML are configured for the live account and new-user defaults. The UI delegates authentication to KScreenLocker/PAM, but real guest rendering, authentication, failure handling, repeated locks, scaling, and performance remain unvalidated.
 
 - [ ] **IN_PROGRESS · P0** The detailed audit matrix in [`FINAL-AUDIT.md`](FINAL-AUDIT.md) retains the 0.1.1/XFCE evidence; its KDE runtime update records the latest 0.2.1 desktop. Plasma app/network behavior, guest build ID, persistence and shutdown/restart remain unverified. Track every image in [`ISO-RELEASES.md`](ISO-RELEASES.md).
 

@@ -2,11 +2,11 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
-## Lock-screen wallpaper source update — 2026-11-21
+## KScreenLocker interface — 2026-11-21
 
-- Added the supplied green-wave artwork as the KScreenLocker wallpaper for the live account, `/etc/skel` new users, and XDG defaults. KScreenLocker continues to use its native PAM authentication; this source change does not replace its authentication UI.
-- Focused packaging tests and build-script syntax checks pass. No ISO was rebuilt and no guest was started with this source. UTM's ARM64 VM is stopped with historical v0.3.0 media attached; graphical wallpaper rendering and lock/unlock behavior remain pending.
-- A custom authentication layout is not claimed here. Plasma 6.6 loads lock-screen QML from a `Plasma/Shell` package, so a supported package implementation and real-session validation are required before changing the native form.
+- Added a Plasma 6.6 `Plasma/Shell` package derived from the shell installed by the build, keeping the stock desktop files and replacing only the lock-screen QML entry and its UI. The selected image is the supplied green-wave artwork. Live and new-user defaults select the derived package.
+- The QML uses KScreenLocker's `authenticator.startAuthenticating()` and `authenticator.respond()` flow, retains PAM error/success handling, and gates shutdown, reboot, user switching, and battery UI on the real `SessionManagement`/Breeze component state. It does not implement an alternate authentication service.
+- Static package tests and QML source checks pass, but graphical acceptance is **pending**. No new ISO has been booted with this implementation. UTM's ARM64 VM remains attached to historical v0.3.0 media; lock/unlock, real PAM success/failure, QML runtime errors, multiple resolutions, CPU/memory use, and screenshots have not been validated.
 
 ## Plasma top bar source update — 2026-11-20
 
