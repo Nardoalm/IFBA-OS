@@ -312,6 +312,13 @@ umount "$ROOTFS/proc" 2>/dev/null || true
 umount -R "$ROOTFS/sys" 2>/dev/null || true
 rm -f "$RESOLV_TARGET"
 install -D -m 0644 "$BUILD_INFO_FILE" "$ROOTFS/usr/share/ifba-os/build-info.json"
+for file in \
+  /usr/share/ifba-os/ifba-ai.css \
+  /usr/share/ifba-os/ifba-welcome.qss \
+  /usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png \
+  /usr/share/color-schemes/IFBA-OS-Dark.colors \
+  /etc/gtk-3.0/gtk.css \
+  /etc/gtk-4.0/gtk.css; do
   test -s "$ROOTFS$file"
 done
 test -s "$ROOTFS/usr/share/ifba-os/ifba-welcome.qss"

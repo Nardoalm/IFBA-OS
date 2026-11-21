@@ -1,5 +1,6 @@
-// Native Plasma panels only. Keep the applet identifiers available in the
-// Ubuntu Plasma 6 package set; no third-party dock or global-menu applet.
+// Native Plasma 6 panels only. Keep menus and actions tied to real applets.
+// The session setup applies this layout once to a new profile; existing panel
+// customizations are left untouched after first login.
 var topPanel = new Panel
 topPanel.location = "top"
 topPanel.height = 36
@@ -8,29 +9,15 @@ topPanel.alignment = "left"
 topPanel.floating = true
 topPanel.hiding = "none"
 
-var systemMenu = topPanel.addWidget("org.kde.plasma.kickoff")
-systemMenu.currentConfigGroup = ["General"]
-systemMenu.writeConfig("favorites", "applications:org.kde.kinfocenter.desktop,applications:systemsettings.desktop,applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:ifba-ai.desktop,applications:suap-ifba.desktop,applications:ava-ifba.desktop")
-systemMenu.writeConfig("systemApplications", "systemsettings.desktop,org.kde.kinfocenter.desktop,org.kde.discover.desktop")
-systemMenu.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")
-systemMenu.writeConfig("primaryActions", "3")
-systemMenu.writeConfig("showActionButtonCaptions", "true")
-
-var applicationsMenu = topPanel.addWidget("org.kde.plasma.kicker")
-applicationsMenu.currentConfigGroup = ["General"]
-applicationsMenu.writeConfig("icon", "applications-all-symbolic")
-applicationsMenu.writeConfig("showRecentApps", "false")
-applicationsMenu.writeConfig("showRecentDocs", "false")
-
+// Plasma's appmenu exports menus only for applications that support the KDE
+// global-menu protocol. Other applications simply have no menu here.
 var globalMenu = topPanel.addWidget("org.kde.plasma.appmenu")
 globalMenu.currentConfigGroup = ["Appearance"]
-globalMenu.writeConfig("compactView", "false")
+globalMenu.writeConfig("compactView", "true")
 
 var spacer = topPanel.addWidget("org.kde.plasma.panelspacer")
 spacer.currentConfigGroup = ["General"]
 spacer.writeConfig("expanding", true)
-
-var search = topPanel.addWidget("org.kde.milou")
 
 var tray = topPanel.addWidget("org.kde.plasma.systemtray")
 tray.currentConfigGroup = ["General"]
@@ -55,12 +42,18 @@ dock.alignment = "center"
 dock.floating = true
 dock.hiding = "dodgewindows"
 
-var dockLauncher = dock.addWidget("org.kde.plasma.kickoff")
-dockLauncher.currentConfigGroup = ["General"]
+var appLauncher = dock.addWidget("org.kde.plasma.kickoff")
+appLauncher.currentConfigGroup = ["General"]
+appLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")
+appLauncher.writeConfig("favorites", "applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:ifba-ai.desktop,applications:systemsettings.desktop")
+appLauncher.writeConfig("systemApplications", "systemsettings.desktop,org.kde.kinfocenter.desktop,org.kde.discover.desktop")
+appLauncher.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")
+appLauncher.writeConfig("primaryActions", "3")
+appLauncher.writeConfig("showActionButtonCaptions", "true")
 
 var tasks = dock.addWidget("org.kde.plasma.icontasks")
 tasks.currentConfigGroup = ["General"]
-tasks.writeConfig("launchers", "applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:ifba-ai.desktop,applications:org.thonny.Thonny.desktop,applications:org.kde.gcompris.desktop,applications:libreoffice-writer.desktop,applications:systemsettings.desktop")
+tasks.writeConfig("launchers", "applications:ifba-ai.desktop,applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:systemsettings.desktop")
 tasks.writeConfig("maxStripes", 1)
 tasks.writeConfig("showOnlyCurrentScreen", true)
 tasks.writeConfig("showToolTips", true)
@@ -70,6 +63,4 @@ tasks.writeConfig("groupedTaskVisualization", 0)
 tasks.writeConfig("groupPopups", true)
 tasks.writeConfig("sortingStrategy", 1)
 tasks.writeConfig("separateLaunchers", true)
-tasks.writeConfig("taskHoverEffect", false)
-
-dock.addWidget("org.kde.plasma.trash")
+tasks.writeConfig("taskHoverEffect", true)

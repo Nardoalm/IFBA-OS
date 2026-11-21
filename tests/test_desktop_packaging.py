@@ -2,8 +2,11 @@
 
 import configparser
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
+import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
@@ -28,6 +31,9 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("/work/assets/wallpapers/ifba-os-desktop.png", build)
         self.assertIn("/usr/share/plymouth/themes/ifba-os/", build)
         self.assertIn("/work/assets/plymouth/ifba-os-startup.png", build)
+
+    def test_container_build_script_has_valid_shell_syntax(self):
+        subprocess.run(["bash", "-n", str(ROOT / "scripts/build-iso-container.sh")], check=True)
 
     def test_lock_screen_uses_selected_wallpaper_for_live_and_new_users(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
@@ -150,9 +156,14 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("PROMPT_COMMAND=__ifba_set_prompt", prompt)
         self.assertNotIn("fastfetch\\n", prompt)
 
-    def test_plasma_branding_does_not_display_the_noncompliant_placeholder_mark(self):
+    def test_plasma_launcher_uses_the_official_institutional_symbol(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
         layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
+        symbol = ROOT / "assets/icons/ifba-institutional-symbol.png"
+        self.assertTrue(symbol.is_file())
+        self.assertIn('cp -R /work/assets/icons/. "$ROOTFS/usr/share/ifba-os/assets/icons/"', build)
         self.assertNotIn("ifba-mark-placeholder.png", layout)
+        self.assertIn("ifba-institutional-symbol.png", layout)
         self.assertNotIn('writeConfig("menuLabel", "IFBA OS")', layout)
 
     def test_assistant_relaunch_activates_the_existing_window(self):
@@ -203,29 +214,21 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(metadata["KPlugin"]["Id"], "org.ifbaos.desktop")
         top_layout = layout.split("var dock = new Panel", 1)[0]
         top_widgets = re.findall(r'topPanel\.addWidget\("([^"]+)"\)', top_layout)
-        self.assertEqual(
-            top_widgets,
-            [
-                "org.kde.plasma.kickoff",
-                "org.kde.plasma.kicker",
-                "org.kde.plasma.appmenu",
-                "org.kde.plasma.panelspacer",
-                "org.kde.milou",
-                "org.kde.plasma.systemtray",
-                "org.kde.plasma.digitalclock",
-            ],
-        )
+        self.assertEqual(top_widgets, [
+            "org.kde.plasma.appmenu",
+            "org.kde.plasma.panelspacer",
+            "org.kde.plasma.systemtray",
+            "org.kde.plasma.digitalclock",
+        ])
         self.assertIn('topPanel.location = "top"', top_layout)
         self.assertIn("topPanel.height = 36", top_layout)
         self.assertIn("topPanel.floating = true", top_layout)
         self.assertNotIn('systemMenu.writeConfig("menuLabel", "IFBA OS")', top_layout)
-        self.assertNotIn('file:///usr/share/ifba-os/assets/icons/ifba-mark-placeholder.png', top_layout)
-        self.assertIn('systemMenu.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")', top_layout)
-        self.assertIn("systemsettings.desktop,org.kde.kinfocenter.desktop", top_layout)
-        self.assertIn("applications:org.kde.kinfocenter.desktop", top_layout)
-        self.assertIn("applications:systemsettings.desktop", top_layout)
-        self.assertIn('globalMenu.writeConfig("compactView", "false")', top_layout)
-        self.assertIn('search = topPanel.addWidget("org.kde.milou")', top_layout)
+        self.assertIn('appLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")', layout)
+        self.assertIn('appLauncher.writeConfig("systemFavorites", "lock-screen,reboot,shutdown")', layout)
+        self.assertIn('globalMenu.writeConfig("compactView", "true")', top_layout)
+        self.assertNotIn("org.kde.plasma.kicker", top_layout)
+        self.assertNotIn("org.kde.milou", top_layout)
         for tray_item in (
             "org.kde.plasma.notifications",
             "org.kde.plasma.networkmanagement",
@@ -253,33 +256,27 @@ class DesktopPackagingTests(unittest.TestCase):
         dock = layout.split("var dock = new Panel", 1)[1]
         kickoff_index = dock.index('dock.addWidget("org.kde.plasma.kickoff")')
         tasks_index = dock.index('dock.addWidget("org.kde.plasma.icontasks")')
-        trash_index = dock.index('dock.addWidget("org.kde.plasma.trash")')
         self.assertLess(kickoff_index, tasks_index)
-        self.assertLess(tasks_index, trash_index)
         launcher_line = re.search(r'tasks\.writeConfig\("launchers", "([^"]+)"\)', dock)
         self.assertIsNotNone(launcher_line)
         self.assertEqual(
             launcher_line.group(1).split(","),
             [
+                "applications:ifba-ai.desktop",
                 "applications:firefox.desktop",
                 "applications:org.kde.dolphin.desktop",
                 "applications:org.kde.konsole.desktop",
-                "applications:ifba-ai.desktop",
-                "applications:org.thonny.Thonny.desktop",
-                "applications:org.kde.gcompris.desktop",
-                "applications:libreoffice-writer.desktop",
                 "applications:systemsettings.desktop",
             ],
         )
         self.assertIn('tasks.writeConfig("showToolTips", true)', dock)
-        self.assertIn('tasks.writeConfig("taskHoverEffect", false)', dock)
+        self.assertIn('tasks.writeConfig("taskHoverEffect", true)', dock)
         self.assertIn('tasks.writeConfig("groupingStrategy", 1)', dock)
         self.assertIn('tasks.writeConfig("sortingStrategy", 1)', dock)
         self.assertIn('tasks.writeConfig("iconSpacing", 1)', dock)
         for required_file in (
             "/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json",
             "org.kde.plasma.taskmanager.so",
-            "org.kde.plasma.trash.so",
             "org.thonny.Thonny.desktop",
             "org.kde.gcompris.desktop",
             "libreoffice-writer.desktop",
@@ -298,6 +295,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('wallpaper_marker="$state_dir/plasma-wallpaper-attempted-v2"', setup)
         self.assertIn('touch "$layout_marker"', setup)
         self.assertLess(setup.index('touch "$wallpaper_marker"'), setup.index("plasma-apply-wallpaperimage"))
+
         self.assertIn('if [ -e "$legacy_marker" ] && [ ! -e "$layout_marker" ]; then', setup)
         self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop", setup)
         self.assertIn("plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png", setup)
@@ -319,6 +317,27 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("/lib/systemd/system/sddm.service", build)
         self.assertNotIn("xfce4-session", build)
         self.assertNotIn("lightdm", build.lower())
+
+    def test_plasma_session_setup_applies_panels_only_once(self):
+        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            mock_bin = temp / "bin"
+            mock_bin.mkdir()
+            log = temp / "calls.log"
+            for command in ("plasma-apply-lookandfeel", "plasma-apply-wallpaperimage"):
+                mock = mock_bin / command
+                mock.write_text("#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$TEST_LOG\"\n")
+                mock.chmod(0o755)
+            env = os.environ.copy()
+            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
+            for _ in range(2):
+                subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
+            self.assertEqual(log.read_text().splitlines(), [
+                "--apply org.ifbaos.desktop",
+                "/usr/share/backgrounds/ifba-os/wallpaper.png",
+            ])
+            self.assertTrue((temp / "home/.config/ifba-os/plasma-layout-applied-v2").is_file())
 
     def test_ifba_aurorae_decoration_is_installed_and_has_native_window_controls(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
