@@ -23,7 +23,9 @@ else
 fi
 ISO=/tmp/ifba-iso
 ISO_FILENAME="${IFBA_ISO_FILENAME:?IFBA_ISO_FILENAME must be set by scripts/build-iso.sh}"
-OUT="/work/output/$ISO_FILENAME"
+OUTPUT_DIR="${IFBA_OUTPUT_DIR:-/work/output}"
+BUILD_INFO_FILE="${IFBA_BUILD_INFO_FILE:-/work/output/.ifba-os-build-info.json}"
+OUT="$OUTPUT_DIR/$ISO_FILENAME"
 
 apt-get update
 apt-get install -y --no-install-recommends debootstrap squashfs-tools xorriso "${BOOT_PACKAGES[@]}" curl gnupg ca-certificates
@@ -218,7 +220,7 @@ umount -R "$ROOTFS/dev" 2>/dev/null || true
 umount "$ROOTFS/proc" 2>/dev/null || true
 umount -R "$ROOTFS/sys" 2>/dev/null || true
 rm -f "$RESOLV_TARGET"
-install -D -m 0644 /work/output/.ifba-os-build-info.json "$ROOTFS/usr/share/ifba-os/build-info.json"
+install -D -m 0644 "$BUILD_INFO_FILE" "$ROOTFS/usr/share/ifba-os/build-info.json"
 for file in /usr/share/ifba-os/build-info.json /usr/share/backgrounds/ifba-os/wallpaper.png /usr/share/color-schemes/IFBA-OS-Dark.colors /etc/skel/.config/kdeglobals /etc/sddm.conf.d/10-ifba-os.conf /usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json /usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js /usr/bin/firefox /usr/bin/ifba-ai-ui /usr/share/applications/ifba-ai.desktop /usr/lib/python3/dist-packages/ifba_ai/ui.py /usr/share/applications/suap-ifba.desktop /usr/share/applications/ava-ifba.desktop /usr/local/bin/ifba-os-plasma-session-setup /etc/NetworkManager/system-connections/ifba-wired.nmconnection; do
   test -s "$ROOTFS$file"
 done

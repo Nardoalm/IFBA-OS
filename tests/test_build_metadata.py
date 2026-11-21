@@ -106,9 +106,13 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn('v${SYSTEM_VERSION}.iso', host_build)
         self.assertIn('IFBA_ISO_FILENAME="$ISO_FILENAME"', host_build)
         self.assertIn('docker run --rm --privileged --platform "linux/$ARCH"', host_build)
-        self.assertIn('"$ARCH" != amd64 && "$ARCH" != arm64', host_build)
+        self.assertIn('ARCHES=(arm64 amd64)', host_build)
+        self.assertIn('git -C "$ROOT" rev-parse HEAD', host_build)
+        self.assertIn('assert_source_unchanged', host_build)
+        self.assertIn('BUILD_ID="ifba-$(date -u +\'%Y%m%dT%H%M%SZ\')-${ARCH}-${BUILD_COMMIT:0:12}"', host_build)
+        self.assertIn('release_artifacts.py" publish', host_build)
         self.assertIn('ifba-os-ubuntu-26.04-${ARCH}-v${SYSTEM_VERSION}.iso', host_build)
-        self.assertIn('OUT="/work/output/$ISO_FILENAME"', container_build)
+        self.assertIn('OUT="$OUTPUT_DIR/$ISO_FILENAME"', container_build)
         self.assertNotIn("ubuntu:26.04", host_build)
         for required in (
             "wallpaper.png",

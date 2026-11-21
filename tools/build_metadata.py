@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 
-SYSTEM_VERSION = "0.3.1"
+SYSTEM_VERSION = "0.3.2"
 
 
 def build_info(build_id, commit, date_utc, source_dirty, architecture):
@@ -41,6 +41,8 @@ def write_iso_manifest(info_path, iso_path, output_path):
             size += len(chunk)
     manifest = {
         **info,
+        "build_status": "built",
+        "runtime_status": "unvalidated",
         "artifact": {
             "file": Path(iso_path).name,
             "sha256": digest.hexdigest(),
