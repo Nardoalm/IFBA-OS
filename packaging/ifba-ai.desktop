@@ -10,3 +10,8 @@ Icon=/usr/share/ifba-os/assets/icons/ai-assistant-orb.png
 Terminal=false
 Categories=Education;Utility;
 StartupNotify=true
+Actions=Preview;
+
+[Desktop Action Preview]
+Name=Abrir prévia da nova interface
+Exec=/usr/bin/ifba-ai-preview

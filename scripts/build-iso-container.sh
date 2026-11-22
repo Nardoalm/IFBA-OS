@@ -113,6 +113,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter fonts-noto-core \
   xdg-desktop-portal-kde xdg-desktop-portal-gtk \
   python3-dbus python3-gi gir1.2-gtk-3.0 gnome-keyring libpam-gnome-keyring \
+  python3-markdown-it=3.0.0-3build1 python3-pygments=2.19.2+dfsg-1 \
   libsecret-tools python3-xlib python3-pyatspi at-spi2-core gir1.2-atspi-2.0 \
   libnss3 libatk1.0-0 libatk-bridge2.0-0t64 libcups2t64 libasound2t64 \
   libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libdrm2 \
@@ -278,11 +279,13 @@ install -D -m 0644 /work/packaging/sddm/ifba-theme.conf.user \
 cp -R /work/assets/icons/. "$ROOTFS/usr/share/ifba-os/assets/icons/"
 cp -R /work/ai/ifba_ai "$ROOTFS/usr/lib/python3/dist-packages/"
 cp /work/packaging/ifba-ai-ui "$ROOTFS/usr/bin/ifba-ai-ui"
+install -D -m 0755 /work/packaging/ifba-ai-preview "$ROOTFS/usr/bin/ifba-ai-preview"
 cp /work/packaging/ifba-ai-daemon "$ROOTFS/usr/bin/ifba-ai-daemon"
 cp /work/tools/ifba-os-version "$ROOTFS/usr/local/bin/ifba-os-version"
 chmod 0755 "$ROOTFS/usr/bin/ifba-ai-ui" "$ROOTFS/usr/bin/ifba-ai-daemon" "$ROOTFS/usr/local/bin/ifba-os-version"
 cp /work/packaging/ifba-ai.desktop "$ROOTFS/usr/share/applications/ifba-ai.desktop"
 cp /work/packaging/ifba-ai.css "$ROOTFS/usr/share/ifba-os/ifba-ai.css"
+install -D -m 0644 /work/packaging/ifba-ai-preview.css "$ROOTFS/usr/share/ifba-os/ifba-ai-preview.css"
 cp /work/packaging/org.ifba.OS.AI.service "$ROOTFS/usr/share/dbus-1/services/"
 cp /work/packaging/ifba-ai.service "$ROOTFS/usr/lib/systemd/user/"
 cp /work/packaging/firefox.desktop /work/packaging/suap-ifba.desktop /work/packaging/ava-ifba.desktop "$ROOTFS/usr/share/applications/"
@@ -461,6 +464,8 @@ rm -f "$RESOLV_TARGET"
 install -D -m 0644 "$BUILD_INFO_FILE" "$ROOTFS/usr/share/ifba-os/build-info.json"
 for file in \
   /usr/share/ifba-os/ifba-ai.css \
+  /usr/share/ifba-os/ifba-ai-preview.css \
+  /usr/bin/ifba-ai-preview \
   /usr/share/ifba-os/ifba-welcome.qss \
   /usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png \
   /usr/share/color-schemes/IFBA-OS-Dark.colors \

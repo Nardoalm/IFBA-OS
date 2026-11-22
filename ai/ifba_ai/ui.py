@@ -9,6 +9,7 @@ import traceback
 try:
     import dbus
     import gi
+    gi.require_version("Gdk", "3.0")
     gi.require_version("Gtk", "3.0")
     from dbus.mainloop.glib import DBusGMainLoop
     from gi.repository import Gdk, GdkPixbuf, GLib, Gio, Gtk, Pango
@@ -36,6 +37,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.set_position(Gtk.WindowPosition.CENTER)
         self.proxy = None
         self.bus = None
+        self.service_signals = []
         self.service_connection_started = False
         self.live_demo = False
         self.current_conversation = None
@@ -170,7 +172,8 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.key_entry.set_placeholder_text("Cole sua chave pessoal; ela não será exibida novamente")
         page.pack_start(self.key_entry, False, False, 0)
 
-        page.pack_start(Gtk.Label(label="Modelo", xalign=0), False, False, 0)
+        self.model_section_start = Gtk.Label(label="Modelo", xalign=0)
+        page.pack_start(self.model_section_start, False, False, 0)
         self.model = Gtk.ComboBoxText()
         for model_id, metadata in MODELS.items():
             self.model.append(model_id, metadata["title"])
@@ -221,7 +224,10 @@ class AssistantWindow(Gtk.ApplicationWindow):
                               ("Limite de caracteres enviados", self.context_chars),
                               ("Retenção do histórico (dias; 0 = apagar ao salvar)", self.history_retention),
                               ("Retenção das memórias (dias; 0 = apagar ao salvar)", self.memory_retention)):
-            page.pack_start(Gtk.Label(label=label, xalign=0), False, False, 0)
+            caption = Gtk.Label(label=label, xalign=0)
+            if widget is self.context_messages:
+                self.privacy_section_start = caption
+            page.pack_start(caption, False, False, 0)
             page.pack_start(widget, False, False, 0)
 
         self.memory = Gtk.CheckButton(label="Ativar memória educacional nesta conta")
@@ -295,10 +301,13 @@ class AssistantWindow(Gtk.ApplicationWindow):
             self.bus = dbus.SessionBus()
             obj = self.bus.get_object(BUS_NAME, OBJECT_PATH, introspect=False)
             self.proxy = dbus.Interface(obj, dbus_interface=INTERFACE)
-            self.bus.add_signal_receiver(self._on_delta, signal_name="MessageDelta", dbus_interface=INTERFACE)
-            self.bus.add_signal_receiver(self._on_finished, signal_name="GenerationFinished", dbus_interface=INTERFACE)
-            self.bus.add_signal_receiver(self._on_failed, signal_name="GenerationFailed", dbus_interface=INTERFACE)
-            self.bus.add_signal_receiver(self._on_visual_guide, signal_name="VisualGuide", dbus_interface=INTERFACE)
+            for name, callback in (("MessageDelta", self._on_delta),
+                                   ("GenerationFinished", self._on_finished),
+                                   ("GenerationFailed", self._on_failed),
+                                   ("VisualGuide", self._on_visual_guide)):
+                handle = self.bus.add_signal_receiver(callback, signal_name=name, dbus_interface=INTERFACE,
+                                                      bus_name=BUS_NAME, path=OBJECT_PATH)
+                self.service_signals.append(handle)
             self.proxy.GetStatus(
                 reply_handler=self._on_service_status,
                 error_handler=self._on_service_error,
@@ -309,6 +318,9 @@ class AssistantWindow(Gtk.ApplicationWindow):
         return False
 
     def _retry_service(self, *_args):
+        for handle in self.service_signals:
+            handle.remove()
+        self.service_signals.clear()
         self.service_connection_started = False
         self.proxy = None
         self.bus = None
@@ -639,6 +651,9 @@ class AssistantWindow(Gtk.ApplicationWindow):
         dialog.destroy()
         if response != Gtk.ResponseType.ACCEPT:
             return
+        self._submit_visual_capture(context, image, title)
+
+    def _submit_visual_capture(self, context, image, title):
         prompt = self.input.get_text().strip()
         if not prompt:
             self.status.set_text("Escreva uma pergunta antes de enviar a captura.")
@@ -736,13 +751,9 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.show()
         self.present()
 
-    def _save_settings(self, *_):
-        if not self.proxy:
-            self.status.set_text("O serviço local do assistente não está disponível.")
-            return
-        model = self.model.get_active_id() or DEFAULT_MODEL
-        values = {
-            "model_id": model,
+    def _settings_values(self):
+        return {
+            "model_id": self.model.get_active_id() or DEFAULT_MODEL,
             "reasoning_level": self._selected_reasoning_level(),
             "max_tokens": self.tokens.get_value_as_int(),
             "memory_enabled": self.memory.get_active(),
@@ -754,6 +765,12 @@ class AssistantWindow(Gtk.ApplicationWindow):
             "history_retention_days": self.history_retention.get_value_as_int(),
             "memory_retention_days": self.memory_retention.get_value_as_int(),
         }
+
+    def _save_settings(self, *_):
+        if not self.proxy:
+            self.status.set_text("O serviço local do assistente não está disponível.")
+            return
+        values = self._settings_values()
         try:
             key = self.key_entry.get_text().strip()
             if key:
