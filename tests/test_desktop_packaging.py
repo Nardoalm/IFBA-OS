@@ -28,6 +28,9 @@ class DesktopPackagingTests(unittest.TestCase):
 
     def test_wallpaper_and_splash_are_copied_to_their_own_runtime_paths(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
+        self.assertIn('desktop.writeConfig("Image", "file:///usr/share/backgrounds/ifba-os/campus-jacobina.jpg")', layout)
+        self.assertIn("/usr/share/backgrounds/ifba-os/campus-jacobina.jpg", build)
         self.assertIn("/usr/share/backgrounds/ifba-os/wallpaper.png", build)
         self.assertIn("/work/assets/wallpapers/ifba-os-desktop.png", build)
         self.assertIn("/usr/share/plymouth/themes/ifba-os/", build)

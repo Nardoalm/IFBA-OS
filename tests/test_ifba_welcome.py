@@ -40,7 +40,12 @@ class WelcomeRuntimeTests(unittest.TestCase):
     def test_window_opens_and_exposes_the_expected_sections(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "welcome.ini"
-            window = ifba_welcome.WelcomeWindow(path)
+            with patch.object(
+                ifba_welcome,
+                "resolve_program",
+                side_effect={"codium": "/usr/bin/codium"}.get,
+            ):
+                window = ifba_welcome.WelcomeWindow(path)
             window.show()
             self.app.processEvents()
             self.assertTrue(window.isVisible())
@@ -48,6 +53,7 @@ class WelcomeRuntimeTests(unittest.TestCase):
             self.assertIn("AVA IFBA", window._buttons)
             self.assertIn("IFBA AI", window._buttons)
             self.assertIn("VSCodium", window._buttons)
+            self.assertNotIn("GCompris", window._buttons)
             self.assertIn("Documentação", window._buttons)
             self.assertIn("Atualizações", window._buttons)
             with patch.object(ifba_welcome, "user_config_path", return_value=path):

@@ -111,7 +111,7 @@ class PlasmaFirstLoginTests(unittest.TestCase):
 
     @staticmethod
     def has_ifba_layout(content, live_state):
-        wallpaper = "file:///usr/share/backgrounds/ifba-os/wallpaper.png"
+        wallpaper = "file:///usr/share/backgrounds/ifba-os/campus-jacobina.jpg"
         return (
             len(live_state["panels"]) == 2
             and {panel["location"] for panel in live_state["panels"]} == {"top", "bottom"}

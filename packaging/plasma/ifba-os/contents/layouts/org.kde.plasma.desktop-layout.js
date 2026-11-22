@@ -2,7 +2,7 @@
 for (const desktop of desktops()) {
     desktop.wallpaperPlugin = "org.kde.image"
     desktop.currentConfigGroup = ["Wallpaper", "org.kde.image", "General"]
-    desktop.writeConfig("Image", "file:///usr/share/backgrounds/ifba-os/wallpaper.png")
+    desktop.writeConfig("Image", "file:///usr/share/backgrounds/ifba-os/campus-jacobina.jpg")
 }
 
 var topPanel = new Panel

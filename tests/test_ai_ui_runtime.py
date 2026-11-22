@@ -52,6 +52,12 @@ class AssistantUiRuntimeTests(unittest.TestCase):
         self.assertTrue(self.window.retry_service_button.get_visible())
         self.assertFalse(self.window.new_chat.get_sensitive())
 
+    def test_live_status_does_not_force_an_overwide_window(self):
+        self.window._on_service_status(False, False, True, "")
+
+        self.assertIn("Sessão Live", self.window.status.get_text())
+        self.assertLess(self.window.status.get_preferred_width().minimum_width, 560)
+
 
 if __name__ == "__main__":
     unittest.main()
