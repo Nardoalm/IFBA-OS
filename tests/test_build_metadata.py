@@ -152,6 +152,20 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn('install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup', container_build)
         self.assertIn('"$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"', container_build)
 
+    def test_casper_manifest_covers_and_checks_the_final_live_payload(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        paths = build.split("casper_payload=(\n", 1)[1].split("\n)", 1)[0].split()
+        self.assertEqual(paths, [
+            "casper/vmlinuz", "casper/initrd", "casper/filesystem.squashfs",
+            "casper/filesystem.size", "boot/grub/grub.cfg",
+        ])
+        manifest = '(cd "$ISO" && md5sum "${casper_payload[@]}" > md5sum.txt)'
+        self.assertLess(build.index(manifest), build.index('grub-mkrescue -volid'))
+        self.assertIn('iso_extract+=(-extract "/$file" "$VERIFY_DIR/$file")', build)
+        self.assertIn('for file in "${casper_payload[@]}" md5sum.txt;', build)
+        self.assertIn('cmp -s "$ISO/md5sum.txt" "$VERIFY_DIR/md5sum.txt"', build)
+        self.assertIn('(cd "$VERIFY_DIR" && md5sum --check --strict md5sum.txt)', build)
+
 
 if __name__ == "__main__":
     unittest.main()

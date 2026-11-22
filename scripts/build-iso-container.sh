@@ -556,18 +556,30 @@ menuentry "IFBA OS prototype (live)" {
   initrd /casper/initrd
 }
 GRUB
+# Casper reads an md5sum-format list relative to the ISO root. Limit it to
+# the finished Live payload. GRUB generates its catalog and EFI image later.
+casper_payload=(
+  casper/vmlinuz
+  casper/initrd
+  casper/filesystem.squashfs
+  casper/filesystem.size
+  boot/grub/grub.cfg
+)
+(cd "$ISO" && md5sum "${casper_payload[@]}" > md5sum.txt)
 grub-mkrescue -volid "IFBA_OS_26_04_${IFBA_ARCH}" -o "$OUT" "$ISO"
 VERIFY_DIR="$(mktemp -d)"
-xorriso -osirrox on -indev "$OUT" \
-  -extract /casper/vmlinuz "$VERIFY_DIR/vmlinuz" \
-  -extract /casper/initrd "$VERIFY_DIR/initrd" \
-  -extract /casper/filesystem.squashfs "$VERIFY_DIR/filesystem.squashfs" \
-  -extract /boot/grub/grub.cfg "$VERIFY_DIR/grub.cfg" \
-  -end
-for file in vmlinuz initrd filesystem.squashfs grub.cfg; do
+iso_extract=()
+for file in "${casper_payload[@]}" md5sum.txt; do
+  mkdir -p "$VERIFY_DIR/$(dirname "$file")"
+  iso_extract+=(-extract "/$file" "$VERIFY_DIR/$file")
+done
+xorriso -osirrox on -indev "$OUT" "${iso_extract[@]}" -end
+for file in "${casper_payload[@]}" md5sum.txt; do
   test -s "$VERIFY_DIR/$file"
 done
-unsquashfs -cat "$VERIFY_DIR/filesystem.squashfs" usr/share/ifba-os/build-info.json \
+cmp -s "$ISO/md5sum.txt" "$VERIFY_DIR/md5sum.txt"
+(cd "$VERIFY_DIR" && md5sum --check --strict md5sum.txt)
+unsquashfs -cat "$VERIFY_DIR/casper/filesystem.squashfs" usr/share/ifba-os/build-info.json \
   > "$VERIFY_DIR/build-info.json"
 cmp -s "$VERIFY_DIR/build-info.json" "$BUILD_INFO_FILE"
 rm -rf "$VERIFY_DIR"
