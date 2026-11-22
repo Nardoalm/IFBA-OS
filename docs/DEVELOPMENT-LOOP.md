@@ -251,3 +251,11 @@
 - The native macOS ISO chooser failed in UTM (`-10005: noWindowsAvailable`) while the separate ARM64 wizard was set to QEMU, 4096 MiB RAM and 4 CPU cores. The ISO path stayed empty; no VM was saved. The historical running VM remains on v0.3.3 and was not touched.
 - Removed older local archive images at the owner's explicit request, retaining v0.3.3 ARM64 because it is referenced by the running historical VM. Old release records and hashes remain in docs.
 - **Next:** In the open wizard, manually select `/Users/leonardo/Documents/IFBA-OS/output/latest/arm64/ifba-os-ubuntu-26.04-arm64-v0.3.4.iso`; create a new test VM and perform real boot, desktop, network and application checks. Test AMD64 separately.
+
+
+## Matched v0.3.5 usability-fix build — 2026-11-22 UTC
+
+- Committed and pushed source `03828a82d0ea178ca073dcc44f139c91778562c0`; working tree's unrelated local `AGENTS.md`, `.DS_Store`, `.impeccable/`, and artwork were not staged.
+- Full host suite passed 127 tests with 5 target-platform skips. Separate Linux/Xvfb runtime tests passed 2 GTK assistant cases and 3 Qt Welcome cases. Python/JavaScript syntax, generated design-system check, and `git diff --check` passed.
+- Built ARM64 and AMD64 with `./scripts/build-iso.sh --both` in a clean detached worktree from the same commit. Both `release_artifacts.py verify` runs passed. Artifacts and hashes are in `ISO-RELEASES.md`; `output/latest/release-status.json` records a complete pair. `latest` now contains only v0.3.5, while the v0.3.3 ARM64 ISO referenced by the historical VM remains unchanged.
+- UTM's historical ARM64 screen had no active virtio GPU output. ISO selection in a separate VM remains blocked by the macOS picker error; neither v0.3.5 architecture has boot/runtime evidence.

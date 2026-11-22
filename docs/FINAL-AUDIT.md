@@ -69,7 +69,7 @@ The window-decoration source packages a project Aurorae SVG theme, native contro
 
 ## Release artifact organization — 2026-11-20
 
-Versioned ISO artifacts reside under `output/versions/vX.Y.Z/{amd64,arm64}/` with per-artifact manifests; root compatibility names and `latest/` use symlinks, so ISO files are not duplicated. That 2026-11-20 snapshot was superseded by the matched v0.3.4 pair built from commit `e7ebe4a27297a656517363162fd8454018ca7709`; the current local `output/latest/` pair passes structural verification and remains runtime-unvalidated. See `ISO-RELEASES.md` and `BUILDING.md` for historical artifact records.
+Versioned ISO artifacts reside under `output/versions/vX.Y.Z/{amd64,arm64}/` with per-artifact manifests; root compatibility names and `latest/` use symlinks, so ISO files are not duplicated. That 2026-11-20 snapshot was superseded first by v0.3.4 and then by the matched v0.3.5 pair built from commit `03828a82d0ea178ca073dcc44f139c91778562c0`; the current local `output/latest/` pair passes structural verification and remains runtime-unvalidated. See `ISO-RELEASES.md` and `BUILDING.md` for historical artifact records.
 
 UTM ARM64 VM creation remains blocked at the native file picker (`noWindowsAvailable`). The attempted unsaved wizard was canceled, and the existing suspended AMD64 VM remains unchanged. No ARM boot was performed; manual ISO selection steps are in `VM-TESTING.md`.
 
@@ -124,3 +124,12 @@ The latest UTM screenshot confirms a usable XFCE desktop on the exact output ISO
 - UTM was available, but its native file picker failed with `-10005: noWindowsAvailable` in the new ARM64 VM wizard. The unsaved wizard has 4096 MiB RAM and 4 CPU cores, but no ISO attached and no VM saved. The historical ARM64 VM is already running v0.3.3 and was not modified. No boot or desktop evidence exists for v0.3.4.
 - At the owner's explicit request, old local archive ISOs were removed, with the single exception of the v0.3.3 ARM64 ISO attached to the active historical VM. Documentation retains the historical release metadata.
 - **Remaining:** Select `/Users/leonardo/Documents/IFBA-OS/output/latest/arm64/ifba-os-ubuntu-26.04-arm64-v0.3.4.iso` manually in the open UTM wizard, create a separate test VM, then capture actual boot/desktop screenshots and run guest checks. Test AMD64 independently before attributing results to that architecture.
+
+
+## v0.3.5 fixes and current UTM evidence — 2026-11-22 UTC
+
+- Matched ARM64/AMD64 v0.3.5 images were built from clean commit `03828a82d0ea178ca073dcc44f139c91778562c0`, independently verified by manifest, SHA-256, size, ISO structure, architecture metadata and embedded boot/rootfs checks. Both runtime statuses remain unvalidated.
+- Full suite: 127 passed, 5 skipped on the macOS host because target GTK/PyQt runtime dependencies are unavailable there. In a separate Ubuntu/Xvfb environment, 2 GTK assistant startup/error cases and 3 PyQt Welcome cases passed. The KRunner runner's two CTest cases also passed during the AMD64 ISO build.
+- Fixes: the GTK 3 unsupported `ToggleButton.set_group` call that prevented IFBA AI window construction was replaced with exclusive toggle handling; empty chat and D-Bus failure states now provide visible text and retry. Welcome now sizes to available screen geometry. The native Kickoff launcher was added to the top panel; KRunner's native Alt+Space shortcut is documented.
+- UTM observation: the historical ARM64 VM remains attached to v0.3.3 and was not modified. UTM reports its virtio GPU output inactive (“Display output is not active.”). The native picker failure (`noWindowsAvailable`) prevented attaching v0.3.5 to a separate VM. No new guest boot, desktop screenshot, network, application or Calamares test is claimed. Exact manual ISO selection paths and next steps are in `VM-TESTING.md`.
+- Build notices: SquashFS ACL xattr notices, xorriso volume-ID/MBR geometry notices, ARM initramfs gzip fallback, Qt locale fallback and AMD64 `/dev/pts` apt log notice were observed and non-fatal. No performance benchmark was run.
