@@ -108,7 +108,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("self.proxy.ListConversations(\n                reply_handler=self._on_conversations_loaded", ui)
         self.assertIn("error_handler=self._on_service_error", ui)
         self.assertIn("timeout=5", ui)
-        self.assertIn("self.status.set_text(\"O assistente abriu, mas o serviço local não respondeu.", ui)
+        self.assertIn("self.status.set_text(\"Serviço do assistente indisponível\")", ui)
 
     def test_assistant_presents_window_before_connecting_to_session_bus(self):
         ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
@@ -118,6 +118,36 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('self.retry_service_button = Gtk.Button(label="Tentar novamente")', ui)
         self.assertIn('self.retry_service_button.connect("clicked", self._retry_service)', ui)
         self.assertIn("self.service_connection_started = False", ui)
+
+    def test_assistant_shows_an_empty_state_and_recoverable_service_error(self):
+        ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
+        loaded = ui.split("    def _on_conversations_loaded(", 1)[1].split("    def _load_settings(", 1)[0]
+        failed = ui.split("    def _on_service_error(", 1)[1].split("    def _load_settings(", 1)[0]
+
+        self.assertIn('"IFBA AI\\n\\nConectando ao serviço do assistente…"', ui)
+        self.assertIn('self.stack.get_visible_child_name() == "chat"', loaded)
+        self.assertIn("self._display_history()", loaded)
+        self.assertIn('self.messages_buffer.set_text("IFBA AI\\n\\n" + message)', failed)
+        self.assertIn('self.stack.set_visible_child_name("chat")', failed)
+        self.assertIn("self.retry_service_button.show()", failed)
+        self.assertNotIn("button.set_group(previous)", ui)
+        self.assertIn("def _on_reasoning_toggled(self, button, level):", ui)
+
+    def test_top_panel_has_a_visible_ifba_launcher_and_k_runner_hint(self):
+        layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
+        welcome = (ROOT / "welcome/ifba_welcome.py").read_text()
+
+        self.assertIn('var topLauncher = topPanel.addWidget("org.kde.plasma.kickoff")', layout)
+        self.assertIn('topLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")', layout)
+        self.assertIn("A busca do sistema abre com Alt+Espaço.", welcome)
+
+    def test_welcome_window_is_bounded_by_current_display_geometry(self):
+        welcome = (ROOT / "welcome/ifba_welcome.py").read_text()
+
+        self.assertIn("screen.availableGeometry()", welcome)
+        self.assertIn("int(available.width() * 0.80)", welcome)
+        self.assertIn("int(available.height() * 0.72)", welcome)
+        self.assertNotIn("self.resize(1020, 760)", welcome)
 
     def test_ai_launch_files_and_user_service_are_packaged_with_runtime_dependencies(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
@@ -237,6 +267,7 @@ class DesktopPackagingTests(unittest.TestCase):
         top_layout = layout.split("var dock = new Panel", 1)[0]
         top_widgets = re.findall(r'topPanel\.addWidget\("([^"]+)"\)', top_layout)
         self.assertEqual(top_widgets, [
+            "org.kde.plasma.kickoff",
             "org.kde.plasma.appmenu",
             "org.kde.plasma.panelspacer",
             "org.ifbaos.controlcenter",

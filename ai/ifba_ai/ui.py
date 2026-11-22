@@ -85,6 +85,9 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.messages_view.set_cursor_visible(False)
         self.messages_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         self.messages_buffer = self.messages_view.get_buffer()
+        self.messages_buffer.set_text(
+            "IFBA AI\n\nConectando ao serviço do assistente…"
+        )
         self.messages_scroll = Gtk.ScrolledWindow()
         self.messages_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.messages_scroll.add(self.messages_view)
@@ -113,6 +116,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         settings_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         settings_scroll.add(self.settings_page)
         self.stack.add_named(settings_scroll, "settings")
+        self.stack.set_visible_child_name("chat")
         settings_button = Gtk.Button(label="Configurações")
         settings_button.connect("clicked", lambda *_: self.stack.set_visible_child_name("settings"))
         header.pack_end(settings_button)
@@ -182,15 +186,11 @@ class AssistantWindow(Gtk.ApplicationWindow):
         page.pack_start(reasoning_group, False, False, 0)
         self.reasoning_buttons = {}
         labels = {"off": "Off", "low": "Baixo", "medium": "Médio", "high": "Alto"}
-        previous = None
         for level in REASONING_LEVELS:
             button = Gtk.ToggleButton(label=labels[level])
-            if previous is not None:
-                button.set_group(previous)
-            button.connect("toggled", self._update_model_hint)
+            button.connect("toggled", self._on_reasoning_toggled, level)
             reasoning_group.add(button)
             self.reasoning_buttons[level] = button
-            previous = button
         self.reasoning_buttons["off"].set_active(True)
 
         self.deep_mode_hint = Gtk.Label(xalign=0)
@@ -263,6 +263,13 @@ class AssistantWindow(Gtk.ApplicationWindow):
         return next((level for level, button in self.reasoning_buttons.items()
                      if button.get_active()), "off")
 
+    def _on_reasoning_toggled(self, button, level):
+        if button.get_active():
+            for other_level, other_button in self.reasoning_buttons.items():
+                if other_level != level and other_button.get_active():
+                    other_button.set_active(False)
+        self._update_model_hint()
+
     def _update_model_hint(self, *_args):
         if not hasattr(self, "model_hint") or not hasattr(self, "deep_mode_hint"):
             return
@@ -326,6 +333,10 @@ class AssistantWindow(Gtk.ApplicationWindow):
             self.status.set_text("Cofre indisponível ou bloqueado. Desbloqueie-o na sessão antes de salvar uma chave.")
         else:
             self.status.set_text("Chave configurada." if configured else "Assistente opcional: configure uma chave ou continue sem IA.")
+        self.data_button.set_sensitive(True)
+        self.tools_button.set_sensitive(True)
+        self.key_entry.set_sensitive(True)
+        self.save_settings_button.set_sensitive(True)
         self.new_chat.set_sensitive(bool(configured))
         self.visual_button.set_sensitive(bool(configured))
         try:
@@ -352,10 +363,26 @@ class AssistantWindow(Gtk.ApplicationWindow):
 
     def _on_conversations_loaded(self, conversations):
         self._load_conversations(conversations)
+        # A ready service with no selected conversation must still show a
+        # useful prompt instead of leaving the dark chat surface empty.
+        if self.stack.get_visible_child_name() == "chat" and not self.current_conversation:
+            self._display_history()
 
     def _on_service_error(self, *_details):
-        self.status.set_text("O assistente abriu, mas o serviço local não respondeu. Verifique a sessão D-Bus e tente novamente.")
-        self.stack.set_visible_child_name("settings")
+        message = (
+            "O serviço local do IFBA AI não respondeu.\n\n"
+            "Confira se a sessão está conectada e use “Tentar novamente”. "
+            "Nenhuma conversa foi iniciada."
+        )
+        self.messages_buffer.set_text("IFBA AI\n\n" + message)
+        self.status.set_text("Serviço do assistente indisponível")
+        self.new_chat.set_sensitive(False)
+        self.visual_button.set_sensitive(False)
+        self.data_button.set_sensitive(False)
+        self.tools_button.set_sensitive(False)
+        self.save_settings_button.set_sensitive(False)
+        self.key_entry.set_sensitive(False)
+        self.stack.set_visible_child_name("chat")
         self.retry_service_button.show()
 
     def _load_settings(self, serialized=None):

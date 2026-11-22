@@ -55,6 +55,20 @@ class WelcomeRuntimeTests(unittest.TestCase):
                 self.assertEqual(ifba_welcome.main(["--autostart"]), 0)
             window.close()
 
+    def test_first_run_window_scales_to_leave_desktop_panels_visible(self):
+        with tempfile.TemporaryDirectory() as directory:
+            window = ifba_welcome.WelcomeWindow(Path(directory) / "welcome.ini")
+            screen = QApplication.primaryScreen()
+            available = screen.availableGeometry()
+            window.show()
+            self.app.processEvents()
+
+            self.assertLessEqual(window.width(), min(900, int(available.width() * 0.80)))
+            self.assertLessEqual(window.height(), min(680, int(available.height() * 0.72)))
+            self.assertGreaterEqual(window.frameGeometry().top(), available.top())
+            self.assertLessEqual(window.frameGeometry().bottom(), available.bottom())
+            window.close()
+
 
 if __name__ == "__main__":
     unittest.main()

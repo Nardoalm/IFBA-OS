@@ -109,8 +109,7 @@ class WelcomeWindow(QMainWindow):
         super().__init__()
         self.config_path = config_path or user_config_path()
         self.setWindowTitle("IFBA OS · Boas-vindas")
-        self.setMinimumSize(760, 600)
-        self.resize(1020, 760)
+        self._set_initial_geometry()
         self.setObjectName("welcomeWindow")
         self._buttons: dict[str, QPushButton] = {}
         self.setStyleSheet(load_style())
@@ -147,6 +146,21 @@ class WelcomeWindow(QMainWindow):
         scroll.setWidget(content)
         self.setCentralWidget(scroll)
 
+    def _set_initial_geometry(self) -> None:
+        """Keep first-run content clear of Plasma's top bar and bottom dock."""
+        screen = QApplication.primaryScreen()
+        if screen is None:
+            self.setMinimumSize(560, 440)
+            self.resize(840, 620)
+            return
+
+        available = screen.availableGeometry()
+        width = min(900, max(1, int(available.width() * 0.80)))
+        height = min(680, max(1, int(available.height() * 0.72)))
+        self.setMinimumSize(min(560, width), min(440, height))
+        self.resize(width, height)
+        self.move(available.center() - self.rect().center())
+
     def _header(self) -> QWidget:
         frame = QFrame()
         frame.setObjectName("hero")
@@ -159,7 +173,10 @@ class WelcomeWindow(QMainWindow):
         text = QVBoxLayout()
         title = QLabel("Boas-vindas!")
         title.setObjectName("heroTitle")
-        subtitle = QLabel("Acesse os portais, conheça as ferramentas e personalize seu começo.")
+        subtitle = QLabel(
+            "Acesse os portais, conheça as ferramentas e personalize seu começo. "
+            "A busca do sistema abre com Alt+Espaço."
+        )
         subtitle.setObjectName("heroSubtitle")
         subtitle.setWordWrap(True)
         text.addWidget(title)

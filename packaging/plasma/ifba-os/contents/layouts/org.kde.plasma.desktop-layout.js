@@ -9,6 +9,11 @@ topPanel.alignment = "left"
 topPanel.floating = true
 topPanel.hiding = "none"
 
+// Keep the launcher visible even when no application exports a global menu.
+var topLauncher = topPanel.addWidget("org.kde.plasma.kickoff")
+topLauncher.currentConfigGroup = ["General"]
+topLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")
+
 // Plasma's appmenu exports menus only for applications that support the KDE
 // global-menu protocol. Other applications simply have no menu here.
 var globalMenu = topPanel.addWidget("org.kde.plasma.appmenu")

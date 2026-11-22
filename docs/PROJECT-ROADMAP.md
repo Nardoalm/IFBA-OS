@@ -6,6 +6,8 @@
 
 ### Correction pass — 2026-11-21
 
+- [x] **IMPLEMENTED IN SOURCE · P1** IFBA Welcome is now bounded to 80% of the available width and 72% of its height so it does not cover the Plasma top bar or dock at common VM resolutions. The chat pane shows a greeting after conversations load, and a D-Bus failure displays an explicit message and retry action instead of a blank dark area. Kickoff with the IF symbol is now present at the left of the top panel; KRunner's native Alt+Space shortcut is discoverable from the welcome screen. Static regressions pass; Qt rendering and VM behavior are pending a new ISO and boot.
+
 - [x] **MITIGATED · P0 · Live demo data policy** The Live rootfs marks itself as demo-only. IFBA AI refuses personal-key storage, chat/memory persistence, capture, export, and generation without creating its SQLite database; Calamares removes the marker for installed users. Ordinary files remain shared in the unlocked Live account, so this is not multi-user isolation and the image remains unsuitable for shared/personal-data use. Added regression and packaging checks; UTM/Calamares runtime validation remains pending.
 - [x] **FIXED IN SOURCE · P1 · Unbounded assistant stream** NVIDIA SSE reads now cap each line at 128 KiB and the stream/assistant response at 2 MiB before parsing, emission, or persistence. Oversized-line, aggregate-stream and injected-client regressions were added; provider behavior was not tested live.
 

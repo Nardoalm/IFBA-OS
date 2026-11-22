@@ -4,7 +4,7 @@ O IFBA Welcome é o aplicativo Qt 6 nativo do KDE Plasma que aparece ao entrar p
 
 ## Preferência de abertura
 
-Na parte inferior da janela, marque **Não mostrar novamente ao entrar** para desativar a abertura automática. A preferência é salva apenas no perfil local do usuário em `~/.config/ifba-os/welcome.ini`. O atalho **Boas-vindas do IFBA OS** continua disponível no menu para abrir a tela manualmente.
+Na parte inferior da janela, marque **Não mostrar novamente ao entrar** para desativar a abertura automática. A preferência é salva apenas no perfil local do usuário em `~/.config/ifba-os/welcome.ini`. O atalho **Boas-vindas do IFBA OS** continua disponível no menu para abrir a tela manualmente. A janela limita seu tamanho à área disponível e permanece centralizada para não cobrir os painéis do Plasma. Pressione **Alt+Espaço** para abrir a busca nativa do Plasma (KRunner), que também pesquisa aplicações instaladas.
 
 ## Atalhos e limites
 
