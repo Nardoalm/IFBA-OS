@@ -68,6 +68,14 @@ class DesignSystemTests(unittest.TestCase):
         self.assertIn("highlight.color=" + self.colors["accent"], kvantum)
         self.assertIn(self.colors["accent"], kvantum_svg)
 
+    def test_gtk_style_preserves_toolkit_window_controls(self):
+        gtk_css = (ROOT / "packaging/gtk/gtk.css").read_text()
+        gtk_settings = (ROOT / "packaging/gtk/settings.ini").read_text()
+        button_rule = next(line for line in gtk_css.splitlines() if line.startswith("button"))
+        for window_button in ("titlebutton", "close", "minimize", "maximize", "restore"):
+            self.assertIn(f":not(.{window_button})", button_rule)
+        self.assertIn("gtk-decoration-layout=close,minimize,maximize:", gtk_settings)
+
     def test_build_installs_shared_defaults_for_live_and_new_users(self):
         for path in (
             "/etc/gtk-3.0/gtk.css", "/etc/gtk-3.0/settings.ini",

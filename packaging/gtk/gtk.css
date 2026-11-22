@@ -18,7 +18,6 @@
 
 * {
   font-family: "Inter", sans-serif;
-  transition-duration: 180ms;
   outline-color: #4ADE80;
 }
 window, dialog { background-color: @window_bg_color; color: @window_fg_color; }
@@ -26,15 +25,15 @@ entry, textview, list, row, notebook, frame {
   background-color: @card_bg_color; color: @card_fg_color;
   border-color: @borders; border-radius: 8px;
 }
-button {
+button:not(.titlebutton):not(.close):not(.minimize):not(.maximize):not(.restore) {
   color: @window_fg_color; background-image: none; background-color: @card_bg_color;
   border: 1px solid @borders; border-radius: 8px;
   padding: 8px 12px;
 }
-button:hover { background-color: rgba(34, 197, 94, 0.140); }
-button:active, button:checked, row:selected {
+button:not(.titlebutton):not(.close):not(.minimize):not(.maximize):not(.restore):hover { background-color: rgba(34, 197, 94, 0.140); }
+button:not(.titlebutton):not(.close):not(.minimize):not(.maximize):not(.restore):active, button:not(.titlebutton):not(.close):not(.minimize):not(.maximize):not(.restore):checked, row:selected {
   background-color: rgba(34, 197, 94, 0.220); color: @window_fg_color;
 }
-button:focus, entry:focus { outline: 2px solid @accent_color; outline-offset: 1px; }
-button:disabled { opacity: 0.48; }
+button:not(.titlebutton):not(.close):not(.minimize):not(.maximize):not(.restore):focus, entry:focus { outline: 2px solid @accent_color; outline-offset: 1px; }
+button:not(.titlebutton):not(.close):not(.minimize):not(.maximize):not(.restore):disabled { opacity: 0.48; }
 tooltip { background-color: @popover_bg_color; color: @popover_fg_color; border-radius: 6px; }

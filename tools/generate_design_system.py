@@ -57,6 +57,8 @@ def generate(tokens):
             color_text.append(f"{key}={value}")
         color_text.append("")
 
+    # GTK 3 uses .titlebutton, while GTK 4 uses the action class on the button.
+    gtk_button = "button:not(.titlebutton):not(.close):not(.minimize):not(.maximize):not(.restore)"
     gtk_text = f'''/* Generated from packaging/design-system/tokens.json. */
 @define-color window_bg_color {colors['background']};
 @define-color view_bg_color {colors['background']};
@@ -77,7 +79,6 @@ def generate(tokens):
 
 * {{
   font-family: "{tokens['typography']['family']}", sans-serif;
-  transition-duration: {motion['duration_standard_ms']}ms;
   outline-color: {colors['focus']};
 }}
 window, dialog {{ background-color: @window_bg_color; color: @window_fg_color; }}
@@ -85,17 +86,17 @@ entry, textview, list, row, notebook, frame {{
   background-color: @card_bg_color; color: @card_fg_color;
   border-color: @borders; border-radius: {radius['control']}px;
 }}
-button {{
+{gtk_button} {{
   color: @window_fg_color; background-image: none; background-color: @card_bg_color;
   border: 1px solid @borders; border-radius: {radius['control']}px;
   padding: {spacing['sm']}px {spacing['md']}px;
 }}
-button:hover {{ background-color: {rgba(colors['accent'], tokens['opacity']['hover'])}; }}
-button:active, button:checked, row:selected {{
+{gtk_button}:hover {{ background-color: {rgba(colors['accent'], tokens['opacity']['hover'])}; }}
+{gtk_button}:active, {gtk_button}:checked, row:selected {{
   background-color: {rgba(colors['accent'], tokens['opacity']['selection'])}; color: @window_fg_color;
 }}
-button:focus, entry:focus {{ outline: 2px solid @accent_color; outline-offset: 1px; }}
-button:disabled {{ opacity: {tokens['opacity']['disabled']}; }}
+{gtk_button}:focus, entry:focus {{ outline: 2px solid @accent_color; outline-offset: 1px; }}
+{gtk_button}:disabled {{ opacity: {tokens['opacity']['disabled']}; }}
 tooltip {{ background-color: @popover_bg_color; color: @popover_fg_color; border-radius: {radius['small']}px; }}
 '''
     gtk_settings = f'''[Settings]
@@ -103,6 +104,7 @@ gtk-application-prefer-dark-theme=1
 gtk-font-name={tokens['typography']['family']} {tokens['typography']['base_pt']}
 gtk-icon-theme-name=breeze-dark
 gtk-theme-name=Breeze-Dark
+gtk-decoration-layout=close,minimize,maximize:
 '''
     assistant_gtk = f'''/* Generated from packaging/design-system/tokens.json. */
 window {{ background-color: {colors['background']}; color: {colors['text_primary']}; font-family: "{tokens['typography']['family']}", sans-serif; font-size: {tokens['typography']['base_pt']}pt; }}
