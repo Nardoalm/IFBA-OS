@@ -20,10 +20,9 @@ class PlasmaNativeLockTests(unittest.TestCase):
 
         self.assertIn("ShellPackage=org.kde.plasma.desktop", defaults)
         self.assertIn("ShellPackage=org.kde.plasma.desktop", shell_config)
-        self.assertIn("migrate_plasma_shell.py", build)
-        self.assertIn("migrate_plasma_control_center.py", build)
-        self.assertIn('rm -rf "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter"', build)
-        self.assertIn('"$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma"', build)
+        self.assertNotIn("migrate_plasma_shell.py", build)
+        self.assertNotIn("migrate_plasma_control_center.py", build)
+        self.assertIn('test ! -e "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma"', build)
         self.assertIn("org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml", build)
         self.assertNotIn("package_plasma_lockscreen.py", build)
         self.assertNotIn("/work/packaging/plasma/ifbaos-shell/contents/lockscreen", build)

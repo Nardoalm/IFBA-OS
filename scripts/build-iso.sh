@@ -32,7 +32,7 @@ for ARCH in "${ARCHES[@]}"; do
   ISO_FILENAME="ifba-os-ubuntu-26.04-${ARCH}-v${SYSTEM_VERSION}.iso"
   BUILD_INFO="$STAGING/.ifba-os-build-info-${ARCH}.json"
   OUT="$STAGING/$ISO_FILENAME"
-  if [[ "$ARCH" == amd64 ]]; then DEFAULT_BUILD_CACHE_VOLUME=ifba-os-plasma-build-cache; else DEFAULT_BUILD_CACHE_VOLUME=ifba-os-plasma-build-cache-arm64; fi
+  DEFAULT_BUILD_CACHE_VOLUME="ifba-os-bootstrap-resolute-$ARCH"
   BUILD_CACHE_VOLUME="${IFBA_BUILD_CACHE_VOLUME:-$DEFAULT_BUILD_CACHE_VOLUME}"
   [[ "$BUILD_CACHE_VOLUME" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]] || { echo 'Invalid Docker volume name' >&2; exit 2; }
   BUILD_DATE_UTC="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
@@ -41,7 +41,7 @@ for ARCH in "${ARCHES[@]}"; do
   docker volume create --name "$BUILD_CACHE_VOLUME" >/dev/null
   docker run --rm --privileged --platform "linux/$ARCH" -e IFBA_ARCH="$ARCH" -e IFBA_ISO_FILENAME="$ISO_FILENAME" \
     -e IFBA_OUTPUT_DIR=/work/output/.staging -e IFBA_BUILD_INFO_FILE="/work/output/.staging/.ifba-os-build-info-${ARCH}.json" \
-    -v "$ROOT:/work" --mount type=volume,src="$BUILD_CACHE_VOLUME",dst=/var/cache/ifba-rootfs \
+    -v "$ROOT:/work" --mount type=volume,src="$BUILD_CACHE_VOLUME",dst=/var/cache/ifba-bootstrap \
     -w /work ubuntu:24.04 bash /work/scripts/build-iso-container.sh
   assert_source_unchanged
   python3 "$ROOT/tools/build_metadata.py" iso-manifest --build-info "$BUILD_INFO" --iso "$OUT" --output "$OUT.manifest.json"

@@ -25,11 +25,9 @@ KRUNNER_BUILD_PACKAGES=(
   cmake g++ make extra-cmake-modules qt6-base-dev qt6-declarative-dev-tools libkf6coreaddons-dev libkf6i18n-dev \
   libkf6jobwidgets-dev libkf6kio-dev libkf6runner-dev libkf6service-dev
 )
-if [[ "$IFBA_ARCH" == amd64 ]]; then
-  ROOTFS=/var/cache/ifba-rootfs/rootfs-plasma-26.04
-else
-  ROOTFS=/var/cache/ifba-rootfs/rootfs-plasma-26.04-arm64
-fi
+ROOTFS="$(mktemp -d /var/tmp/ifba-rootfs.XXXXXX)"
+chmod 0755 "$ROOTFS"
+BOOTSTRAP_CACHE="/var/cache/ifba-bootstrap/resolute/$IFBA_ARCH"
 ISO=/tmp/ifba-iso
 ISO_FILENAME="${IFBA_ISO_FILENAME:?IFBA_ISO_FILENAME must be set by scripts/build-iso.sh}"
 OUTPUT_DIR="${IFBA_OUTPUT_DIR:-/work/output}"
@@ -37,14 +35,18 @@ BUILD_INFO_FILE="${IFBA_BUILD_INFO_FILE:-/work/output/.ifba-os-build-info.json}"
 OUT="$OUTPUT_DIR/$ISO_FILENAME"
 
 apt-get update
-apt-get install -y --no-install-recommends debootstrap squashfs-tools xorriso "${BOOT_PACKAGES[@]}" curl gnupg ca-certificates
+apt-get install -y --no-install-recommends debootstrap squashfs-tools xorriso "${BOOT_PACKAGES[@]}" curl gnupg ca-certificates ubuntu-keyring util-linux
 rm -rf "$ISO"
 mkdir -p "$ISO/casper" "$ISO/boot/grub"
-if [[ ! -e "$ROOTFS/etc/os-release" ]]; then
-  rm -rf "$ROOTFS"
-  mkdir -p "$ROOTFS"
-  debootstrap --arch="$IFBA_ARCH" resolute "$ROOTFS" "$ARCHIVE"
+# Reuse downloaded packages only. The target filesystem is new for each build.
+mkdir -p "$BOOTSTRAP_CACHE"
+# Noble's debootstrap may not ship the Resolute alias to the Ubuntu script.
+BOOTSTRAP_SCRIPT=/usr/share/debootstrap/scripts/resolute
+if [[ ! -f "$BOOTSTRAP_SCRIPT" ]]; then
+  BOOTSTRAP_SCRIPT=/usr/share/debootstrap/scripts/gutsy
 fi
+flock "$BOOTSTRAP_CACHE/.lock" debootstrap --arch="$IFBA_ARCH" --cache-dir="$BOOTSTRAP_CACHE" \
+  --keyring=/usr/share/keyrings/ubuntu-archive-keyring.gpg resolute "$ROOTFS" "$ARCHIVE" "$BOOTSTRAP_SCRIPT"
 cat > "$ROOTFS/etc/apt/sources.list" <<SOURCES
 deb $ARCHIVE resolute main universe multiverse
 deb $ARCHIVE resolute-updates main universe multiverse
@@ -180,7 +182,7 @@ install -D -m 0644 /dev/null "$ROOTFS/etc/ifba-os/live-demo"
 mkdir -p "$ROOTFS/etc/systemd/system/multi-user.target.wants" "$ROOTFS/etc/NetworkManager/system-connections" \
   "$ROOTFS/etc/NetworkManager/conf.d" \
   "$ROOTFS/usr/local/bin" "$ROOTFS/usr/lib/python3/dist-packages" \
-  "$ROOTFS/usr/lib/systemd/user/default.target.wants" "$ROOTFS/usr/share/dbus-1/services"
+  "$ROOTFS/usr/share/dbus-1/services"
 ln -sfn /lib/systemd/system/qemu-guest-agent.service "$ROOTFS/etc/systemd/system/multi-user.target.wants/qemu-guest-agent.service"
 ln -sfn /usr/lib/systemd/system/NetworkManager.service "$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
 rm -f "$ROOTFS/etc/systemd/system/multi-user.target.wants/systemd-networkd.service" \
@@ -396,12 +398,6 @@ install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/etc/skel/.
 if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmashellrc" ]]; then
   install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/home/ubuntu/.config/plasmashellrc"
 fi
-python3 /work/tools/migrate_plasma_shell.py "$ROOTFS/home/ubuntu/.config/plasmashellrc"
-python3 /work/tools/migrate_plasma_control_center.py \
-  "$ROOTFS/home/ubuntu/.config/plasma-org.kde.plasma.desktop-appletsrc"
-# These are stale build-cache components from the retired UI, not user data.
-rm -rf "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter" \
-  "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma"
 install -D -m 0644 /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
@@ -508,6 +504,11 @@ for applet in org.kde.milou org.kde.plasma.kickoff org.kde.plasma.kicker \
 done
 find "$ROOTFS/usr/lib" -path '*/kf6/krunner/ifba_app_description_runner.so' -print -quit | grep -q .
 test -s "$ROOTFS/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json"
+if find "$ROOTFS/usr/lib/systemd/user" "$ROOTFS/etc" "$ROOTFS/home/ubuntu" \
+  -type l -name ifba-ai.service -print -quit | grep -q .; then
+  printf 'IFBA AI must be activated on demand, not by a pre-enabled unit link.\n' >&2
+  exit 1
+fi
 test ! -e "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter"
 test ! -e "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma"
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskmanager.so' -print -quit | grep -q .

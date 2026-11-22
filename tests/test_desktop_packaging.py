@@ -259,7 +259,7 @@ class DesktopPackagingTests(unittest.TestCase):
             "upower",
         ):
             self.assertIn(package, build)
-        self.assertIn('debootstrap --arch="$IFBA_ARCH" resolute', build)
+        self.assertIn('resolute "$ROOTFS" "$ARCHIVE"', build)
         self.assertIn("IFBA-OS-Dark.colors", build)
         self.assertIn("IFBA OS Dark", build)
         self.assertIn("org.ifbaos.desktop", build)

@@ -141,9 +141,7 @@ class BuildMetadataTests(unittest.TestCase):
             "build-info.json",
         ):
             self.assertIn(required, container_build)
-        self.assertIn('debootstrap --arch="$IFBA_ARCH" resolute', container_build)
         self.assertIn("grub-efi-arm64-bin", container_build)
-        self.assertIn("rootfs-plasma-26.04-arm64", container_build)
         self.assertIn('IFBA_ARCH="$ARCH"', host_build)
         self.assertIn('ARCHIVE=http://ports.ubuntu.com/ubuntu-ports', container_build)
         self.assertIn('BOOT_PACKAGES=(grub-efi-arm64-bin mtools)', container_build)
@@ -151,6 +149,20 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn('test "$(readlink "$ROOTFS/etc/systemd/system/display-manager.service")" = /lib/systemd/system/sddm.service', container_build)
         self.assertIn('install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup', container_build)
         self.assertIn('"$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"', container_build)
+
+    def test_build_recreates_the_rootfs_and_reuses_only_package_downloads(self):
+        host = (ROOT / "scripts/build-iso.sh").read_text()
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        self.assertIn('ROOTFS="$(mktemp -d /var/tmp/ifba-rootfs.XXXXXX)"', build)
+        self.assertIn('chmod 0755 "$ROOTFS"', build)
+        self.assertIn('dst=/var/cache/ifba-bootstrap', host)
+        self.assertIn('BOOTSTRAP_CACHE="/var/cache/ifba-bootstrap/resolute/$IFBA_ARCH"', build)
+        self.assertIn('flock "$BOOTSTRAP_CACHE/.lock" debootstrap', build)
+        self.assertIn('--cache-dir="$BOOTSTRAP_CACHE"', build)
+        self.assertIn('--keyring=/usr/share/keyrings/ubuntu-archive-keyring.gpg resolute "$ROOTFS"', build)
+        self.assertNotIn('$ROOTFS/etc/os-release', build)
+        self.assertNotIn('/var/cache/ifba-rootfs', host + build)
+        self.assertIn('-type l -name ifba-ai.service -print -quit', build)
 
     def test_casper_manifest_covers_and_checks_the_final_live_payload(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
