@@ -6,20 +6,49 @@ layout_marker="$state_dir/plasma-layout-applied-v2"
 wallpaper_marker="$state_dir/plasma-wallpaper-attempted-v2"
 mkdir -p "$state_dir"
 
-# Do not migrate old profiles through a new defaults pass: those users may
-# already have customized panels, favorites, colors, or wallpaper.
+appletsrc="$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
+has_panel() {
+  [ -f "$appletsrc" ] && grep -q '^plugin=org.kde.panel$' "$appletsrc"
+}
+
+# Preserve initialized profiles. A legacy marker is trusted only if Plasma
+# actually saved a panel; old false markers caused a wallpaper-only desktop.
 if [ -e "$legacy_marker" ] && [ ! -e "$layout_marker" ]; then
-  touch "$layout_marker" "$wallpaper_marker"
-  exit 0
+  if has_panel; then
+    touch "$layout_marker" "$wallpaper_marker"
+    exit 0
+  fi
+  # Recreate the missing panel, but do not reapply the default wallpaper to an
+  # older profile whose wallpaper choice may have been customized.
+  touch "$wallpaper_marker"
+fi
+
+if [ -e "$layout_marker" ] && ! has_panel; then
+  # A marker without a persisted panel is stale. Remove only that marker and
+  # retry the first-run layout; keep unrelated Plasma configuration intact.
+  rm -f "$layout_marker"
 fi
 
 if [ ! -e "$layout_marker" ]; then
-  command -v plasma-apply-lookandfeel >/dev/null 2>&1 || exit 0
-  plasma-apply-lookandfeel --apply org.ifbaos.desktop || exit 0
-  touch "$layout_marker"
+  # An existing Plasma layout belongs to the user, even if this setup marker
+  # is missing (for example after an upgrade or a copied home directory).
+  if [ -f "$appletsrc" ] && grep -q '^\[Containments\]\[[0-9][0-9]*\]' "$appletsrc"; then
+    touch "$layout_marker"
+  else
+    command -v plasma-apply-lookandfeel >/dev/null 2>&1 || exit 0
+    # --apply selects the theme; --resetLayout actually creates its panels.
+    plasma-apply-lookandfeel --apply org.ifbaos.desktop --resetLayout || exit 0
+    # Applying a package can return success before Plasma has persisted a
+    # layout. Leave the marker absent so a failed first login can retry.
+    if [ ! -f "$appletsrc" ] || ! grep -q '^plugin=org.kde.panel$' "$appletsrc"; then
+      printf 'IFBA: Plasma has not saved any panels; setup will retry next login.\n' >&2
+      exit 0
+    fi
+    touch "$layout_marker"
+  fi
 fi
 
 if [ ! -e "$wallpaper_marker" ]; then
-  touch "$wallpaper_marker"
   plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png || exit 0
+  touch "$wallpaper_marker"
 fi

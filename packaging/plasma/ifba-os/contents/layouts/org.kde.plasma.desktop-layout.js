@@ -24,12 +24,10 @@ var spacer = topPanel.addWidget("org.kde.plasma.panelspacer")
 spacer.currentConfigGroup = ["General"]
 spacer.writeConfig("expanding", true)
 
-topPanel.addWidget("org.ifbaos.controlcenter")
-
 var tray = topPanel.addWidget("org.kde.plasma.systemtray")
 tray.currentConfigGroup = ["General"]
-tray.writeConfig("extraItems", "org.kde.plasma.notifications,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.battery")
-tray.writeConfig("shownItems", "org.kde.plasma.notifications,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.battery")
+tray.writeConfig("extraItems", "org.kde.plasma.notifications,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.bluetooth")
+tray.writeConfig("shownItems", "org.kde.plasma.notifications,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.bluetooth")
 tray.writeConfig("scaleIconsToFit", "true")
 tray.writeConfig("iconSpacing", "2")
 
@@ -43,7 +41,7 @@ clock.writeConfig("dateDisplayFormat", "1")
 
 var dock = new Panel
 dock.location = "bottom"
-dock.height = 70
+dock.height = 72
 dock.lengthMode = "fit"
 dock.alignment = "center"
 dock.floating = true
@@ -62,7 +60,7 @@ appLauncher.writeConfig("applicationsDisplay", 0)
 appLauncher.writeConfig("appNameFormat", 0)
 appLauncher.writeConfig("alphaSort", true)
 
-var tasks = dock.addWidget("org.kde.plasma.icontasks")
+var tasks = dock.addWidget("com.github.mattanis.macosdock")
 tasks.currentConfigGroup = ["General"]
 tasks.writeConfig("launchers", "applications:ifba-ai.desktop,applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:systemsettings.desktop")
 tasks.writeConfig("maxStripes", 1)
@@ -75,3 +73,11 @@ tasks.writeConfig("groupPopups", true)
 tasks.writeConfig("sortingStrategy", 1)
 tasks.writeConfig("separateLaunchers", true)
 tasks.writeConfig("taskHoverEffect", true)
+tasks.writeConfig("zoomMultiplier", 1.25)
+tasks.writeConfig("zoomAnimationType", 1)
+tasks.writeConfig("hoverElevation", 6)
+tasks.writeConfig("iconSize", 44)
+tasks.writeConfig("autoAdjustPanelThickness", false)
+tasks.writeConfig("containerBackgroundColor", "#101A15")
+tasks.writeConfig("containerBackgroundType", 3)
+tasks.writeConfig("blurOpacity", 0.72)

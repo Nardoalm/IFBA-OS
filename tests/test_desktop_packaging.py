@@ -271,7 +271,6 @@ class DesktopPackagingTests(unittest.TestCase):
             "org.kde.plasma.kickoff",
             "org.kde.plasma.appmenu",
             "org.kde.plasma.panelspacer",
-            "org.ifbaos.controlcenter",
             "org.kde.plasma.systemtray",
             "org.kde.plasma.digitalclock",
         ])
@@ -292,28 +291,29 @@ class DesktopPackagingTests(unittest.TestCase):
             "org.kde.plasma.networkmanagement",
             "org.kde.plasma.volume",
             "org.kde.plasma.battery",
+            "org.kde.plasma.bluetooth",
         ):
             self.assertIn(tray_item, top_layout)
         self.assertIn('clock.writeConfig("dateFormat", "custom")', top_layout)
         self.assertIn("ddd d 'de' MMM yyyy", top_layout)
         self.assertIn('clock.writeConfig("use24hFormat", "2")', top_layout)
         self.assertIn('dock.location = "bottom"', layout)
-        self.assertIn('dock.height = 70', layout)
+        self.assertIn('dock.height = 72', layout)
         self.assertIn('dock.lengthMode = "fit"', layout)
         self.assertIn('dock.alignment = "center"', layout)
         self.assertIn('dock.floating = true', layout)
         self.assertIn('dock.hiding = "dodgewindows"', layout)
-        self.assertIn('org.kde.plasma.icontasks', layout)
+        self.assertIn('com.github.mattanis.macosdock', layout)
         for favorite in ("firefox.desktop", "org.kde.dolphin.desktop", "org.kde.konsole.desktop",
                          "ifba-ai.desktop", "systemsettings.desktop"):
             self.assertIn(favorite, layout)
-        for widget in ("org.kde.plasma.kickoff", "org.kde.plasma.icontasks",
+        for widget in ("org.kde.plasma.kickoff", "com.github.mattanis.macosdock",
                        "org.kde.plasma.systemtray", "org.kde.plasma.digitalclock",
                        "org.kde.plasma.panelspacer"):
             self.assertIn(widget, layout)
         dock = layout.split("var dock = new Panel", 1)[1]
         kickoff_index = dock.index('dock.addWidget("org.kde.plasma.kickoff")')
-        tasks_index = dock.index('dock.addWidget("org.kde.plasma.icontasks")')
+        tasks_index = dock.index('dock.addWidget("com.github.mattanis.macosdock")')
         self.assertLess(kickoff_index, tasks_index)
         launcher_line = re.search(r'tasks\.writeConfig\("launchers", "([^"]+)"\)', dock)
         self.assertIsNotNone(launcher_line)
@@ -328,6 +328,9 @@ class DesktopPackagingTests(unittest.TestCase):
             ],
         )
         self.assertIn('tasks.writeConfig("showToolTips", true)', dock)
+        self.assertIn('tasks.writeConfig("zoomAnimationType", 1)', dock)
+        self.assertIn('tasks.writeConfig("containerBackgroundType", 3)', dock)
+        self.assertIn('tasks.writeConfig("blurOpacity", 0.72)', dock)
         self.assertIn('tasks.writeConfig("taskHoverEffect", true)', dock)
         self.assertIn('tasks.writeConfig("groupingStrategy", 1)', dock)
         self.assertIn('tasks.writeConfig("sortingStrategy", 1)', dock)
@@ -355,16 +358,16 @@ class DesktopPackagingTests(unittest.TestCase):
             f"[kwinrc][Effect-magiclamp]\nAnimationDuration={motion['duration_standard_ms']}",
             defaults,
         )
-        self.assertIn("[kwinrc][Effect-Overview]", defaults)
+        self.assertIn("[kwinrc][Effect-overview]", defaults)
         setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
         self.assertIn('legacy_marker="$state_dir/plasma-layout-applied"', setup)
         self.assertIn('layout_marker="$state_dir/plasma-layout-applied-v2"', setup)
         self.assertIn('wallpaper_marker="$state_dir/plasma-wallpaper-attempted-v2"', setup)
         self.assertIn('touch "$layout_marker"', setup)
-        self.assertLess(setup.index('touch "$wallpaper_marker"'), setup.index("plasma-apply-wallpaperimage"))
+        self.assertGreater(setup.rindex('touch "$wallpaper_marker"'), setup.index("plasma-apply-wallpaperimage"))
 
         self.assertIn('if [ -e "$legacy_marker" ] && [ ! -e "$layout_marker" ]; then', setup)
-        self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop", setup)
+        self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop --resetLayout", setup)
         self.assertIn("plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png", setup)
         self.assertIn('cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/etc/skel/.config/autostart/"', build)
         self.assertIn('find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so"', build)
@@ -427,80 +430,29 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("Build-only dependency remains installed", build)
         self.assertIn("*/kf6/krunner/ifba_app_description_runner.so", build)
 
-    def test_control_center_is_a_native_plasmoid_installed_and_added_once(self):
+    def test_top_bar_uses_native_system_tray_instead_of_custom_control_center(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
         layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
-        package = ROOT / "packaging/plasma/ifba-control-center"
-        metadata = json.loads((package / "metadata.json").read_text())
-        motion = json.loads((ROOT / "packaging/design-system/tokens.json").read_text())["motion"]
-        qml = (package / "contents/ui/main.qml").read_text()
-        animation_tokens = (package / "contents/ui/IfbaAnimationTokens.qml").read_text()
-        animated_button = (package / "contents/ui/IfbaAnimatedButton.qml").read_text()
-        animated_tool_button = (package / "contents/ui/IfbaAnimatedToolButton.qml").read_text()
+        self.assertNotIn('topPanel.addWidget("org.ifbaos.controlcenter")', layout)
+        self.assertIn('topPanel.addWidget("org.kde.plasma.systemtray")', layout)
+        self.assertIn('tray.writeConfig("shownItems",', layout)
+        self.assertIn("org.kde.plasma.bluetooth", layout)
+        self.assertNotIn("ifba-control-center/metadata.json", build)
+        self.assertNotIn('install -D -m 0644 /work/packaging/plasma/ifba-control-center', build)
+        self.assertIn('test ! -e "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter"', build)
 
-        self.assertEqual(metadata["KPackageStructure"], "Plasma/Applet")
-        self.assertEqual(metadata["KPlugin"]["Id"], "org.ifbaos.controlcenter")
-        self.assertIn('topPanel.addWidget("org.ifbaos.controlcenter")', layout)
-        self.assertEqual(layout.count('topPanel.addWidget("org.ifbaos.controlcenter")'), 1)
-        self.assertIn("ifba-control-center/metadata.json", build)
-        self.assertIn("ifba-control-center/contents/ui/main.qml", build)
-        self.assertIn("design-system/visual-motionrc", build)
-        self.assertIn("/usr/share/ifba-os/design-system/visual-motionrc", build)
-        self.assertIn("IfbaAnimationTokens.qml", build)
-        self.assertIn("IfbaAnimatedButton.qml", build)
-        self.assertIn("IfbaAnimatedToolButton.qml", build)
-        self.assertIn("qt6-declarative-dev-tools", build)
-        self.assertIn("/usr/lib/qt6/bin/qmlformat /tmp/ifba-control-center-check/main.qml", build)
-        self.assertIn("/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/metadata.json", build)
-        self.assertIn("/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/main.qml", build)
-        self.assertIn("/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimationTokens.qml", build)
-        self.assertIn("IfbaAnimatedToolButton {", qml)
-        self.assertGreaterEqual(qml.count("IfbaAnimatedButton {"), 5)
-        self.assertIn("Behavior on scale", animated_button)
-        self.assertIn("Behavior on scale", animated_tool_button)
-        self.assertIn("enabled: !motion.reducedMotion", animated_button)
-        self.assertIn("enabled: !motion.reducedMotion", animated_tool_button)
-        self.assertIn("NumberAnimation { duration: motion.hoverMs; easing.type: motion.hoverCurve }", animated_button)
-        self.assertIn(f"kdeDurationScale: Kirigami.Units.longDuration / {motion['duration_slow_ms']}", animation_tokens)
-        self.assertIn("readonly property bool reducedMotion: Kirigami.Units.longDuration <= 1", animation_tokens)
-        self.assertNotIn("PlasmaCore.Units", animation_tokens)
-        self.assertEqual(motion["reduced_motion_duration_ms"], 0)
-        self.assertIn(f"Math.round({motion['duration_fast_ms']} * kdeDurationScale)", animation_tokens)
-        self.assertIn(f"Math.round({motion['duration_standard_ms']} * kdeDurationScale)", animation_tokens)
-        self.assertIn(f"Math.round({motion['duration_slow_ms']} * kdeDurationScale)", animation_tokens)
-        self.assertIn("switchWidth: Kirigami.Units.gridUnit * 20", qml)
-        self.assertIn("Layout.maximumWidth: Kirigami.Units.gridUnit * 25", qml)
-        self.assertIn("Layout.minimumHeight: Kirigami.Units.gridUnit * 18", qml)
-        self.assertIn("org.kde.plasma.private.brightnesscontrolplugin", qml)
-        self.assertIn("org.kde.plasma.private.batterymonitor", qml)
-        self.assertIn("org.kde.plasma.private.volume", qml)
-        self.assertIn("org.kde.plasma.networkmanagement", qml)
-        self.assertIn("org.kde.bluezqt", qml)
-        self.assertIn("org.kde.plasma.private.mpris", qml)
-        self.assertIn("Notifications.Globals.toggleDoNotDisturbMode()", qml)
-        self.assertIn("visible: root.bluetoothAvailable", qml)
-        self.assertIn("visible: brightness.isBrightnessAvailable || nightLight.available", qml)
-        self.assertIn("visible: battery.hasBatteries", qml)
-        self.assertIn("enabled: root.currentPlayer && root.currentPlayer.canGoNext", qml)
-        self.assertIn("Keys.onEscapePressed", qml)
-        self.assertIn("Accessible.name", qml)
-        self.assertIn('openSystemSettings("kcm_networkmanagement")', qml)
-        self.assertIn('openSystemSettings("kcm_bluetooth")', qml)
-        self.assertIn('openSystemSettings("kcm_kscreen")', qml)
-        self.assertIn('openSystemSettings("kcm_about-distro")', qml)
-        self.assertNotRegex(qml, r"\b(?:sudo|pkexec|QProcess|system)\s*\(")
-
-    def test_control_center_controls_use_live_hardware_capabilities(self):
-        qml = (ROOT / "packaging/plasma/ifba-control-center/contents/ui/main.qml").read_text()
-        self.assertIn("networkDevices.wirelessDeviceAvailable && networkState.wirelessHwEnabled", qml)
-        self.assertIn("BluezQt.Manager.adapters.length > 0", qml)
-        self.assertIn("Context.state === Context.State.Ready", qml)
-        self.assertIn("sinkFilterModel.count > 0", qml)
-        self.assertIn("brightness.setBrightness(displayName", qml)
-        self.assertIn("powerProfiles.profiles.length > 0", qml)
-        self.assertIn("!!root.currentPlayer", qml)
-        self.assertIn("NetworkManagement.NetworkStatus", qml)
-        self.assertIn("BluezQt.Manager.connectedDevices", qml)
+    def test_kscreenlocker_uses_native_plasma_shell_with_ifba_wallpaper(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        defaults = (ROOT / "packaging/plasma/ifba-os/contents/defaults").read_text()
+        shell_config = (ROOT / "packaging/plasma/ifba-os-shell.conf").read_text()
+        self.assertIn("ShellPackage=org.kde.plasma.desktop", defaults)
+        self.assertIn("ShellPackage=org.kde.plasma.desktop", shell_config)
+        self.assertIn("org.ifbaos.plasma", build)  # targeted migration only
+        self.assertIn("migrate_plasma_shell.py", build)
+        self.assertNotIn("package_plasma_lockscreen.py", build)
+        self.assertNotIn("/work/packaging/plasma/ifbaos-shell/contents/lockscreen", build)
+        self.assertIn("lockscreen-wallpaper.png", (ROOT / "packaging/plasma/ifba-os-lockscreen.conf").read_text())
+        self.assertIn("org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml", build)
 
     def test_plasma_session_setup_applies_panels_only_once(self):
         setup = ROOT / "packaging/plasma/ifba-os-session-setup"
@@ -512,16 +464,81 @@ class DesktopPackagingTests(unittest.TestCase):
             for command in ("plasma-apply-lookandfeel", "plasma-apply-wallpaperimage"):
                 mock = mock_bin / command
                 mock.write_text("#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$TEST_LOG\"\n")
+                if command == "plasma-apply-lookandfeel":
+                    mock.write_text(mock.read_text() + 'mkdir -p "$HOME/.config"\nprintf "[Containments][1]\\nplugin=org.kde.panel\\n" > "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"\n')
                 mock.chmod(0o755)
             env = os.environ.copy()
             env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
             for _ in range(2):
                 subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
             self.assertEqual(log.read_text().splitlines(), [
-                "--apply org.ifbaos.desktop",
+                "--apply org.ifbaos.desktop --resetLayout",
                 "/usr/share/backgrounds/ifba-os/wallpaper.png",
             ])
             self.assertTrue((temp / "home/.config/ifba-os/plasma-layout-applied-v2").is_file())
+
+    def test_plasma_session_setup_preserves_existing_panels_without_marker(self):
+        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            config = temp / "home/.config"
+            config.mkdir(parents=True)
+            (config / "plasma-org.kde.plasma.desktop-appletsrc").write_text(
+                "[Containments][1]\nplugin=org.kde.panel\n"
+            )
+            mock_bin = temp / "bin"
+            mock_bin.mkdir()
+            mock = mock_bin / "plasma-apply-lookandfeel"
+            mock.write_text("#!/bin/sh\nexit 99\n")
+            mock.chmod(0o755)
+            env = os.environ.copy()
+            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin"})
+            subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
+            self.assertTrue((config / "ifba-os/plasma-layout-applied-v2").is_file())
+
+    def test_plasma_setup_retries_when_theme_returns_success_without_panels(self):
+        with tempfile.TemporaryDirectory() as directory:
+            temp = Path(directory)
+            mock_bin = temp / "bin"
+            mock_bin.mkdir()
+            log = temp / "calls"
+            mock = mock_bin / "plasma-apply-lookandfeel"
+            mock.write_text('#!/bin/sh\nprintf "apply\\n" >> "$TEST_LOG"\n')
+            mock.chmod(0o755)
+            env = os.environ.copy()
+            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
+            for _ in range(2):
+                subprocess.run([str(ROOT / "packaging/plasma/ifba-os-session-setup")], env=env, check=True, capture_output=True)
+            self.assertEqual(log.read_text().splitlines(), ["apply", "apply"])
+            self.assertFalse((temp / "home/.config/ifba-os/plasma-layout-applied-v2").exists())
+
+    def test_plasma_setup_repairs_stale_layout_marker_when_saved_panel_is_missing(self):
+        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
+        with tempfile.TemporaryDirectory() as directory:
+            temp = Path(directory)
+            config = temp / "home/.config"
+            state = config / "ifba-os"
+            state.mkdir(parents=True)
+            (state / "plasma-layout-applied-v2").write_text("old marker\n")
+            (state / "plasma-wallpaper-attempted-v2").write_text("preserve wallpaper\n")
+            appletsrc = config / "plasma-org.kde.plasma.desktop-appletsrc"
+            appletsrc.write_text("[ScreenMapping]\nitemsOnDisabledScreens=\n")
+            mock_bin = temp / "bin"
+            mock_bin.mkdir()
+            log = temp / "calls"
+            mock = mock_bin / "plasma-apply-lookandfeel"
+            mock.write_text(
+                '#!/bin/sh\nprintf "%s\\n" "$*" >> "$TEST_LOG"\n'
+                'printf "[Containments][1]\\nplugin=org.kde.panel\\n" > "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"\n'
+            )
+            mock.chmod(0o755)
+            env = os.environ.copy()
+            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
+
+            subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
+            self.assertEqual(log.read_text().splitlines(), ["--apply org.ifbaos.desktop --resetLayout"])
+            self.assertTrue((state / "plasma-layout-applied-v2").is_file())
+            self.assertTrue((state / "plasma-wallpaper-attempted-v2").is_file())
 
     def test_ifba_aurorae_decoration_is_installed_and_has_native_window_controls(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()

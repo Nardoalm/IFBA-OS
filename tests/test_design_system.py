@@ -110,7 +110,7 @@ class DesignSystemTests(unittest.TestCase):
         setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
         self.assertIn('if [ -e "$legacy_marker" ] && [ ! -e "$layout_marker" ]; then', setup)
         self.assertIn('touch "$layout_marker"', setup)
-        self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop", setup)
+        self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop --resetLayout", setup)
 
 
 if __name__ == "__main__":

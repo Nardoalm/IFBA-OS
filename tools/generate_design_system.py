@@ -15,7 +15,6 @@ OUTPUTS = {
     "gtk_settings": ROOT / "packaging/gtk/settings.ini",
     "assistant_gtk": ROOT / "packaging/ifba-ai.css",
     "welcome_qt": ROOT / "packaging/design-system/ifba-welcome.qss",
-    "qml_motion": ROOT / "packaging/plasma/ifba-control-center/contents/ui/IfbaAnimationTokens.qml",
     "motion_profile": ROOT / "packaging/design-system/visual-motionrc",
 }
 
@@ -146,29 +145,6 @@ QCheckBox::indicator {{ width: 17px; height: 17px; }}
 QCheckBox::indicator:checked {{ background: {colors['accent']}; border: 1px solid {colors['focus']}; border-radius: {radius['small']}px; }}
 QCheckBox::indicator:unchecked {{ background: {colors['surface_elevated']}; border: 1px solid {colors['border']}; border-radius: {radius['small']}px; }}
 '''
-    qml_motion = f'''/* Generated from packaging/design-system/tokens.json. */
-import QtQuick
-import org.kde.kirigami as Kirigami
-
-QtObject {{
-    // Kirigami.Units follows KDE's AnimationDurationFactor. KDE clamps the
-    // resulting duration to 1 ms, so explicitly disable Behaviors at that floor.
-    readonly property bool reducedMotion: Kirigami.Units.longDuration <= 1
-    readonly property real kdeDurationScale: Kirigami.Units.longDuration / {motion['duration_slow_ms']}
-    readonly property int hoverMs: reducedMotion ? {motion['reduced_motion_duration_ms']} : Math.round({motion['duration_fast_ms']} * kdeDurationScale)
-    readonly property int controlMs: reducedMotion ? {motion['reduced_motion_duration_ms']} : Math.round({motion['duration_standard_ms']} * kdeDurationScale)
-    readonly property int moduleMs: reducedMotion ? {motion['reduced_motion_duration_ms']} : Math.round({motion['duration_standard_ms']} * kdeDurationScale)
-    readonly property int dockMs: reducedMotion ? {motion['reduced_motion_duration_ms']} : Math.round({motion['duration_standard_ms']} * kdeDurationScale)
-    readonly property int windowOpenMs: reducedMotion ? {motion['reduced_motion_duration_ms']} : Math.round({motion['duration_standard_ms']} * kdeDurationScale)
-    readonly property int minimizeMs: reducedMotion ? {motion['reduced_motion_duration_ms']} : Math.round({motion['duration_slow_ms']} * kdeDurationScale)
-    readonly property int overviewMs: reducedMotion ? {motion['reduced_motion_duration_ms']} : Math.round({motion['duration_slow_ms']} * kdeDurationScale)
-    readonly property int lockScreenMs: reducedMotion ? {motion['reduced_motion_duration_ms']} : Math.round({motion['duration_standard_ms']} * kdeDurationScale)
-
-    readonly property int hoverCurve: Easing.{easing['hover']}
-    readonly property int enterCurve: Easing.{easing['enter']}
-    readonly property int standardCurve: Easing.{easing['state']}
-}}
-'''
     motion_profile = f'''# Generated from packaging/design-system/tokens.json.
 [Motion]
 DurationFastMs={motion['duration_fast_ms']}
@@ -205,7 +181,6 @@ DurationSlowMs={motion['duration_slow_ms']}
         OUTPUTS["gtk_settings"]: gtk_settings,
         OUTPUTS["assistant_gtk"]: assistant_gtk,
         OUTPUTS["welcome_qt"]: welcome_qt,
-        OUTPUTS["qml_motion"]: qml_motion,
         OUTPUTS["motion_profile"]: motion_profile,
     }
 

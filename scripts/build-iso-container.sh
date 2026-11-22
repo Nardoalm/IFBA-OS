@@ -97,18 +97,6 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   python3-pyqt6 thonny libreoffice-writer gcompris-qt \
   "${INSTALLER_BOOT_PACKAGES[@]}"
 chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${KRUNNER_BUILD_PACKAGES[@]}"
-mkdir -p "$ROOTFS/tmp/ifba-control-center-check"
-cp /work/packaging/plasma/ifba-control-center/contents/ui/main.qml "$ROOTFS/tmp/ifba-control-center-check/main.qml"
-chroot "$ROOTFS" /usr/lib/qt6/bin/qmlformat /tmp/ifba-control-center-check/main.qml >/dev/null
-cp /work/packaging/plasma/ifba-control-center/contents/ui/IfbaAnimationTokens.qml \
-  "$ROOTFS/tmp/ifba-control-center-check/IfbaAnimationTokens.qml"
-chroot "$ROOTFS" /usr/lib/qt6/bin/qmlformat /tmp/ifba-control-center-check/IfbaAnimationTokens.qml >/dev/null
-for qml_file in IfbaAnimatedButton.qml IfbaAnimatedToolButton.qml; do
-  cp "/work/packaging/plasma/ifba-control-center/contents/ui/$qml_file" \
-    "$ROOTFS/tmp/ifba-control-center-check/$qml_file"
-  chroot "$ROOTFS" "/usr/lib/qt6/bin/qmlformat" "/tmp/ifba-control-center-check/$qml_file" >/dev/null
-done
-rm -rf "$ROOTFS/tmp/ifba-control-center-check"
 mkdir -p "$ROOTFS/tmp/ifba-app-description-runner"
 cp -R /work/packaging/plasma/ifba-app-description-runner/. "$ROOTFS/tmp/ifba-app-description-runner/"
 chroot "$ROOTFS" cmake -S /tmp/ifba-app-description-runner -B /tmp/ifba-app-description-runner/build \
@@ -117,6 +105,14 @@ chroot "$ROOTFS" cmake --build /tmp/ifba-app-description-runner/build --parallel
 chroot "$ROOTFS" ctest --test-dir /tmp/ifba-app-description-runner/build --output-on-failure
 chroot "$ROOTFS" cmake --install /tmp/ifba-app-description-runner/build
 rm -rf "$ROOTFS/tmp/ifba-app-description-runner"
+# Vendor only audited QML source; build/install no upstream scripts or plugins.
+mkdir -p "$ROOTFS/usr/share/plasma/plasmoids/com.github.mattanis.macosdock"
+cp -R /work/packaging/plasma/ifba-dock/. "$ROOTFS/usr/share/plasma/plasmoids/com.github.mattanis.macosdock/"
+for qml_file in /work/packaging/plasma/ifba-dock/contents/ui/*.qml; do
+  chroot "$ROOTFS" /usr/lib/qt6/bin/qmlformat "/usr/share/plasma/plasmoids/com.github.mattanis.macosdock/contents/ui/$(basename "$qml_file")" >/dev/null
+done
+mkdir -p "$ROOTFS/usr/share/doc/ifba-os/third-party/plasma-macos-dock"
+cp -R /work/packaging/third-party/plasma-macos-dock/. "$ROOTFS/usr/share/doc/ifba-os/third-party/plasma-macos-dock/"
 chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get purge -y "${KRUNNER_BUILD_PACKAGES[@]}"
 chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get autoremove --purge -y
 for package in "${KRUNNER_BUILD_PACKAGES[@]}"; do
@@ -369,21 +365,15 @@ install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/etc/skel/.
 if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmashellrc" ]]; then
   install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/home/ubuntu/.config/plasmashellrc"
 fi
+python3 /work/tools/migrate_plasma_shell.py "$ROOTFS/home/ubuntu/.config/plasmashellrc"
+python3 /work/tools/migrate_plasma_control_center.py \
+  "$ROOTFS/home/ubuntu/.config/plasma-org.kde.plasma.desktop-appletsrc"
+# These are stale build-cache components from the retired UI, not user data.
+rm -rf "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter" \
+  "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma"
 install -D -m 0644 /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
-install -D -m 0644 /work/packaging/plasma/ifba-control-center/metadata.json \
-  "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/metadata.json"
-install -D -m 0644 /work/packaging/plasma/ifba-control-center/contents/ui/main.qml \
-  "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/main.qml"
-install -D -m 0644 /work/packaging/plasma/ifba-control-center/contents/ui/IfbaAnimationTokens.qml \
-  "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimationTokens.qml"
-for qml_file in IfbaAnimatedButton.qml IfbaAnimatedToolButton.qml; do
-  install -D -m 0644 "/work/packaging/plasma/ifba-control-center/contents/ui/$qml_file" \
-    "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/$qml_file"
-done
-python3 /work/tools/package_plasma_lockscreen.py "$ROOTFS" \
-  /work/packaging/plasma/ifbaos-shell/contents/lockscreen
 cp -R /work/packaging/plasma/window-decoration/IFBA-Window \
   "$ROOTFS/usr/share/aurorae/themes/"
 for decoration_scale in _x1.25 _x1.5 _x1.75 _x2.0; do
@@ -480,16 +470,14 @@ done
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/org.kde.kdecoration3/org.kde.kwin.aurorae.so' -print -quit | grep -q .
 for applet in org.kde.milou org.kde.plasma.kickoff org.kde.plasma.kicker \
   org.kde.plasma.appmenu org.kde.plasma.systemtray org.kde.plasma.notifications \
-  org.kde.plasma.networkmanagement org.kde.plasma.volume org.kde.plasma.battery; do
+  org.kde.plasma.networkmanagement org.kde.plasma.volume org.kde.plasma.battery \
+  org.kde.plasma.bluetooth; do
   find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so" -print -quit | grep -q .
 done
 find "$ROOTFS/usr/lib" -path '*/kf6/krunner/ifba_app_description_runner.so' -print -quit | grep -q .
 test -s "$ROOTFS/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json"
-test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/metadata.json"
-test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/main.qml"
-test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimationTokens.qml"
-test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimatedButton.qml"
-test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimatedToolButton.qml"
+test ! -e "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter"
+test ! -e "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma"
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskmanager.so' -print -quit | grep -q .
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.trash.so' -print -quit | grep -q .
 for launcher in firefox.desktop org.kde.dolphin.desktop org.kde.konsole.desktop ifba-ai.desktop \
@@ -500,10 +488,9 @@ done
 cmp -s /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
 cmp -s /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
 cmp -s /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
-cmp -s /work/packaging/plasma/ifbaos-shell/contents/lockscreen/LockScreen.qml \
-  "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreen.qml"
-cmp -s /work/packaging/plasma/ifbaos-shell/contents/lockscreen/LockScreenUi.qml \
-  "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreenUi.qml"
+grep -q '^ShellPackage=org.kde.plasma.desktop$' "$ROOTFS/etc/skel/.config/plasmashellrc"
+grep -q '^ShellPackage=org.kde.plasma.desktop$' "$ROOTFS/etc/xdg/plasmashellrc"
+test -s "$ROOTFS/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml"
 test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
 for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do

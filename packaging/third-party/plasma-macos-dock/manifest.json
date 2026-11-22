@@ -1,0 +1,47 @@
+{
+  "repository": "https://github.com/Matt-Anis/plasma-macos-dock",
+  "commit": "ba4f0551ac9c71e9a777451aa1c43db144a10156",
+  "mode": "QML only; no installer, artwork or native plugin",
+  "omitted_assets": {
+    "contents/icons/com.github.mattanis.macosdock.png": "Not redistributed: the upstream preview icon contains proprietary macOS Finder and System Settings artwork. The plasmoid metadata uses the KDE preferences-desktop-icons theme icon instead."
+  },
+  "licenses": [
+    "GPL-2.0-or-later",
+    "LGPL-2.0-or-later"
+  ],
+  "omitted_assets": {
+    "contents/icons/com.github.mattanis.macosdock.png": {
+      "sha256": "7595a6c7f5f715b5342397ed863768eb31e4f59a2bebb15bf7c69563685ba85e",
+      "reason": "Not redistributed: the upstream preview icon contains proprietary macOS Finder and System Settings artwork. The plasmoid metadata uses the KDE preferences-desktop-icons theme icon instead."
+    }
+  },
+  "files": {
+    "contents/config/config.qml": "30942496c8c482725f0f9fe172388fcea25a51289ca62e2a5d7a25990640ba53",
+    "contents/config/main.xml": "f30fd330c0bb54205a2dda5263549f3407c22d87d2439b23883fa8862b9fd505",
+    "contents/ui/AudioStream.qml": "e759db7e9304d213c111c70ba38535d22a905b943aaf4af3c5665eef4cbf9799",
+    "contents/ui/Badge.qml": "1cc83155d23c3e2460fb0f38fc06ea5a211790b18989807a205092b5e25022cc",
+    "contents/ui/BlurAreaBridge.qml": "ad4174484c3e5e530b1dc8d57baa2d654fe50f2c416b42abd51bcb8978fedd72",
+    "contents/ui/ConfigAppearance.qml": "a266282d6f99714330d224f5976ca72530f43332ca064d29f0b69da27026719e",
+    "contents/ui/ConfigBehavior.qml": "ae9cc581147332735ca7c6677a00c2717af2d840811d65d73617eeb1f099fd7b",
+    "contents/ui/ContextMenu.qml": "b556450baeb4528dbd49991fb338685fe297bcd0981d8d51a231dae7d611199a",
+    "contents/ui/GroupDialog.qml": "04a79ac82d1a9166309b3ed56eca0a538e7bbb1cce2b70dd7944ea1fb4d5cfbf",
+    "contents/ui/GroupExpanderOverlay.qml": "4ece77dd53e11b9744d9d6f0ad3da0facca4b196bad0ce07f2ae5b31233cd605",
+    "contents/ui/LiquidGlassBackground.qml": "3560cefa3040eb0bf1c795914fc38af9415bdc0d925942791f286217e70f429a",
+    "contents/ui/MouseHandler.qml": "18b3e7f8dce8558e5ce8aad7134896883c7fbd9ef286cae49db0fa018833eab0",
+    "contents/ui/PipeWireThumbnail.qml": "b76fc7105bb69bf00a1cad94533fc0292a6ca7171409ec89bee75d2f68077e6b",
+    "contents/ui/PlayerController.qml": "0e5b699efaf8b4b7b0b6ff3c5532043b38cb2df275e440ee232aec7cc827779f",
+    "contents/ui/PulseAudio.qml": "c0ea1c1375ecc829a0578f9721722ffd0816cead8a86c4167ee6d297c0282e39",
+    "contents/ui/ScrollableTextWrapper.qml": "4584629b45e2ff5d0b78d0531a782dc9dae8c4a86f60b16062567bbf2bccb3ee",
+    "contents/ui/Task.qml": "7d90aa16f6c69076e4226417bdc8a30b999c3055b1957d107640c34f17b4fe75",
+    "contents/ui/TaskBadgeOverlay.qml": "215a618ff15e8120b43035fe029655f92348f23854db16c0ba7198f7a049bd69",
+    "contents/ui/TaskList.qml": "b60f7f41cd2d1df739f14842391892ef96cd02272c1bd03fe0cabc14d45c85f4",
+    "contents/ui/TaskProgressOverlay.qml": "20f86b0f6a237a12cb6cb6e6c1f8071719f40c0917281d3cd360729d9d340100",
+    "contents/ui/ToolTipDelegate.qml": "1c0e7619a093cd0be45871216f3abf72e09c6a8899ee41fd8b3e944c190f6390",
+    "contents/ui/ToolTipInstance.qml": "f68b429e6eccf7b63083201490ed47b3e15d129fefdcddbf14820240bf68005e",
+    "contents/ui/ToolTipWindowMouseArea.qml": "d11004379772e6c8ac94a12875afee18f8263767347266715fe9cd9172f832dc",
+    "contents/ui/X11Thumbnail.qml": "660ce72a3fa3519ca391982f0bc18e215db0449dc14221dd86fca3738c0a7786",
+    "contents/ui/code/LayoutMetrics.js": "63e8fe9537d892db051b40d2319040b294faaa1589ec144d1102a7d86d5cd4e1",
+    "contents/ui/code/TaskTools.js": "276c952996157dad182af0fb78e5e2cdf5a69add1bc915706182abb31c2afd5d",
+    "contents/ui/main.qml": "319b9f10403565629116eec29a76ef01bf472ad4aaef7f955736152c17e88114"
+  }
+}

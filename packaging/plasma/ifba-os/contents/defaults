@@ -29,6 +29,12 @@ AnimationSpeed=2
 blurEnabled=true
 magiclampEnabled=true
 overviewEnabled=true
+squashEnabled=false
+scaleEnabled=true
+fadeEnabled=false
+maximizeEnabled=true
+slideEnabled=true
+fadedesktopEnabled=false
 
 [kwinrc][Effect-Blur]
 BlurStrength=2
@@ -39,11 +45,11 @@ AnimationDuration=180
 [kwinrc][Effect-PresentWindows]
 BorderActivate=9
 
-[kwinrc][Effect-Overview]
+[kwinrc][Effect-overview]
 BorderActivate=9
 
 [plasmarc][Theme]
 name=IFBA-WhiteSur-Dark
 
 [plasmashellrc][Shell]
-ShellPackage=org.ifbaos.plasma
+ShellPackage=org.kde.plasma.desktop

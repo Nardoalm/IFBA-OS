@@ -42,6 +42,7 @@ class VisualProfileTests(unittest.TestCase):
 case "$*" in
   *visual-motionrc*DurationStandardMs*) printf '%s\\n' "${MOTION_STANDARD_MS:-180}" ;;
   *visual-motionrc*DurationSlowMs*) printf '%s\\n' "${MOTION_SLOW_MS:-240}" ;;
+  *Kvantum*) printf '%s\\n' "${QT_THEME:-PersonalTheme}" ;;
   *kdeglobals*) printf '%s\\n' "${MOTION_FACTOR:-1}" ;;
   *) printf '1\\n' ;;
 esac
@@ -61,12 +62,28 @@ esac
                 result = subprocess.run(["sh", str(SCRIPT), name], env=environment, text=True, capture_output=True)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 calls = log.read_text().splitlines()
-                self.assertEqual(len(calls), 4)
+                self.assertEqual(len(calls), 11)
                 self.assertIn(f"--group Plugins --key blurEnabled {enabled}", calls[0])
                 self.assertIn(f"--group Effect-Blur --key BlurStrength {strength}", calls[1])
                 self.assertIn(f"--group Plugins --key magiclampEnabled {magiclamp}", calls[2])
                 self.assertIn(f"--group Effect-magiclamp --key AnimationDuration {duration}", calls[3])
                 self.assertTrue(all("kwinrc" in call for call in calls))
+                animated = "false" if name == "leve" else "true"
+                self.assertIn("--key squashEnabled false", calls[4])
+                self.assertIn("--key fadeEnabled false", calls[5])
+                for index in (6, 7, 8):
+                    self.assertTrue(calls[index].endswith(animated))
+
+            for selected, expected_theme in (("IFBA-Glass", "IFBA-Glass-Opaque"), ("IFBA-Glass-Opaque", "IFBA-Glass-Opaque"), ("PersonalTheme", None)):
+                log.write_text("")
+                environment["QT_THEME"] = selected
+                subprocess.run(["sh", str(SCRIPT), "leve"], env=environment, check=True, capture_output=True)
+                theme_calls = [line for line in log.read_text().splitlines() if "--file Kvantum/" in line]
+                if expected_theme:
+                    self.assertEqual(len(theme_calls), 1)
+                    self.assertTrue(theme_calls[0].endswith(expected_theme))
+                else:
+                    self.assertEqual(theme_calls, [])
 
     def test_reduced_motion_preference_disables_magic_lamp_without_changing_preference(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -78,6 +95,7 @@ esac
 case "$*" in
   *visual-motionrc*DurationStandardMs*) printf '%s\\n' "${MOTION_STANDARD_MS:-180}" ;;
   *visual-motionrc*DurationSlowMs*) printf '%s\\n' "${MOTION_SLOW_MS:-240}" ;;
+  *Kvantum*) printf '%s\\n' "${QT_THEME:-PersonalTheme}" ;;
   *kdeglobals*) printf '%s\\n' "${MOTION_FACTOR:-1}" ;;
   *) printf '1\\n' ;;
 esac

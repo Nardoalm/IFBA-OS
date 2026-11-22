@@ -45,18 +45,21 @@ case "$profile" in
     exit 1
     ;;
   leve)
+    animated=false
     blur=false
     strength=0
     magiclamp=false
     duration=$standard_duration
     ;;
   equilibrado)
+    animated=true
     blur=true
     strength=2
     magiclamp=true
     duration=$standard_duration
     ;;
   avancado)
+    animated=true
     blur=true
     strength=4
     magiclamp=true
@@ -83,6 +86,7 @@ fi
 if awk -v factor="$motion_factor" \
   'BEGIN { exit (factor ~ /^[0-9]+([.][0-9]*)?$/ && factor + 0 == 0) ? 0 : 1 }'; then
   magiclamp=false
+  animated=false
 fi
 
 # These are user-invoked, current-user KWin settings. Do not use sudo, edit
@@ -91,6 +95,27 @@ kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled "$blur"
 kwriteconfig6 --file kwinrc --group Effect-Blur --key BlurStrength "$strength"
 kwriteconfig6 --file kwinrc --group Plugins --key magiclampEnabled "$magiclamp"
 kwriteconfig6 --file kwinrc --group Effect-magiclamp --key AnimationDuration "$duration"
+# KWin's mutually exclusive animation categories must have one owner.
+kwriteconfig6 --file kwinrc --group Plugins --key squashEnabled false
+kwriteconfig6 --file kwinrc --group Plugins --key fadeEnabled false
+kwriteconfig6 --file kwinrc --group Plugins --key scaleEnabled "$animated"
+kwriteconfig6 --file kwinrc --group Plugins --key maximizeEnabled "$animated"
+kwriteconfig6 --file kwinrc --group Plugins --key slideEnabled "$animated"
+kwriteconfig6 --file kwinrc --group Plugins --key fadedesktopEnabled false
+kwriteconfig6 --file kwinrc --group Effect-scale --key Duration "$duration"
+
+# Reuse the packaged opaque Kvantum variant on low-end machines. Only switch
+# IFBA themes: a personally selected third-party theme belongs to the user.
+if command -v kreadconfig6 >/dev/null 2>&1; then
+  qt_theme=$(kreadconfig6 --file Kvantum/kvantum.kvconfig --group General --key theme --default '' 2>/dev/null || true)
+  case "$qt_theme" in
+    IFBA-Glass|IFBA-Glass-Opaque)
+      if [ "$profile" = leve ]; then qt_theme=IFBA-Glass-Opaque; else qt_theme=IFBA-Glass; fi
+      kwriteconfig6 --file Kvantum/kvantum.kvconfig --group General --key theme "$qt_theme"
+      printf 'Tema Qt: %s (reinicie os aplicativos Qt para aplicar).\n' "$qt_theme"
+      ;;
+  esac
+fi
 
 if command -v qdbus6 >/dev/null 2>&1 && qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1; then
   :

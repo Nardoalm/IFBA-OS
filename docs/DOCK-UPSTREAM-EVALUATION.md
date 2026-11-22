@@ -26,3 +26,11 @@ O build usa Ubuntu 26.04 e Plasma 6.6 (ver `DESIGN-SYSTEM.md`). A sessão Live �
 ## Critério para a próxima integração
 
 Substituir somente `org.kde.plasma.icontasks` no painel inferior, manter o Kickoff com o símbolo institucional oficial e os lançadores IFBA AI, Firefox, Dolphin, Konsole e Configurações. Fixar o commit e distribuir código-fonte/licenças. O painel do Plasma deve continuar sendo criado apenas para usuários novos e sessões Live; não reaplicar layout em cada inicialização. Antes de publicar, comprovar build AMD64/ARM64, funcionamento X11/Wayland e comportamento com duas telas reais ou virtuais. Até lá, o layout atual permanece como fallback funcional.
+
+## Implementação posterior: alternativa de painel integrada
+
+O QML da alternativa Matt-Anis foi incorporado em `packaging/plasma/ifba-dock`, fixado em `ba4f0551ac9c71e9a777451aa1c43db144a10156`. A decisão anterior de investigação é atualizada para **APROVADO COM ADAPTAÇÕES para empacotamento QML**, com runtime pendente. Cabeçalhos GPL/LGPL de todos os arquivos são preservados e os textos completos estão em `packaging/third-party/plasma-macos-dock`; hashes das fontes originais constam no manifesto. Não foram incorporados os assets de imagem, instaladores nem módulo C++ opcional.
+
+O painel inferior mantém Kickoff com símbolo IF e favoritos educacionais; o widget de tarefas passa a `com.github.mattanis.macosdock`, usando modelo KDE, ações/contextos upstream, ampliação moderada 1.25, animação suave e salto. O painel flutuante tem 72 px de espessura e conserva auto-ocultação nativa e filtragem por tela. O fundo `SystemBlur` usa a área de blur opcional do upstream quando disponível; sem ela, o mesmo componente cai para uma superfície IFBA translúcida esmeralda escura, sem carregar módulo nativo. Ampliação/salto respeitam movimento reduzido. O Icons Only Tasks do KDE continua instalado como alternativa selecionável pelo usuário.
+
+O pipeline copia a fonte local, verifica sintaxe QML e preserva licenças. O layout só é aplicado a perfis novos; usuários existentes não são migrados automaticamente. ARM64/AMD64 compartilham QML, mas a resolução das APIs privadas, duas telas, ações de janela e renderização em X11/Wayland ainda exigem testes reais na mídia nova. Não há evidência de runtime desta integração.
