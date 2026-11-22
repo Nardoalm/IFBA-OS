@@ -47,7 +47,8 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("$ROOTFS/etc/skel/.config/kscreenlockerrc", build)
         self.assertIn("$ROOTFS/home/ubuntu/.config/kscreenlockerrc", build)
         self.assertIn("WallpaperPlugin=org.kde.image", config)
-        self.assertIn("Image=/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png", config)
+        self.assertIn("Image=file:///usr/share/backgrounds/ifba-os/campus-jacobina.jpg", config)
+        self.assertTrue((ROOT / "assets/wallpapers/ifba-os-campus-jacobina.jpg").is_file())
 
     def test_live_home_permissions_and_guest_diagnostics_are_packaged(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
@@ -460,7 +461,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertNotIn("migrate_plasma_shell.py", build)
         self.assertNotIn("package_plasma_lockscreen.py", build)
         self.assertNotIn("/work/packaging/plasma/ifbaos-shell/contents/lockscreen", build)
-        self.assertIn("lockscreen-wallpaper.png", (ROOT / "packaging/plasma/ifba-os-lockscreen.conf").read_text())
+        self.assertIn("campus-jacobina.jpg", (ROOT / "packaging/plasma/ifba-os-lockscreen.conf").read_text())
         self.assertIn("org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml", build)
 
     def test_plasma_session_setup_migrates_only_the_old_ifba_titlebar_defaults(self):

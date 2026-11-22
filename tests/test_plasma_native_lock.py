@@ -80,7 +80,7 @@ class PlasmaNativeLockTests(unittest.TestCase):
         config = (ROOT / "packaging/plasma/ifba-os-lockscreen.conf").read_text()
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
         self.assertIn("WallpaperPlugin=org.kde.image", config)
-        self.assertIn("Image=/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png", config)
+        self.assertIn("Image=file:///usr/share/backgrounds/ifba-os/campus-jacobina.jpg", config)
         self.assertIn("/etc/skel/.config/kscreenlockerrc", build)
         self.assertIn("/etc/xdg/kscreenlockerrc", build)
 
