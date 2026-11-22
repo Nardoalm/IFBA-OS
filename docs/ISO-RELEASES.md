@@ -227,3 +227,18 @@ At the time of the 2026-11-20 migration, `output/latest/amd64/` pointed to v0.3.
 - **Verification:** `tools/release_artifacts.py verify` passed for both architecture/manifest pairs. Embedded build metadata reports `source_dirty: false`; pipeline checks inspected kernel, initrd, rootfs and GRUB configuration. Runtime remains unvalidated: no UTM boot, screenshots, networking, AI interaction or Calamares installation is claimed.
 - **Automated checks:** 137 tests passed, 5 skipped because GTK/PyQt target dependencies are unavailable on the host; the build's CTest checks passed 2/2 on each architecture. `git diff --check` and syntax checks passed. Nonfatal build notices included initramfs gzip fallback without `zstd`, SquashFS ACL xattr-prefix notices, xorriso volume-ID/MBR geometry notices, chroot apt logging/D-Bus notices and Qt locale fallback.
 - **GitHub release:** Not published; `gh auth status` reports no authenticated GitHub host in this environment.
+
+
+## 0.3.7 — audio backend and window controls — 2026-11-22 UTC
+
+| Architecture | Build ID | Source commit | Build time (UTC) | Size (bytes) | SHA-256 | Build status | Runtime status |
+|---|---|---|---|---:|---|---|---|
+| arm64 | `ifba-20261122T135922Z-arm64-cb21dbbfe972` | `cb21dbbfe972c4f2cf5aafd300f51d308105e711` | `2026-11-22T13:59:22Z` | 2,021,965,824 | `610289958067b1dac852ccc5d4d9b79f19bfcc3506563cd3bf43cb377140af55` | built and structurally verified | unvalidated |
+| amd64 | `ifba-20261122T140239Z-amd64-cb21dbbfe972` | `cb21dbbfe972c4f2cf5aafd300f51d308105e711` | `2026-11-22T14:02:39Z` | 2,080,104,448 | `1b3262f6dbe63bd4a4e35edd4a871c57bbdab5815ff9654fd092dadd9f377bcf` | built and structurally verified | unvalidated |
+
+- **Build method:** Official `./scripts/build-iso.sh --arch arm64` and `--arch amd64` pipeline from a clean detached worktree at the shared source commit above. Each generated manifest records `source_dirty: false`.
+- **Verification:** `tools/release_artifacts.py verify` passed on both staged outputs and both archived files. Independent SHA-256 and size checks match the manifests. `file` identifies both as bootable ISO 9660 DOS/MBR media; the build extracted and checked architecture-specific kernel, initrd, SquashFS and GRUB boot data. These checks do not establish a successful guest boot or runtime behavior.
+- **Warnings:** Both builds completed with exit status 0. Nonfatal notices included SquashFS `system.posix_acl_*` xattr prefixes and `xorriso` ISO volume-ID normalization/MBR geometry adjustment. The AMD64 chroot build also reported Qt changing locale `C` to `C.UTF-8`; ARM64 initramfs used gzip because `zstd` was unavailable. AMD64 internal CTest checks passed 2/2.
+- **Artifacts:** Archived under `output/versions/v0.3.7/{arm64,amd64}/`. The v0.3.6 `output/latest/` pointers and `release-status.json` were deliberately left untouched: UTM showed a running historical VM with a v0.3.6 ISO filename, but its backing image path could not be established from the VM configuration. This preserves the possibly attached file; v0.3.7 is built and archived but is not the current `latest` pointer.
+- **UTM/runtime:** No v0.3.7 guest was booted and no screenshots were captured. Audio playback, YouTube, window decorations, IFBA AI controls, desktop layout, network and Calamares remain unvalidated on these images. Existing UTM VMs were not stopped, reconfigured or modified.
+- **GitHub release:** Not published in this build session; check the current `gh` authentication state before uploading assets.
