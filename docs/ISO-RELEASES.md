@@ -139,7 +139,7 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 
 ## Next product version
 
-Matched v0.3.3 images are built for both architectures from the same source commit. Their runtime status remains unvalidated until a real guest boot and feature checks are completed.
+Matched v0.3.3 images are built for both architectures from the same source commit. Their runtime status remains unvalidated until a real guest boot and feature checks are completed. Version 0.3.4 is the next candidate release; its shared source commit will be built for both architectures before either `latest/` pointer advances.
 
 ## Artifact organization migration — 2026-11-20
 
