@@ -242,3 +242,12 @@
 - Built ARM64 and AMD64 with `./scripts/build-iso.sh --both` from clean detached worktree commit `fedfa208f47a9ee54d4690a64d410c6af287cb45`. The existing `output/` archive/pointers were reused; no historical ISO, VM, Docker volume, or cache was deleted. `latest` now points to the verified v0.3.3 matched pair.
 - Both external manifests report `source_dirty: false`. Release verification passed for hashes, byte sizes, ISO/El Torito structure, architecture labels and embedded boot payload/rootfs checks. ARM64 SHA-256 `e5ff90b8222e31aae53d66b26319879990ab03cab1a2e133c6332cdccc8aaaa7` (1,962,625,024 bytes); AMD64 `326f5781dcccab0affdd2fb27d0f09b56c5c8ec871bdf3c3520039e569468d9e` (2,018,887,680 bytes). Runtime remains unvalidated.
 - UTM displayed its library and the historical VMs. A new ARM64 wizard reached the ISO selection step, but the macOS picker was inaccessible (`noWindowsAvailable`); the unsaved wizard was canceled. Historical VMs remain unchanged. See the latest `VM-TESTING.md` section for exact ISO paths and pending guest checks.
+
+
+## Matched v0.3.4 build and UTM follow-up — 2026-11-22 UTC
+
+- Built ARM64 and AMD64 as a matched pair with `./scripts/build-iso.sh --both` from clean worktree commit `e7ebe4a27297a656517363162fd8454018ca7709`. Both image builds exited 0. Full tests had passed 121 tests with 2 skipped before the build. Manifest/hash/size and ISO structural verification passed; both runtime statuses remain unvalidated. Build warnings and full artifact metadata are recorded in `ISO-RELEASES.md`.
+- Published the pair directly under `output/latest/`; `release-status.json` reports `complete_pair: true` and the common source commit.
+- The native macOS ISO chooser failed in UTM (`-10005: noWindowsAvailable`) while the separate ARM64 wizard was set to QEMU, 4096 MiB RAM and 4 CPU cores. The ISO path stayed empty; no VM was saved. The historical running VM remains on v0.3.3 and was not touched.
+- Removed older local archive images at the owner's explicit request, retaining v0.3.3 ARM64 because it is referenced by the running historical VM. Old release records and hashes remain in docs.
+- **Next:** In the open wizard, manually select `/Users/leonardo/Documents/IFBA-OS/output/latest/arm64/ifba-os-ubuntu-26.04-arm64-v0.3.4.iso`; create a new test VM and perform real boot, desktop, network and application checks. Test AMD64 separately.

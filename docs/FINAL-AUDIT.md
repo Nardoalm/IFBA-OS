@@ -69,7 +69,7 @@ The window-decoration source packages a project Aurorae SVG theme, native contro
 
 ## Release artifact organization — 2026-11-20
 
-Versioned ISO artifacts reside under `output/versions/vX.Y.Z/{amd64,arm64}/` with per-artifact manifests; root compatibility names and `latest/` use symlinks, so ISO files are not duplicated. The latest pair present locally is v0.3.3 for both architectures, built from source commit `fedfa208f47a9ee54d4690a64d410c6af287cb45`; both pass structural verification but remain runtime-unvalidated. Source has advanced past that artifact commit. See `ISO-RELEASES.md` and `BUILDING.md` for historical artifact records.
+Versioned ISO artifacts reside under `output/versions/vX.Y.Z/{amd64,arm64}/` with per-artifact manifests; root compatibility names and `latest/` use symlinks, so ISO files are not duplicated. That 2026-11-20 snapshot was superseded by the matched v0.3.4 pair built from commit `e7ebe4a27297a656517363162fd8454018ca7709`; the current local `output/latest/` pair passes structural verification and remains runtime-unvalidated. See `ISO-RELEASES.md` and `BUILDING.md` for historical artifact records.
 
 UTM ARM64 VM creation remains blocked at the native file picker (`noWindowsAvailable`). The attempted unsaved wizard was canceled, and the existing suspended AMD64 VM remains unchanged. No ARM boot was performed; manual ISO selection steps are in `VM-TESTING.md`.
 
@@ -116,3 +116,11 @@ The latest UTM screenshot confirms a usable XFCE desktop on the exact output ISO
 - IFBA AI now detects `/etc/ifba-os/live-demo`. In that mode it does not initialize the conversation database and rejects API-key storage, chat/memory writes, visual capture, export, and generation. The GTK UI explains the demo restriction and disables those entry points. Calamares removes the marker in its target chroot, where its user module creates a separate account with autologin disabled. This limits accidental personal-data use in the Live demo, but does not isolate ordinary files or resist someone with the shared Live account's administrator privileges. Keep Live use disposable and single-session; validate the actual Calamares install and PAM behavior in UTM.
 - NVIDIA response handling caps each SSE line at 128 KiB and aggregate response text/body at 2 MiB in both the HTTP parser and assistant service. Focused regressions cover a too-long line, oversized aggregate stream, and oversized chunk from an alternate client. No authenticated NVIDIA request was made.
 - Source change and regression checks do not validate the previously built v0.3.3 ISOs; they predate this patch. A new matched pair must be built from a committed source state and boot-tested before these controls can be claimed in an image.
+
+
+## v0.3.4 release and UTM status — 2026-11-22 UTC
+
+- A matched ARM64/AMD64 pair was built from clean source commit `e7ebe4a27297a656517363162fd8454018ca7709`. Manifest, checksum, size and ISO structural checks passed. `latest/release-status.json` reports a complete pair. Exact build IDs and hashes are in `ISO-RELEASES.md`.
+- UTM was available, but its native file picker failed with `-10005: noWindowsAvailable` in the new ARM64 VM wizard. The unsaved wizard has 4096 MiB RAM and 4 CPU cores, but no ISO attached and no VM saved. The historical ARM64 VM is already running v0.3.3 and was not modified. No boot or desktop evidence exists for v0.3.4.
+- At the owner's explicit request, old local archive ISOs were removed, with the single exception of the v0.3.3 ARM64 ISO attached to the active historical VM. Documentation retains the historical release metadata.
+- **Remaining:** Select `/Users/leonardo/Documents/IFBA-OS/output/latest/arm64/ifba-os-ubuntu-26.04-arm64-v0.3.4.iso` manually in the open UTM wizard, create a separate test VM, then capture actual boot/desktop screenshots and run guest checks. Test AMD64 independently before attributing results to that architecture.

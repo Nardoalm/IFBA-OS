@@ -139,7 +139,7 @@ These hashes and short descriptions are retained from earlier audit records. Tho
 
 ## Next product version
 
-Matched v0.3.3 images are built for both architectures from the same source commit. Their runtime status remains unvalidated until a real guest boot and feature checks are completed. Version 0.3.4 is the next candidate release; its shared source commit will be built for both architectures before either `latest/` pointer advances.
+Matched v0.3.4 images are built for both architectures from the same source commit and verified. Their runtime status remains unvalidated until real guest boots and feature checks are completed; see the v0.3.4 entry below.
 
 ## Artifact organization migration — 2026-11-20
 
@@ -184,3 +184,18 @@ At the time of the 2026-11-20 migration, `output/latest/amd64/` pointed to v0.3.
 - **Warnings:** The helper/container emitted expected service-start/D-Bus notices in chroot, `mksquashfs` warnings for `system.posix_acl_*` xattr prefixes, `xorriso` warnings that the volume ID does not follow ISO 9660 text rules, and initramfs fallback from zstd to gzip. Thonny emitted Python `SyntaxWarning`s. These were non-fatal; package/rootfs and ISO checks completed successfully.
 - **Automated checks:** 95 tests passed, 2 target-image PyQt6 tests skipped. Bash/POSIX shell syntax, Python compilation, JavaScript syntax and `git diff --check` passed on the committed source.
 - **UTM:** A separate ARM64 QEMU wizard was configured with 4096 MiB RAM, four CPU cores and OpenGL disabled. Clicking Browse for the v0.3.3 ISO returned `noWindowsAvailable`; the unsaved wizard was canceled. No VM was created and no existing VM/media was changed. The AMD64 ISO was not attached to a VM. No boot, guest screenshot, desktop, network or Calamares result is claimed. Manual selection paths are in `VM-TESTING.md`.
+
+
+## 0.3.4 — Matched Plasma design and stability build, 2026-11-22 UTC
+
+| Architecture | Build ID | Source commit | Build time (UTC) | Size (bytes) | SHA-256 | Build status | Runtime status |
+|---|---|---|---|---:|---|---|---|
+| arm64 | `ifba-20261122T005234Z-arm64-e7ebe4a27297` | `e7ebe4a27297a656517363162fd8454018ca7709` | `2026-11-22T00:52:34Z` | 2,008,064,000 | `2593fdc64986c3243a77c59d1e41c43b477cfb718e899220c77523770f4bfcd7` | built and structurally verified | unvalidated |
+| amd64 | `ifba-20261122T005542Z-amd64-e7ebe4a27297` | `e7ebe4a27297a656517363162fd8454018ca7709` | `2026-11-22T00:55:42Z` | 2,065,125,376 | `25ecc7a64a7b10683263ab7254c69d79e39a412a0ed05f97cdd5c72e801b499c` | built and structurally verified | unvalidated |
+
+- **Build method:** `./scripts/build-iso.sh --both` from clean source commit `e7ebe4a27297a656517363162fd8454018ca7709`; ARM64 and AMD64 used the existing architecture-specific build caches. The manifest source commit is identical and `source_dirty: false` for both.
+- **Verification:** Release manifest/hash/size and ISO structure checks passed for both architectures, including boot catalog, architecture metadata and embedded boot/rootfs checks. `file` identifies ISO 9660 DOS/MBR bootable media. These checks do not prove Linux boot or desktop runtime. The full automated suite passed 121 tests with 2 skips before build.
+- **Warnings:** Build tools reported unsupported `system.posix_acl_default/access` xattr prefixes from `mksquashfs`; an ISO volume ID requiring ISO 9660 normalization and automatic MBR geometry adjustment from `xorriso`; initramfs fell back from zstd to gzip; and chroot package setup emitted non-fatal service/D-Bus and `/dev/pts` logging notices. Both builds completed with exit status 0 and structural checks passed.
+- **Publication:** `output/latest/{arm64,amd64}/` contains the v0.3.4 files and per-architecture manifests; `release-status.json` says `complete_pair: true` with the shared source commit. No v0.3.4 ISO was added to `output/versions/`.
+- **Local archive cleanup:** At the owner’s explicit request, older archived ISO files were removed locally. The v0.3.3 AMD64 and v0.3.2 ARM64/AMD64 media are no longer present; their historical identities and hashes remain recorded above. The v0.3.3 ARM64 media and manifest were retained at their original path because the currently running historical UTM VM attaches that file.
+- **UTM:** A separate ARM64 QEMU Linux wizard was prepared with 4096 MiB RAM, 4 CPU cores, QEMU and “Boot from ISO image”. The native macOS **Browse…** action failed with `-10005: noWindowsAvailable`; the ISO path remained blank and no new VM was saved or booted. The existing historical ARM64 VM remains on v0.3.3. AMD64 v0.3.4 was not attached. No v0.3.4 guest screenshot or runtime result is claimed. For manual continuation, select `/Users/leonardo/Documents/IFBA-OS/output/latest/arm64/ifba-os-ubuntu-26.04-arm64-v0.3.4.iso` in the current wizard; finish creating a separate test VM and leave historical VMs unchanged.
