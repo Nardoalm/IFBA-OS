@@ -7,17 +7,20 @@ case "$IFBA_ARCH" in
     ARCHIVE=http://archive.ubuntu.com/ubuntu
     BOOT_PACKAGES=(grub-pc-bin grub-efi-amd64-bin mtools)
     INSTALLER_BOOT_PACKAGES=(grub-efi-amd64-signed shim-signed)
+    CODIUM_PACKAGE_SHA256=988330df203f4d2dbfb9ee0052a0356a27af7c0a2a7ff606424c531ae4a7b538
     ;;
   arm64)
     ARCHIVE=http://ports.ubuntu.com/ubuntu-ports
     BOOT_PACKAGES=(grub-efi-arm64-bin mtools)
     INSTALLER_BOOT_PACKAGES=(grub-efi-arm64-signed shim-signed)
+    CODIUM_PACKAGE_SHA256=7b0c60ea1592287d44669a63ac09092790f05bbd119e3bccc3f94d7722dcef79
     ;;
   *)
     printf 'Unsupported architecture: %s\n' "$IFBA_ARCH" >&2
     exit 2
     ;;
 esac
+CODIUM_VERSION=1.143.17232
 KRUNNER_BUILD_PACKAGES=(
   cmake g++ make extra-cmake-modules qt6-base-dev qt6-declarative-dev-tools libkf6coreaddons-dev libkf6i18n-dev \
   libkf6jobwidgets-dev libkf6kio-dev libkf6runner-dev libkf6service-dev
@@ -63,6 +66,20 @@ Package: firefox*
 Pin: origin packages.mozilla.org
 Pin-Priority: 1000
 PREFERENCES
+curl --fail --silent --show-error --location https://repo.vscodium.dev/vscodium.gpg --output /tmp/vscodium-archive-keyring.asc
+gpg --show-keys --with-colons /tmp/vscodium-archive-keyring.asc \
+  | awk -F: '$1 == "fpr" { print $10; exit }' \
+  | grep --quiet '^9F82ADC6B981F9FE752D1E84EFA45D2860299280$'
+gpg --dearmor --output "$ROOTFS/tmp/vscodium.gpg" /tmp/vscodium-archive-keyring.asc
+install -D -m 0644 "$ROOTFS/tmp/vscodium.gpg" "$ROOTFS/usr/share/keyrings/vscodium.gpg"
+cat > "$ROOTFS/etc/apt/sources.list.d/vscodium.sources" <<'VSCODIUM'
+Types: deb
+URIs: https://repo.vscodium.dev/deb
+Suites: vscodium
+Components: main
+Architectures: amd64 arm64
+Signed-By: /usr/share/keyrings/vscodium.gpg
+VSCODIUM
 mount --bind /dev "$ROOTFS/dev"
 mount -t proc proc "$ROOTFS/proc"
 mount --rbind /sys "$ROOTFS/sys"
@@ -78,6 +95,11 @@ cleanup_mounts() {
 }
 trap cleanup_mounts EXIT
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get update
+chroot "$ROOTFS" apt-cache show codium | awk -v expected_version="$CODIUM_VERSION" -v expected_hash="$CODIUM_PACKAGE_SHA256" '
+  /^Version: / { version = $2 }
+  /^SHA256: / && version == expected_version && $2 == expected_hash { found = 1 }
+  END { exit !found }
+' || { printf 'Audited VSCodium package metadata mismatch for %s\n' "$IFBA_ARCH" >&2; exit 1; }
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --with-new-pkgs
 chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   linux-image-generic casper plymouth plymouth-themes systemd-sysv \
@@ -94,8 +116,11 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libdrm2 \
   libxkbcommon0 libpango-1.0-0 firefox firefox-l10n-pt-br sudo dbus-x11 \
   polkitd pkexec qemu-guest-agent locales calamares squashfs-tools efibootmgr kdialog \
-  python3-pyqt6 thonny libreoffice-writer gcompris-qt \
+  python3-pyqt6 codium="${CODIUM_VERSION}" libreoffice-writer gcompris-qt \
   "${INSTALLER_BOOT_PACKAGES[@]}"
+if chroot "$ROOTFS" dpkg-query -W -f='${db:Status-Status}' thonny 2>/dev/null | grep -qx installed; then
+  chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get purge -y thonny
+fi
 chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${KRUNNER_BUILD_PACKAGES[@]}"
 mkdir -p "$ROOTFS/tmp/ifba-app-description-runner"
 cp -R /work/packaging/plasma/ifba-app-description-runner/. "$ROOTFS/tmp/ifba-app-description-runner/"
@@ -482,7 +507,7 @@ test ! -e "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma"
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskmanager.so' -print -quit | grep -q .
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.trash.so' -print -quit | grep -q .
 for launcher in firefox.desktop org.kde.dolphin.desktop org.kde.konsole.desktop ifba-ai.desktop \
-  org.thonny.Thonny.desktop org.kde.gcompris.desktop libreoffice-writer.desktop systemsettings.desktop \
+  codium.desktop org.kde.gcompris.desktop libreoffice-writer.desktop systemsettings.desktop \
   suap-ifba.desktop ava-ifba.desktop; do
   test -s "$ROOTFS/usr/share/applications/$launcher"
 done
@@ -494,9 +519,11 @@ grep -q '^ShellPackage=org.kde.plasma.desktop$' "$ROOTFS/etc/xdg/plasmashellrc"
 test -s "$ROOTFS/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml"
 test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
-for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio pipewire-pulse wireplumber ffmpeg kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
+for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio pipewire-pulse wireplumber ffmpeg kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 codium libreoffice-writer gcompris-qt; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
+test "$(chroot "$ROOTFS" dpkg-query -W -f='${Version}' codium)" = "$CODIUM_VERSION"
+! chroot "$ROOTFS" dpkg-query -W -f='${db:Status-Status}' thonny 2>/dev/null | grep -qx installed
 for package in "${INSTALLER_BOOT_PACKAGES[@]}"; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done

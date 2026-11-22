@@ -11,7 +11,7 @@ Na parte inferior da janela, marque **Não mostrar novamente ao entrar** para de
 - SUAP e AVA abrem os sites HTTPS públicos já usados pelos atalhos do projeto. O Welcome não lê contas, atividades, notas, cookies ou APIs acadêmicas.
 - IFBA AI abre o aplicativo local. O Welcome não solicita, armazena ou inclui chave da API.
 - Atualizações abre a página de atualizações do Discover; a instalação das atualizações continua dependendo da revisão e confirmação do usuário.
-- Thonny, LibreOffice Writer e GCompris são instalados pelo build para ARM64 e AMD64 e aparecem na tela quando seus executáveis estão disponíveis.
+- VSCodium, LibreOffice Writer e GCompris são instalados pelo build para ARM64 e AMD64 e aparecem na tela quando seus executáveis estão disponíveis. O VSCodium é instalado na versão 1.143.17232 a partir do repositório do projeto, com chave de assinatura verificada e hashes dos pacotes auditados por arquitetura. Os binários VSCodium usam licença MIT; as extensões são obtidas do Open VSX e algumas extensões exclusivas do Visual Studio Marketplace podem não funcionar.
 - Documentação básica permanece instalada em `/usr/share/doc/ifba-os/welcome.html` e pode ser consultada sem conexão.
 
 O aplicativo não coleta nome de estudante nem tenta inferi-lo do nome da conta. A identidade IFBA OS é comunitária; o sistema não afirma endosso institucional.

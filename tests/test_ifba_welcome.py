@@ -47,6 +47,7 @@ class WelcomeRuntimeTests(unittest.TestCase):
             self.assertIn("SUAP", window._buttons)
             self.assertIn("AVA IFBA", window._buttons)
             self.assertIn("IFBA AI", window._buttons)
+            self.assertIn("VSCodium", window._buttons)
             self.assertIn("Documentação", window._buttons)
             self.assertIn("Atualizações", window._buttons)
             with patch.object(ifba_welcome, "user_config_path", return_value=path):

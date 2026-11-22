@@ -338,7 +338,7 @@ class DesktopPackagingTests(unittest.TestCase):
         for required_file in (
             "/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json",
             "org.kde.plasma.taskmanager.so",
-            "org.thonny.Thonny.desktop",
+            "codium.desktop",
             "org.kde.gcompris.desktop",
             "libreoffice-writer.desktop",
             "suap-ifba.desktop",
@@ -746,8 +746,10 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("python3-pyqt6", build)
         self.assertIn("/work/welcome/ifba_welcome.py", build)
         self.assertIn("/etc/xdg/autostart/ifba-os-welcome.desktop", build)
-        self.assertIn("thonny libreoffice-writer gcompris-qt", build)
-        self.assertTrue({"thonny", "libreoffice-writer", "gcompris-qt"}.issubset(installed_tools))
+        self.assertIn('codium="${CODIUM_VERSION}" libreoffice-writer gcompris-qt', build)
+        self.assertTrue({"codium", "libreoffice-writer", "gcompris-qt"}.issubset(installed_tools))
+        self.assertNotIn('("Thonny"', source)
+        self.assertIn('("VSCodium", "Editor de código e desenvolvimento", "codium", ())', source)
         self.assertEqual(desktop["Desktop Entry"]["Exec"], "/usr/bin/ifba-welcome")
         self.assertEqual(desktop["Desktop Entry"]["OnlyShowIn"], "KDE;")
         self.assertEqual(autostart["Desktop Entry"]["Exec"], "/usr/bin/ifba-welcome --autostart")
@@ -758,6 +760,25 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("Não mostrar novamente ao entrar", source)
         self.assertNotIn("suap.ifba.edu.br/api", source)
         self.assertNotIn("ava.ifba.edu.br/api", source)
+
+    def test_vscodium_is_pinned_and_verified_for_both_supported_architectures(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        tools = json.loads((ROOT / "config/educational-apps.json").read_text())
+        entry = next(item for item in tools if item["id"] == "vscodium")
+
+        self.assertIn("CODIUM_VERSION=1.143.17232", build)
+        self.assertIn("https://repo.vscodium.dev/vscodium.gpg", build)
+        self.assertIn("9F82ADC6B981F9FE752D1E84EFA45D2860299280", build)
+        self.assertIn("https://repo.vscodium.dev/deb", build)
+        self.assertIn("Architectures: amd64 arm64", build)
+        self.assertIn("988330df203f4d2dbfb9ee0052a0356a27af7c0a2a7ff606424c531ae4a7b538", build)
+        self.assertIn("7b0c60ea1592287d44669a63ac09092790f05bbd119e3bccc3f94d7722dcef79", build)
+        self.assertIn('codium="${CODIUM_VERSION}"', build)
+        self.assertIn("apt-get purge -y thonny", build)
+        self.assertIn("dpkg-query -W -f='${Version}' codium", build)
+        self.assertEqual(entry["package"], "codium")
+        self.assertEqual(entry["version"], "1.143.17232")
+        self.assertEqual(entry["status"], "installed")
 
 
 if __name__ == "__main__":

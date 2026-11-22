@@ -42,7 +42,7 @@ ACADEMIC_PORTALS = (
 # Fixed executable allowlist. No command is loaded from the web or a user file.
 APPLICATIONS = (
     ("IFBA AI", "Assistente opcional", "/usr/bin/ifba-ai-ui", ()),
-    ("Thonny", "Aprenda e programe em Python", "thonny", ()),
+    ("VSCodium", "Editor de código e desenvolvimento", "codium", ()),
     ("LibreOffice Writer", "Escrita e trabalhos acadêmicos", "lowriter", ()),
     ("GCompris", "Atividades educativas", "gcompris-qt", ()),
 )

@@ -1,5 +1,5 @@
 [
-  {"id":"thonny","name":"Thonny","category":"Programming","package":"thonny","license":"MIT","source":"Ubuntu archive","status":"installed"},
+  {"id":"vscodium","name":"VSCodium","category":"Programming","package":"codium","version":"1.143.17232","license":"MIT (VSCodium binaries)","source":"repo.vscodium.dev; signing key fingerprint 9F82ADC6B981F9FE752D1E84EFA45D2860299280","status":"installed"},
   {"id":"git","name":"Git","category":"Programming","package":"git","license":"GPL-2.0-or-later","source":"Ubuntu archive","status":"candidate"},
   {"id":"python3","name":"Python 3","category":"Programming","package":"python3","license":"PSF-2.0","source":"Ubuntu archive","status":"candidate"},
   {"id":"arduino","name":"Arduino IDE","category":"Programming","package":"arduino","license":"verify per package version","source":"Ubuntu archive","status":"review"},
