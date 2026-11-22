@@ -92,3 +92,25 @@ As aprovações significam apenas que partes identificáveis podem avançar para
 - XMacTahoe, [código no commit auditado](https://github.com/chapdel/XMacTahoe/tree/7ffdaab099220c603c39fbb4503739beee17768c), `LICENSE`, `THIRD_PARTY.md`, licenças sob `licenses/`, `install.sh`, `uninstall.sh`, `plasma/`, `extra/`, `bin/`, `systemd/`.
 - plasma-liquid-glass, [código no commit auditado](https://github.com/artyommargaryan/plasma-liquid-glass/tree/b03d2ee9bbdbfbb0e5b58de9011bc75d60862c11), `LICENSE`, `README.md`, `CMakeLists.txt`, `glass-shape/`, `menu-style/`, `dock/`, `install.sh`, `uninstall.sh`.
 - Base IFBA: [`BUILDING.md`](BUILDING.md), [`DEVELOPMENT-LOOP.md`](DEVELOPMENT-LOOP.md), [`FINAL-AUDIT.md`](FINAL-AUDIT.md), [`tests/test_desktop_packaging.py`](../tests/test_desktop_packaging.py).
+
+## Implementação aprovada: integração de tema (2026-11-21)
+
+A inspeção acima descreve o estado e a recomendação da auditoria original; a implementação abaixo é uma etapa posterior, baseada naquela aprovação condicionada. Foi incorporado somente o WhiteSur KDE no commit `cf4df59ce91004f7ea39358b1b8ff917d5c329f7` (2026-08-07), com licença GPL-3.0 e atribuição preservadas em `packaging/third-party/WhiteSur-kde/`. O manifesto lista os caminhos de origem, destino e adaptações.
+
+| Uso no IFBA | Caminho versionado | Tratamento/licença | Estado de validação |
+|---|---|---|---|
+| Tema de desktop Plasma | `packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/` | SVG/SVGZ upstream selecionados; identificador e metadados IFBA; paleta é o esquema gerado pelo projeto; acentos azuis selecionados foram adaptados para esmeralda; referência a wallpaper removida. GPL-3.0. | Empacotamento e XML estáticos; Plasma/KWin 6.6, Wayland e X11 ainda precisam de VM. |
+| Decoração Aurorae | `packaging/plasma/window-decoration/IFBA-Window/` | Decoração escura e escalas upstream, botões compartilhados; acentos esmeralda, vermelho semântico IFBA, identificador IFBA e botões no lado definido pelo projeto. GPL-3.0. | SVG/XML e configuração estáticos; não observada numa sessão KWin nesta etapa. |
+| Tema Qt Widgets | `packaging/kvantum/IFBA-Glass/` | WhiteSurDark SVG/config recoloridos para a paleta IFBA. GPL-3.0. Blur/translucidez são opcionais ao compositor. | Arquivos, configuração e pacote fixado; runtime gráfico pendente. |
+| Fallback Qt opaco | `packaging/kvantum/IFBA-Glass-Opaque/` | Variante upstream opaca com cores IFBA e licença GPL-3.0. | Arquivos/configuração verificados estaticamente; ativação por usuário/gerenciador Kvantum, runtime pendente. |
+| Engine Qt | Pacotes Ubuntu `qt-style-kvantum` e `qt-style-kvantum-themes` | Fixados em `1.1.5-1` no build e no manifesto. Os pacotes publicados do suite resolute cobrem amd64 e arm64. [Engine](https://packages.ubuntu.com/resolute/amd64/x11/qt-style-kvantum), [temas](https://packages.ubuntu.com/resolute/amd64/qt-style-kvantum-themes). | Disponibilidade consultada no catálogo de pacotes; instalação no chroot depende do próximo build. |
+
+### Itens mantidos nos componentes nativos
+
+- GTK permanece Breeze GTK com o CSS/configuração IFBA existentes; nenhum tema GTK de terceiros foi aprovado na auditoria.
+- Ícones e menus permanecem Breeze/KDE nativos; não foi incorporado o pack de ícones com inventário de licença insuficiente.
+- Transparência de painéis/menus continua dependendo do Plasma/KWin nativo; nenhum efeito binário ou instalador WhiteSur foi importado.
+- Wallpaper IFBA, símbolo oficial do Instituto Federal, tema SDDM Breeze, Look-and-Feel, Kickoff, painéis e plasmoids próprios não foram substituídos.
+- MacSequoia não foi duplicado como segunda base, pois forneceria uma camada Aurorae redundante e mais antiga. XMacTahoe e Plasma Liquid Glass continuam fora desta integração pelas condições já registradas.
+
+Nenhum instalador upstream foi executado ou empacotado; nenhum download externo ocorre durante a compilação dos temas. O pipeline instala os recursos locais, guarda `LICENSE`, `AUTHORS`, manifesto e atribuição em `/usr/share/doc/ifba-os/third-party/WhiteSur-kde`, e aplica defaults via `/etc/skel`/`/etc/xdg` somente sem sobrescrever configurações já existentes. A sessão Live recebe as mesmas configurações; o Calamares copia o rootfs. Essa persistência é coberta estaticamente; não houve build de ISO ou teste em VM nesta etapa, conforme solicitado.

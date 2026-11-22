@@ -1,6 +1,7 @@
 """Static packaging contracts for the native desktop builds."""
 
 import configparser
+import gzip
 import json
 import os
 from pathlib import Path
@@ -534,26 +535,65 @@ class DesktopPackagingTests(unittest.TestCase):
             for node in ET.parse(theme_dir / "decoration.svg").iter()
         }
 
-        self.assertEqual(metadata["DesktopEntry"]["x-kde-plugininfo-name"], "IFBA-Window")
+        self.assertEqual(metadata["Desktop Entry"]["x-kde-plugininfo-name"], "IFBA-Window")
         self.assertEqual(theme["General"]["rightbuttons"], "IAX")
-        self.assertEqual(theme["Layout"]["titleheight"], "34")
-        self.assertEqual(theme["Layout"]["buttonwidthclose"], "42")
-        self.assertEqual(theme["Layout"]["buttonheight"], "34")
-        for frame in ("decoration-top", "decoration-inactive-top", "decoration-maximized-center"):
+        self.assertEqual(theme["General"]["leftbuttons"], "")
+        self.assertEqual(theme["Layout"]["titleheight"], "16")
+        self.assertEqual(theme["Layout"]["buttonwidth"], "16")
+        self.assertEqual(theme["Layout"]["buttonheight"], "16")
+        for frame in ("decoration-top", "decoration-inactive-top", "decoration-center", "decoration-left"):
             self.assertIn(frame, frame_ids)
-        for button, path in (("minimize", "M14 17H28"), ("maximize", "#22C55E"),
-                             ("restore", "#22C55E"), ("close", "#F87171")):
+        for button in ("minimize", "maximize", "restore", "close"):
             button_ids = {
                 node.attrib.get("id")
                 for node in ET.parse(theme_dir / f"{button}.svg").iter()
             }
-            self.assertIn("active-center", button_ids)
-            self.assertIn("hover-center", button_ids)
-            self.assertIn("inactive-center", button_ids)
-            self.assertIn(path, (theme_dir / f"{button}.svg").read_text())
+            self.assertTrue(button_ids, f"upstream Aurorae control asset {button}.svg is empty")
         self.assertIn("kwin-style-aurorae", build)
         self.assertIn("/usr/share/aurorae/themes/IFBA-Window", build)
         self.assertIn("org.kde.kdecoration3/org.kde.kwin.aurorae.so", build)
+        self.assertIn("for decoration_scale in _x1.25 _x1.5 _x1.75 _x2.0; do", build)
+        self.assertIn('source_theme_dir="/work/packaging/plasma/window-decoration/$scaled_theme"', build)
+        for scale in ("_x1.25", "_x1.5", "_x1.75", "_x2.0"):
+            scaled = ROOT / f"packaging/plasma/window-decoration/IFBA-Window{scale}"
+            self.assertTrue((scaled / "decoration.svg").is_file())
+            self.assertIn(f"IFBA-Window${{decoration_scale}}rc", build)
+
+    def test_audited_upstream_theme_components_are_pinned_licensed_and_packaged(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        upstream = (ROOT / "packaging/third-party/WhiteSur-kde/UPSTREAM.md").read_text()
+        self.assertIn("cf4df59ce91004f7ea39358b1b8ff917d5c329f7", upstream)
+        self.assertTrue((ROOT / "packaging/third-party/WhiteSur-kde/LICENSE").is_file())
+        self.assertTrue((ROOT / "packaging/third-party/WhiteSur-kde/AUTHORS").is_file())
+        self.assertIn("qt-style-kvantum=1.1.5-1", build)
+        self.assertIn("qt-style-kvantum-themes=1.1.5-1", build)
+        self.assertIn("/work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark", build)
+        self.assertIn('"/work/packaging/kvantum/$kvantum_theme/$kvantum_theme.svg"', build)
+        self.assertIn('"/work/packaging/kvantum/$kvantum_theme/$kvantum_theme.kvconfig"', build)
+        self.assertIn("IFBA-Glass-Opaque", build)
+        self.assertIn("/etc/skel/.config/Kvantum/kvantum.kvconfig", build)
+        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/Kvantum/kvantum.kvconfig" ]]; then', build)
+        theme = json.loads((ROOT / "packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/metadata.json").read_text())
+        self.assertEqual(theme["KPlugin"]["Id"], "IFBA-WhiteSur-Dark")
+        self.assertEqual(theme["KPlugin"]["License"], "GPL-3.0")
+        self.assertEqual(
+            (ROOT / "packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/colors").read_bytes(),
+            (ROOT / "packaging/color-schemes/IFBA-OS-Dark.colors").read_bytes(),
+        )
+        self.assertFalse(any("wallpaper" in path.name.lower() for path in (ROOT / "packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark").rglob("*")))
+        component_roots = (
+            ROOT / "packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark",
+            ROOT / "packaging/plasma/window-decoration/IFBA-Window",
+            ROOT / "packaging/kvantum",
+        ) + tuple(sorted((ROOT / "packaging/plasma/window-decoration").glob("IFBA-Window_x*")))
+        for component_root in component_roots:
+            for path in component_root.rglob("*"):
+                self.assertNotIn(path.name, {"install.sh", "uninstall.sh"})
+                if path.suffix == ".svg":
+                    ET.parse(path)
+                elif path.suffix == ".svgz":
+                    ET.fromstring(gzip.decompress(path.read_bytes()))
+        self.assertFalse(any(path.suffix == ".sh" for component_root in component_roots for path in component_root.rglob("*")))
 
     def test_calamares_is_configured_for_uefi_manual_partitions_and_safe_user_setup(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()

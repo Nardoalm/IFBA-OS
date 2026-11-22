@@ -51,15 +51,22 @@ class DesignSystemTests(unittest.TestCase):
         assistant_css = (ROOT / "packaging/ifba-ai.css").read_text()
         terminal = (ROOT / "packaging/konsole/IFBA Glass.colorscheme").read_text()
         decoration = ROOT / "packaging/plasma/window-decoration/IFBA-Window"
+        plasma_colors = (ROOT / "packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/colors").read_text()
+        kvantum = (ROOT / "packaging/kvantum/IFBA-Glass/IFBA-Glass.kvconfig").read_text()
+        kvantum_svg = (ROOT / "packaging/kvantum/IFBA-Glass/IFBA-Glass.svg").read_text()
         for color in ("background", "surface", "surface_elevated", "accent", "text_primary", "text_secondary"):
             with self.subTest(token=color):
                 self.assertIn(",".join(str(int(self.colors[color][i:i + 2], 16)) for i in (1, 3, 5)), color_scheme)
                 self.assertIn(self.colors[color], gtk_css)
                 self.assertIn(self.colors[color], assistant_css)
                 self.assertIn(",".join(str(int(self.colors[color][i:i + 2], 16)) for i in (1, 3, 5)), terminal)
-        self.assertIn(self.colors["border"], (decoration / "decoration.svg").read_text())
+                self.assertIn(",".join(str(int(self.colors[color][i:i + 2], 16)) for i in (1, 3, 5)), plasma_colors)
+        self.assertIn(self.colors["border"], gtk_css)
+        self.assertIn(self.colors["border"], assistant_css)
         self.assertIn(self.colors["accent"], (decoration / "maximize.svg").read_text())
         self.assertIn(self.colors["danger"], (decoration / "close.svg").read_text())
+        self.assertIn("highlight.color=" + self.colors["accent"], kvantum)
+        self.assertIn(self.colors["accent"], kvantum_svg)
 
     def test_build_installs_shared_defaults_for_live_and_new_users(self):
         for path in (
@@ -71,6 +78,9 @@ class DesignSystemTests(unittest.TestCase):
         for profile_path in (".config/gtk-3.0/gtk.css", ".config/gtk-4.0/gtk.css", ".config/gtk-3.0/settings.ini", ".config/gtk-4.0/settings.ini"):
             self.assertIn(f'"$home_root/{profile_path}"', self.build)
         self.assertIn("/work/packaging/color-schemes/IFBA-OS-Dark.colors", self.build)
+        self.assertIn("/work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark", self.build)
+        self.assertIn("qt-style-kvantum=1.1.5-1 qt-style-kvantum-themes=1.1.5-1", self.build)
+        self.assertIn('name=IFBA-WhiteSur-Dark', (ROOT / "packaging/plasma/ifba-os/contents/defaults").read_text())
         self.assertIn("/work/packaging/gtk/gtk.css", self.build)
         self.assertIn("/work/packaging/gtk/settings.ini", self.build)
         self.assertIn("/work/packaging/design-system/ifba-welcome.qss", self.build)
@@ -85,6 +95,8 @@ class DesignSystemTests(unittest.TestCase):
 
     def test_existing_live_user_preferences_are_not_replaced(self):
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/kdeglobals" ]]; then', self.build)
+        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmarc" ]]; then', self.build)
+        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/Kvantum/kvantum.kvconfig" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/kscreenlockerrc" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmashellrc" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.desktop" ]]; then', self.build)

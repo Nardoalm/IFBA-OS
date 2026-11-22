@@ -1,0 +1,27 @@
+{
+  "KPackageStructure": "aurorae",
+  "KPlugin": {
+    "Authors": [
+      {
+        "Name": "IFBA OS Community",
+        "Email": ""
+      },
+      {
+        "Name": "Vince Liuice",
+        "Email": "vinceliuice@hotmail.com"
+      }
+    ],
+    "Category": "Plasma 6 Window Decorations",
+    "ServiceTypes": [
+      "aurorae"
+    ],
+    "EnabledByDefault": true,
+    "Name": "IFBA Window Decoration",
+    "Description": "IFBA OS Aurorae decoration adapted from WhiteSur KDE",
+    "Id": "IFBA-Window",
+    "License": "GPL v3",
+    "Version": "1.0",
+    "X-KDE-PluginInfo-blur": false,
+    "X-KPackage-Dependencies": []
+  }
+}

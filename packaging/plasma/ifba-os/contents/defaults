@@ -43,7 +43,7 @@ BorderActivate=9
 BorderActivate=9
 
 [plasmarc][Theme]
-name=breeze-dark
+name=IFBA-WhiteSur-Dark
 
 [plasmashellrc][Shell]
 ShellPackage=org.ifbaos.plasma

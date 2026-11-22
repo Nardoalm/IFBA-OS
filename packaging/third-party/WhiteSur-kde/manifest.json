@@ -1,0 +1,40 @@
+{
+  "repository": "https://github.com/vinceliuice/WhiteSur-kde",
+  "commit": "cf4df59ce91004f7ea39358b1b8ff917d5c329f7",
+  "commit_date": "2026-08-07",
+  "license": "GPL-3.0",
+  "author": "Vince Liuice and contributors",
+  "components": [
+    {
+      "name": "Plasma desktop theme",
+      "path": "packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark",
+      "upstream_path": "plasma/desktoptheme/WhiteSur-dark",
+      "adaptations": ["IFBA metadata and identifier", "IFBA color scheme", "emerald accent substitutions", "upstream wallpaper reference removed"]
+    },
+    {
+      "name": "Aurorae window decoration",
+      "path": "packaging/plasma/window-decoration/IFBA-Window",
+      "upstream_path": "aurorae/main/WhiteSur-dark and aurorae/common/assets-dark",
+      "adaptations": ["IFBA metadata and identifier", "emerald accents", "IFBA titlebar button placement", "upstream scale variants retained"]
+    },
+    {
+      "name": "Kvantum Qt widget themes",
+      "path": "packaging/kvantum/IFBA-Glass",
+      "upstream_path": "Kvantum/WhiteSur/WhiteSurDark.svg and WhiteSurDark.kvconfig",
+      "adaptations": ["IFBA palette", "emerald accents", "IFBA attribution", "translucent configuration"]
+    },
+    {
+      "name": "Kvantum opaque fallback",
+      "path": "packaging/kvantum/IFBA-Glass-Opaque",
+      "upstream_path": "Kvantum/WhiteSur-opaque/WhiteSur-opaqueDark.svg and WhiteSur-opaqueDark.kvconfig",
+      "adaptations": ["IFBA palette", "emerald accents", "IFBA attribution", "opaque configuration"]
+    }
+  ],
+  "ubuntu_packages": {
+    "suite": "resolute",
+    "architecture_support": ["amd64", "arm64"],
+    "qt-style-kvantum": "1.1.5-1",
+    "qt-style-kvantum-themes": "1.1.5-1"
+  },
+  "excluded": ["upstream install scripts", "wallpapers", "icon packs", "fonts", "GTK theme", "SDDM theme", "third-party plasmoids", "global look-and-feel package", "network services"]
+}

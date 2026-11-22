@@ -1,0 +1,25 @@
+{
+  "KPlugin": {
+    "Authors": [
+      {
+        "Name": "IFBA OS Community",
+        "Email": ""
+      },
+      {
+        "Name": "Vince Liuice",
+        "Email": "vinceliuice@hotmail.com"
+      }
+    ],
+    "Category": "Plasma 6.0 theme",
+    "Description": "IFBA OS dark Plasma desktop theme, adapted from WhiteSur KDE",
+    "Description[zh_CN]": "WhiteSur 暗黑苹果主题，由 Vince Liuice (视觉设计师) 设计制作",
+    "EnabledByDefault": true,
+    "Id": "IFBA-WhiteSur-Dark",
+    "License": "GPL-3.0",
+    "Name": "IFBA WhiteSur Dark",
+    "Name[zh_CN]": "WhiteSur 暗黑苹果",
+    "Version": "1.0",
+    "Website": "https://github.com/vinceliuice"
+  },
+  "X-Plasma-API": "5.0"
+}

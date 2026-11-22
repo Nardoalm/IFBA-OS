@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TOKENS = ROOT / "packaging/design-system/tokens.json"
 OUTPUTS = {
     "colors": ROOT / "packaging/color-schemes/IFBA-OS-Dark.colors",
+    "plasma_colors": ROOT / "packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/colors",
     "konsole": ROOT / "packaging/konsole/IFBA Glass.colorscheme",
     "gtk": ROOT / "packaging/gtk/gtk.css",
     "gtk_settings": ROOT / "packaging/gtk/settings.ini",
@@ -198,6 +199,7 @@ DurationSlowMs={motion['duration_slow_ms']}
         konsole_text.append("")
     return {
         OUTPUTS["colors"]: "\n".join(color_text),
+        OUTPUTS["plasma_colors"]: "\n".join(color_text),
         OUTPUTS["konsole"]: "\n".join(konsole_text),
         OUTPUTS["gtk"]: gtk_text,
         OUTPUTS["gtk_settings"]: gtk_settings,

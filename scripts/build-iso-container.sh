@@ -83,6 +83,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   linux-image-generic casper plymouth plymouth-themes systemd-sysv \
   plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou \
   sddm sddm-theme-breeze breeze-gtk-theme breeze-icon-theme breeze-cursor-theme \
+  qt-style-kvantum=1.1.5-1 qt-style-kvantum-themes=1.1.5-1 \
   dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter \
   powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth kscreen fastfetch \
   xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter fonts-noto-core \
@@ -129,6 +130,8 @@ chroot "$ROOTFS" /bin/bash -euxc '
   passwd -d ubuntu
   mkdir -p /etc/sddm.conf.d /usr/share/backgrounds/ifba-os /usr/share/ifba-os/assets/wallpapers \
     /usr/share/ifba-os/assets/icons /usr/share/color-schemes /etc/xdg/autostart \
+    /usr/share/plasma/desktoptheme /usr/share/aurorae/themes /usr/share/Kvantum /etc/xdg/Kvantum \
+    /usr/share/doc/ifba-os/third-party/WhiteSur-kde \
     /usr/share/plasma/look-and-feel /etc/gtk-3.0 /etc/gtk-4.0 \
     /etc/skel/Desktop /etc/skel/.config/autostart /etc/skel/.config/ifba-ai \
     /etc/skel/.local/share/ifba-ai /etc/skel/.cache/ifba-ai \
@@ -323,11 +326,44 @@ Theme=breeze-dark
 [KDE]
 LookAndFeelPackage=org.ifbaos.desktop
 SingleClick=false
+widgetStyle=kvantum
 KDEGLOBALS
 if [[ ! -e "$ROOTFS/home/ubuntu/.config/kdeglobals" ]]; then
   cp "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/home/ubuntu/.config/kdeglobals"
 fi
 install -D -m 0644 "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/etc/xdg/kdeglobals"
+install -D -m 0644 /work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/metadata.json \
+  "$ROOTFS/usr/share/plasma/desktoptheme/IFBA-WhiteSur-Dark/metadata.json"
+cp -R /work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/. \
+  "$ROOTFS/usr/share/plasma/desktoptheme/IFBA-WhiteSur-Dark/"
+install -D -m 0644 /work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/colors \
+  "$ROOTFS/usr/share/plasma/desktoptheme/IFBA-WhiteSur-Dark/colors"
+install -D -m 0644 /work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/plasmarc \
+  "$ROOTFS/etc/skel/.config/plasmarc"
+install -D -m 0644 /work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/plasmarc \
+  "$ROOTFS/etc/xdg/plasmarc"
+if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmarc" ]]; then
+  install -D -m 0644 /work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/plasmarc \
+    "$ROOTFS/home/ubuntu/.config/plasmarc"
+fi
+install -D -m 0644 /work/packaging/kvantum/kvantum.kvconfig \
+  "$ROOTFS/etc/skel/.config/Kvantum/kvantum.kvconfig"
+install -D -m 0644 /work/packaging/kvantum/kvantum.kvconfig \
+  "$ROOTFS/etc/xdg/Kvantum/kvantum.kvconfig"
+if [[ ! -e "$ROOTFS/home/ubuntu/.config/Kvantum/kvantum.kvconfig" ]]; then
+  install -D -m 0644 /work/packaging/kvantum/kvantum.kvconfig \
+    "$ROOTFS/home/ubuntu/.config/Kvantum/kvantum.kvconfig"
+fi
+for kvantum_theme in IFBA-Glass IFBA-Glass-Opaque; do
+  install -D -m 0644 "/work/packaging/kvantum/$kvantum_theme/$kvantum_theme.svg" \
+    "$ROOTFS/usr/share/Kvantum/$kvantum_theme/$kvantum_theme.svg"
+  install -D -m 0644 "/work/packaging/kvantum/$kvantum_theme/$kvantum_theme.kvconfig" \
+    "$ROOTFS/usr/share/Kvantum/$kvantum_theme/$kvantum_theme.kvconfig"
+done
+for upstream_file in LICENSE AUTHORS UPSTREAM.md; do
+  install -D -m 0644 "/work/packaging/third-party/WhiteSur-kde/$upstream_file" \
+    "$ROOTFS/usr/share/doc/ifba-os/third-party/WhiteSur-kde/$upstream_file"
+done
 install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/etc/xdg/plasmashellrc"
 install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/etc/skel/.config/plasmashellrc"
 if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmashellrc" ]]; then
@@ -348,9 +384,25 @@ for qml_file in IfbaAnimatedButton.qml IfbaAnimatedToolButton.qml; do
 done
 python3 /work/tools/package_plasma_lockscreen.py "$ROOTFS" \
   /work/packaging/plasma/ifbaos-shell/contents/lockscreen
-for decoration_file in metadata.desktop IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do
-  install -D -m 0644 "/work/packaging/plasma/window-decoration/IFBA-Window/$decoration_file" \
-    "$ROOTFS/usr/share/aurorae/themes/IFBA-Window/$decoration_file"
+cp -R /work/packaging/plasma/window-decoration/IFBA-Window \
+  "$ROOTFS/usr/share/aurorae/themes/"
+for decoration_scale in _x1.25 _x1.5 _x1.75 _x2.0; do
+  scaled_theme="IFBA-Window$decoration_scale"
+  scaled_theme_dir="$ROOTFS/usr/share/aurorae/themes/$scaled_theme"
+  source_theme_dir="/work/packaging/plasma/window-decoration/$scaled_theme"
+  install -D -m 0644 "$source_theme_dir/decoration.svg" "$scaled_theme_dir/decoration.svg"
+  for decoration_asset in minimize.svg maximize.svg restore.svg close.svg keepabove.svg keepbelow.svg alldesktops.svg; do
+    install -D -m 0644 "/work/packaging/plasma/window-decoration/IFBA-Window/$decoration_asset" \
+      "$scaled_theme_dir/$decoration_asset"
+  done
+  sed "s/IFBA-Window/$scaled_theme/g" \
+    /work/packaging/plasma/window-decoration/IFBA-Window/metadata.desktop \
+    > "$scaled_theme_dir/metadata.desktop"
+  sed "s/IFBA-Window/$scaled_theme/g" \
+    /work/packaging/plasma/window-decoration/IFBA-Window/metadata.json \
+    > "$scaled_theme_dir/metadata.json"
+  install -D -m 0644 /work/packaging/plasma/window-decoration/IFBA-Window/IFBA-Windowrc \
+    "$scaled_theme_dir/${scaled_theme}rc"
 done
 install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup "$ROOTFS/usr/local/bin/ifba-os-plasma-session-setup"
 chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-plasma-session-setup"
@@ -409,9 +461,21 @@ grep -q '^match-device=type:ethernet$' "$ROOTFS/etc/NetworkManager/conf.d/20-ifb
 grep -q '^managed=1$' "$ROOTFS/etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf"
 test -L "$ROOTFS/etc/systemd/system/systemd-networkd.service"
 test "$(readlink "$ROOTFS/etc/systemd/system/systemd-networkd.service")" = /dev/null
-for file in metadata.desktop IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do
-  cmp -s "/work/packaging/plasma/window-decoration/IFBA-Window/$file" \
-    "$ROOTFS/usr/share/aurorae/themes/IFBA-Window/$file"
+for decoration_file in metadata.desktop metadata.json IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do
+  cmp -s "/work/packaging/plasma/window-decoration/IFBA-Window/$decoration_file" \
+    "$ROOTFS/usr/share/aurorae/themes/IFBA-Window/$decoration_file"
+done
+test -s "$ROOTFS/usr/share/plasma/desktoptheme/IFBA-WhiteSur-Dark/metadata.json"
+test -s "$ROOTFS/usr/share/plasma/desktoptheme/IFBA-WhiteSur-Dark/widgets/panel-background.svgz"
+test -s "$ROOTFS/usr/share/plasma/desktoptheme/IFBA-WhiteSur-Dark/colors"
+test -s "$ROOTFS/usr/share/Kvantum/IFBA-Glass/IFBA-Glass.svg"
+test -s "$ROOTFS/usr/share/Kvantum/IFBA-Glass-Opaque/IFBA-Glass-Opaque.svg"
+test -s "$ROOTFS/usr/share/doc/ifba-os/third-party/WhiteSur-kde/LICENSE"
+grep -q '^name=IFBA-WhiteSur-Dark$' "$ROOTFS/etc/skel/.config/plasmarc"
+grep -q '^theme=IFBA-Glass$' "$ROOTFS/etc/skel/.config/Kvantum/kvantum.kvconfig"
+for decoration_scale in _x1.25 _x1.5 _x1.75 _x2.0; do
+  test -s "$ROOTFS/usr/share/aurorae/themes/IFBA-Window$decoration_scale/decoration.svg"
+  test -s "$ROOTFS/usr/share/aurorae/themes/IFBA-Window$decoration_scale/IFBA-Window${decoration_scale}rc"
 done
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/org.kde.kdecoration3/org.kde.kwin.aurorae.so' -print -quit | grep -q .
 for applet in org.kde.milou org.kde.plasma.kickoff org.kde.plasma.kicker \
@@ -442,7 +506,7 @@ cmp -s /work/packaging/plasma/ifbaos-shell/contents/lockscreen/LockScreenUi.qml 
   "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma/contents/lockscreen/LockScreenUi.qml"
 test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
-for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth kscreen calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
+for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
 for package in "${INSTALLER_BOOT_PACKAGES[@]}"; do
