@@ -499,7 +499,7 @@ test -s "$ROOTFS/usr/share/Kvantum/IFBA-Glass-Opaque/IFBA-Glass-Opaque.svg"
 test -s "$ROOTFS/usr/share/doc/ifba-os/third-party/WhiteSur-kde/LICENSE"
 grep -q '^\[plasmarc\]\[Theme\]$' "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
 grep -q '^name=IFBA-WhiteSur-Dark$' "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
-grep -q '^theme=IFBA-Glass$' "$ROOTFS/etc/skel/.config/Kvantum/kvantum.kvconfig"
+grep -qx 'theme=IFBA-Glass-Opaque' "$ROOTFS/etc/skel/.config/Kvantum/kvantum.kvconfig"
 for decoration_scale in _x1.25 _x1.5 _x1.75 _x2.0; do
   test -s "$ROOTFS/usr/share/aurorae/themes/IFBA-Window$decoration_scale/decoration.svg"
   test -s "$ROOTFS/usr/share/aurorae/themes/IFBA-Window$decoration_scale/IFBA-Window${decoration_scale}rc"
