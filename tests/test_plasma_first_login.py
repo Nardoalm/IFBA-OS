@@ -55,7 +55,11 @@ class PlasmaFirstLoginTests(unittest.TestCase):
         stop_file.unlink(missing_ok=True)
         query = """
             print(JSON.stringify({
-                panels: panels().map(panel => panel.id),
+                panels: panels().map(panel => ({
+                    id: panel.id,
+                    location: panel.location,
+                    widgets: panel.widgets().map(widget => widget.type)
+                })),
                 desktops: desktops().map(desktop => {
                     desktop.currentConfigGroup = ["Wallpaper", "org.kde.image", "General"];
                     return desktop.readConfig("Image", "");
@@ -110,16 +114,21 @@ class PlasmaFirstLoginTests(unittest.TestCase):
         wallpaper = "file:///usr/share/backgrounds/ifba-os/wallpaper.png"
         return (
             len(live_state["panels"]) == 2
+            and {panel["location"] for panel in live_state["panels"]} == {"top", "bottom"}
+            and sum(panel["widgets"].count("org.kde.plasma.kickoff") for panel in live_state["panels"]) == 1
+            and any(panel["location"] == "bottom" and panel["widgets"] == ["org.kde.plasma.icontasks"]
+                    for panel in live_state["panels"])
             and all(image == wallpaper for image in live_state["desktops"])
             and content.count("plugin=org.kde.panel\n") == 2
-            and "plugin=com.github.mattanis.macosdock\n" in content
+            and "plugin=org.kde.plasma.icontasks\n" in content
             and f"Image={wallpaper}\n" in content
         )
 
     def test_first_login_and_second_login_reuse_the_same_containments(self):
         _, first = self.start_plasma(self.has_ifba_layout)
         _, second = self.start_plasma(self.has_ifba_layout)
-        self.assertEqual(sorted(first["panels"]), sorted(second["panels"]))
+        self.assertEqual(sorted(first["panels"], key=lambda panel: panel["id"]),
+                         sorted(second["panels"], key=lambda panel: panel["id"]))
 
     def test_screen_mapping_without_saved_containments_can_initialize(self):
         self.applets.write_text("[ScreenMapping]\nitemsOnDisabledScreens=\n")

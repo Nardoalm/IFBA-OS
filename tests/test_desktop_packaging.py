@@ -212,7 +212,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('cp -R /work/assets/icons/. "$ROOTFS/usr/share/ifba-os/assets/icons/"', build)
         self.assertNotIn("ifba-mark-placeholder.png", layout)
         self.assertIn("ifba-institutional-symbol.png", layout)
-        self.assertNotIn('writeConfig("menuLabel", "IFBA OS")', layout)
+        self.assertIn('topLauncher.writeConfig("menuLabel", "IFBA OS")', layout)
 
     def test_assistant_relaunch_activates_the_existing_window(self):
         ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
@@ -275,15 +275,15 @@ class DesktopPackagingTests(unittest.TestCase):
             "org.kde.plasma.digitalclock",
         ])
         self.assertIn('topPanel.location = "top"', top_layout)
-        self.assertIn("topPanel.height = 36", top_layout)
-        self.assertIn("topPanel.floating = true", top_layout)
-        self.assertNotIn('systemMenu.writeConfig("menuLabel", "IFBA OS")', top_layout)
-        self.assertIn('appLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")', layout)
-        self.assertIn('appLauncher.writeConfig("systemFavorites", "suspend,logout,reboot,shutdown")', layout)
-        self.assertIn('appLauncher.writeConfig("favoritesDisplay", 0)', layout)
-        self.assertIn('appLauncher.writeConfig("applicationsDisplay", 0)', layout)
-        self.assertIn('appLauncher.writeConfig("alphaSort", true)', layout)
-        self.assertIn('globalMenu.writeConfig("compactView", "true")', top_layout)
+        self.assertIn("topPanel.height = 32", top_layout)
+        self.assertIn("topPanel.floating = false", top_layout)
+        self.assertIn('topPanel.opacity = "translucent"', top_layout)
+        self.assertIn('topLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")', layout)
+        self.assertIn('topLauncher.writeConfig("systemFavorites", "suspend,logout,reboot,shutdown")', layout)
+        self.assertIn('topLauncher.writeConfig("favoritesDisplay", 0)', layout)
+        self.assertIn('topLauncher.writeConfig("applicationsDisplay", 0)', layout)
+        self.assertIn('topLauncher.writeConfig("alphaSort", true)', layout)
+        self.assertIn('globalMenu.writeConfig("compactView", false)', top_layout)
         self.assertNotIn("org.kde.plasma.kicker", top_layout)
         self.assertNotIn("org.kde.milou", top_layout)
         for tray_item in (
@@ -298,23 +298,23 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("ddd d 'de' MMM yyyy", top_layout)
         self.assertIn('clock.writeConfig("use24hFormat", "2")', top_layout)
         self.assertIn('dock.location = "bottom"', layout)
-        self.assertIn('dock.height = 72', layout)
+        self.assertIn('dock.height = 56', layout)
+        self.assertIn('dock.opacity = "translucent"', layout)
         self.assertIn('dock.lengthMode = "fit"', layout)
         self.assertIn('dock.alignment = "center"', layout)
         self.assertIn('dock.floating = true', layout)
         self.assertIn('dock.hiding = "dodgewindows"', layout)
-        self.assertIn('com.github.mattanis.macosdock', layout)
+        self.assertNotIn('com.github.mattanis.macosdock', layout)
         for favorite in ("firefox.desktop", "org.kde.dolphin.desktop", "org.kde.konsole.desktop",
                          "ifba-ai.desktop", "systemsettings.desktop"):
             self.assertIn(favorite, layout)
-        for widget in ("org.kde.plasma.kickoff", "com.github.mattanis.macosdock",
+        for widget in ("org.kde.plasma.kickoff", "org.kde.plasma.icontasks",
                        "org.kde.plasma.systemtray", "org.kde.plasma.digitalclock",
                        "org.kde.plasma.panelspacer"):
             self.assertIn(widget, layout)
         dock = layout.split("var dock = new Panel", 1)[1]
-        kickoff_index = dock.index('dock.addWidget("org.kde.plasma.kickoff")')
-        tasks_index = dock.index('dock.addWidget("com.github.mattanis.macosdock")')
-        self.assertLess(kickoff_index, tasks_index)
+        self.assertEqual(re.findall(r'dock\.addWidget\("([^"]+)"\)', dock), ["org.kde.plasma.icontasks"])
+        self.assertEqual(layout.count('.addWidget("org.kde.plasma.kickoff")'), 1)
         launcher_line = re.search(r'tasks\.writeConfig\("launchers", "([^"]+)"\)', dock)
         self.assertIsNotNone(launcher_line)
         self.assertEqual(
@@ -328,13 +328,8 @@ class DesktopPackagingTests(unittest.TestCase):
             ],
         )
         self.assertIn('tasks.writeConfig("showToolTips", true)', dock)
-        self.assertIn('tasks.writeConfig("zoomAnimationType", 1)', dock)
-        self.assertIn('tasks.writeConfig("containerBackgroundType", 3)', dock)
-        self.assertIn('tasks.writeConfig("blurOpacity", 0.72)', dock)
-        self.assertIn('tasks.writeConfig("taskHoverEffect", true)', dock)
         self.assertIn('tasks.writeConfig("groupingStrategy", 1)', dock)
         self.assertIn('tasks.writeConfig("sortingStrategy", 1)', dock)
-        self.assertIn('tasks.writeConfig("iconSpacing", 1)', dock)
         for required_file in (
             "/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json",
             "org.kde.plasma.taskmanager.so",
@@ -385,8 +380,8 @@ class DesktopPackagingTests(unittest.TestCase):
     def test_kickoff_launcher_uses_native_catalog_grid_and_real_session_actions(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
         layout = (ROOT / "packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js").read_text()
-        kickoff = layout.split('var appLauncher = dock.addWidget("org.kde.plasma.kickoff")', 1)[1]
-        favorites = re.search(r'appLauncher\.writeConfig\("favorites", "([^"]+)"\)', kickoff)
+        kickoff = layout.split('var topLauncher = topPanel.addWidget("org.kde.plasma.kickoff")', 1)[1].split("var globalMenu", 1)[0]
+        favorites = re.search(r'topLauncher\.writeConfig\("favorites", "([^"]+)"\)', kickoff)
         self.assertIsNotNone(favorites)
         self.assertEqual(favorites.group(1).split(","), [
             "applications:ifba-ai.desktop",
@@ -397,8 +392,8 @@ class DesktopPackagingTests(unittest.TestCase):
             "applications:suap-ifba.desktop",
             "applications:ava-ifba.desktop",
         ])
-        self.assertIn('appLauncher.writeConfig("primaryActions", "3")', kickoff)
-        self.assertIn('appLauncher.writeConfig("systemFavorites", "suspend,logout,reboot,shutdown")', kickoff)
+        self.assertIn('topLauncher.writeConfig("primaryActions", "3")', kickoff)
+        self.assertIn('topLauncher.writeConfig("systemFavorites", "suspend,logout,reboot,shutdown")', kickoff)
         self.assertIn('find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so"', build)
         self.assertIn("org.kde.plasma.kickoff", build)
         self.assertIn('cp /work/packaging/firefox.desktop /work/packaging/suap-ifba.desktop /work/packaging/ava-ifba.desktop', build)

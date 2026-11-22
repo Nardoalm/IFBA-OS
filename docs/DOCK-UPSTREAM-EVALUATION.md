@@ -34,3 +34,18 @@ O QML da alternativa Matt-Anis foi incorporado em `packaging/plasma/ifba-dock`, 
 O painel inferior mantém Kickoff com símbolo IF e favoritos educacionais; o widget de tarefas passa a `com.github.mattanis.macosdock`, usando modelo KDE, ações/contextos upstream, ampliação moderada 1.25, animação suave e salto. O painel flutuante tem 72 px de espessura e conserva auto-ocultação nativa e filtragem por tela. O fundo `SystemBlur` usa a área de blur opcional do upstream quando disponível; sem ela, o mesmo componente cai para uma superfície IFBA translúcida esmeralda escura, sem carregar módulo nativo. Ampliação/salto respeitam movimento reduzido. O Icons Only Tasks do KDE continua instalado como alternativa selecionável pelo usuário.
 
 O pipeline copia a fonte local, verifica sintaxe QML e preserva licenças. O layout só é aplicado a perfis novos; usuários existentes não são migrados automaticamente. ARM64/AMD64 compartilham QML, mas a resolução das APIs privadas, duas telas, ações de janela e renderização em X11/Wayland ainda exigem testes reais na mídia nova. Não há evidência de runtime desta integração.
+
+## Etapa 04 — Gerenciador de tarefas nativo no layout inicial
+
+| Recurso | Matt-Anis integrado | Icons-only Task Manager do Plasma 6.6 |
+| --- | --- | --- |
+| Fixação, tarefas em execução, alternância e menus | Modelo de tarefas do KDE com representação QML própria | Modelo, indicadores, ações e representação do KDE |
+| Agrupamento, reordenação e teclado | Tarefas e grupos baseados no KDE | Agrupamento por aplicação, ordenação manual, arraste e navegação por teclado |
+| Ocultação e telas | Painel flutuante do Plasma, com filtro de tarefas por tela | Mesma política de painel e filtro de tarefas por tela |
+| Acabamento | Ampliação e salto próprios. O blur opcional exigiria o módulo nativo ausente do pacote | Fundo, máscara, sombra e blur do painel Plasma. Ícones estáveis e indicador discreto |
+
+O layout para perfis novos usa o widget nativo. O pacote Matt-Anis permanece disponível para layouts salvos. A barra superior concentra o Kickoff com a logo oficial e o nome do sistema, os menus realmente exportados, a bandeja e o relógio. O applet de menu global não fornece um rótulo genérico com o nome da janela ativa. [Gerenciador de tarefas Plasma 6.6](https://github.com/KDE/plasma-desktop/tree/Plasma/6.6/applets/taskmanager) · [Menu global](https://github.com/KDE/plasma-workspace/blob/Plasma/6.6/applets/appmenu/qml/main.qml) · [API do painel](https://github.com/KDE/plasma-workspace/blob/Plasma/6.6/shell/scripting/panel.cpp)
+
+Em perfis descartáveis no Plasma 6.6.7 ARM64 via X11, foram conferidos 100% e 150% com llvmpipe e 150% com composição desativada. O teste de reinício preservou os painéis e os perfis existentes. No Dock, Dolphin e Konsole abriram sem duplicação, alternaram o foco e o Konsole pôde ser desafixado, fixado e fechado. A imagem `docs/design/reference-desktop.png` está ausente. Várias saídas de vídeo e execução na mídia do IFBA OS via UTM seguem pendentes.
+
+Para reverter o layout inicial, reverta o commit desta etapa. Em um perfil já salvo, adicione o applet desejado pelo modo de edição do próprio Plasma e substitua o applet no painel inferior.
