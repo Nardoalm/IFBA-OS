@@ -161,7 +161,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
     /etc/skel/.local/share/ifba-ai /etc/skel/.cache/ifba-ai \
     /home/ubuntu/Desktop /home/ubuntu/.config/autostart /home/ubuntu/.config/ifba-ai \
     /home/ubuntu/.local/share/ifba-ai /home/ubuntu/.cache/ifba-ai
-  printf "[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=breeze\n\n[Autologin]\nUser=ubuntu\nSession=plasma.desktop\nRelogin=false\n" > /etc/sddm.conf.d/10-ifba-os.conf
+  printf "[General]\nDisplayServer=x11\n\n[Autologin]\nUser=ubuntu\nSession=plasma.desktop\nRelogin=false\n" > /etc/sddm.conf.d/10-ifba-os.conf
   # The greeter may stay on X11 independently of the user's session.
   # Casper selects plasma.desktop in the Live overlay. Calamares unpacks
   # the SquashFS, so the installed greeter starts with this X11 selection.
@@ -266,6 +266,8 @@ cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/backgrounds/if
 cp /work/assets/wallpapers/ifba-os-desktop.png "$ROOTFS/usr/share/ifba-os/assets/wallpapers/"
 install -D -m 0644 /work/assets/wallpapers/ifba-os-lockscreen.png \
   "$ROOTFS/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png"
+install -D -m 0644 /work/assets/wallpapers/ifba-os-campus-jacobina.jpg \
+  "$ROOTFS/usr/share/backgrounds/ifba-os/campus-jacobina.jpg"
 install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
   "$ROOTFS/etc/skel/.config/kscreenlockerrc"
 if [[ ! -e "$ROOTFS/home/ubuntu/.config/kscreenlockerrc" ]]; then
@@ -276,6 +278,13 @@ install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
   "$ROOTFS/etc/xdg/kscreenlockerrc"
 install -D -m 0644 /work/packaging/sddm/ifba-theme.conf.user \
   "$ROOTFS/usr/share/sddm/themes/breeze/theme.conf.user"
+install -D -m 0644 /work/packaging/sddm/20-ifba-appearance.conf \
+  "$ROOTFS/etc/sddm.conf.d/20-ifba-appearance.conf"
+if [[ ! -e "$ROOTFS/var/lib/sddm/.config/kdeglobals" ]]; then
+  install -D -m 0644 /work/packaging/color-schemes/IFBA-OS-Dark.colors \
+    "$ROOTFS/var/lib/sddm/.config/kdeglobals"
+  chroot "$ROOTFS" chown sddm:sddm /var/lib/sddm/.config /var/lib/sddm/.config/kdeglobals
+fi
 cp -R /work/assets/icons/. "$ROOTFS/usr/share/ifba-os/assets/icons/"
 cp -R /work/ai/ifba_ai "$ROOTFS/usr/lib/python3/dist-packages/"
 cp /work/packaging/ifba-ai-ui "$ROOTFS/usr/bin/ifba-ai-ui"
@@ -485,6 +494,10 @@ test -x "$ROOTFS/usr/bin/ifba-visual-profile-dialog"
 test -s "$ROOTFS/usr/share/applications/ifba-visual-profile.desktop"
 test -s "$ROOTFS/usr/share/ifba-os/design-system/visual-motionrc"
 test -s "$ROOTFS/usr/share/sddm/themes/breeze/theme.conf.user"
+test -s "$ROOTFS/usr/share/backgrounds/ifba-os/campus-jacobina.jpg"
+cmp -s /work/packaging/sddm/20-ifba-appearance.conf \
+  "$ROOTFS/etc/sddm.conf.d/20-ifba-appearance.conf"
+find "$ROOTFS/usr/lib" -path '*/qt6/plugins/platformthemes/KDEPlasmaPlatformTheme6.so' -print -quit | grep -q .
 for file in /etc/NetworkManager/conf.d/10-globally-managed-devices.conf \
   /etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf \
   /usr/bin/ifba-visual-profile /usr/bin/ifba-visual-profile-dialog \

@@ -146,8 +146,21 @@ esac
         theme = (ROOT / "packaging/sddm/ifba-theme.conf.user").read_text()
         self.assertIn("/usr/share/sddm/themes/breeze/theme.conf.user", build)
         self.assertIn("logo=/usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png", theme)
-        self.assertIn("color=#22C55E", theme)
-        self.assertIn("background=/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png", theme)
+        self.assertIn("iconTheme=breeze-dark", theme)
+        self.assertIn("type=image", theme)
+        self.assertIn("color=#222A34", theme)
+        self.assertIn("background=/usr/share/backgrounds/ifba-os/campus-jacobina.jpg", theme)
+        self.assertIn("/work/assets/wallpapers/ifba-os-campus-jacobina.jpg", build)
+        appearance = (ROOT / "packaging/sddm/20-ifba-appearance.conf").read_text()
+        self.assertEqual(appearance.splitlines(), [
+            "[General]", "GreeterEnvironment=QT_QPA_PLATFORMTHEME=kde", "",
+            "[Theme]", "Current=breeze", "CursorTheme=breeze_cursors",
+        ])
+        self.assertIn('/etc/sddm.conf.d/20-ifba-appearance.conf', build)
+        self.assertIn('if [[ ! -e "$ROOTFS/var/lib/sddm/.config/kdeglobals" ]]; then', build)
+        cleanup = (ROOT / "packaging/calamares/shellprocess.conf").read_text()
+        self.assertIn("rm -f /etc/sddm.conf.d/10-ifba-os.conf", cleanup)
+        self.assertNotIn("20-ifba-appearance.conf", cleanup)
 
 
 if __name__ == "__main__":
