@@ -338,7 +338,7 @@ class DesktopPackagingTests(unittest.TestCase):
         for required_file in (
             "/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json",
             "org.kde.plasma.taskmanager.so",
-            "codium.desktop",
+            "com.visualstudio.CodeOSS.desktop",
             "org.kde.gcompris.desktop",
             "libreoffice-writer.desktop",
             "suap-ifba.desktop",

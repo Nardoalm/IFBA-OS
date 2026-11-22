@@ -507,7 +507,7 @@ test ! -e "$ROOTFS/usr/share/plasma/shells/org.ifbaos.plasma"
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskmanager.so' -print -quit | grep -q .
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.trash.so' -print -quit | grep -q .
 for launcher in firefox.desktop org.kde.dolphin.desktop org.kde.konsole.desktop ifba-ai.desktop \
-  codium.desktop org.kde.gcompris.desktop libreoffice-writer.desktop systemsettings.desktop \
+  com.visualstudio.CodeOSS.desktop org.kde.gcompris.desktop libreoffice-writer.desktop systemsettings.desktop \
   suap-ifba.desktop ava-ifba.desktop; do
   test -s "$ROOTFS/usr/share/applications/$launcher"
 done
