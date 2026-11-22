@@ -73,6 +73,45 @@ def make_artifact(root, arch, version, commit="abc123", series="26.04"):
 
 
 class ReleaseArtifactsTests(unittest.TestCase):
+    def test_publish_pair_places_both_directly_in_latest(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "output"
+            source = Path(td) / "incoming"
+            source.mkdir()
+            arm_iso, arm_manifest = make_artifact(source, "arm64", "0.3.4", "release-commit")
+            amd_iso, amd_manifest = make_artifact(source, "amd64", "0.3.4", "release-commit")
+
+            release.publish_pair(arm_iso, arm_manifest, amd_iso, amd_manifest, root)
+
+            for arch in ("arm64", "amd64"):
+                latest_arch = root / "latest" / arch
+                iso = latest_arch / f"ifba-os-ubuntu-26.04-{arch}-v0.3.4.iso"
+                manifest = latest_arch / "manifest.json"
+                self.assertTrue(iso.is_file())
+                self.assertFalse(iso.is_symlink())
+                self.assertTrue(manifest.is_file())
+                self.assertFalse(manifest.is_symlink())
+                self.assertEqual(release.inspect(iso, manifest)["source_commit"], "release-commit")
+            status = json.loads((root / "latest/release-status.json").read_text())
+            self.assertEqual(status, {
+                "complete_pair": True,
+                "version": "0.3.4",
+                "source_commit": "release-commit",
+            })
+            self.assertFalse((root / "versions/v0.3.4").exists())
+
+    def test_publish_pair_rejects_mixed_architecture_provenance(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "output"
+            source = Path(td) / "incoming"
+            source.mkdir()
+            arm_iso, arm_manifest = make_artifact(source, "arm64", "0.3.4", "commit-a")
+            amd_iso, amd_manifest = make_artifact(source, "amd64", "0.3.4", "commit-b")
+
+            with self.assertRaisesRegex(ValueError, "share product version and source commit"):
+                release.publish_pair(arm_iso, arm_manifest, amd_iso, amd_manifest, root)
+            self.assertFalse((root / "latest").exists())
+
     def test_publish_refuses_artifacts_built_from_dirty_source(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

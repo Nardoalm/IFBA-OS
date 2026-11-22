@@ -46,7 +46,23 @@ for ARCH in "${ARCHES[@]}"; do
   assert_source_unchanged
   python3 "$ROOT/tools/build_metadata.py" iso-manifest --build-info "$BUILD_INFO" --iso "$OUT" --output "$OUT.manifest.json"
   rm "$BUILD_INFO"
-  python3 "$ROOT/tools/release_artifacts.py" publish "$OUT" "$OUT.manifest.json" --output "$ROOT/output"
-  rm -f "$OUT" "$OUT.manifest.json"
-  printf 'Published v%s %s\n' "$SYSTEM_VERSION" "$ARCH"
 done
+
+if [[ "${1:-}" == "--both" ]]; then
+  assert_source_unchanged
+  python3 "$ROOT/tools/release_artifacts.py" publish-pair \
+    "$STAGING/ifba-os-ubuntu-26.04-arm64-v${SYSTEM_VERSION}.iso" \
+    "$STAGING/ifba-os-ubuntu-26.04-arm64-v${SYSTEM_VERSION}.iso.manifest.json" \
+    "$STAGING/ifba-os-ubuntu-26.04-amd64-v${SYSTEM_VERSION}.iso" \
+    "$STAGING/ifba-os-ubuntu-26.04-amd64-v${SYSTEM_VERSION}.iso.manifest.json" \
+    --output "$ROOT/output"
+  rm -f \
+    "$STAGING/ifba-os-ubuntu-26.04-arm64-v${SYSTEM_VERSION}.iso" \
+    "$STAGING/ifba-os-ubuntu-26.04-arm64-v${SYSTEM_VERSION}.iso.manifest.json" \
+    "$STAGING/ifba-os-ubuntu-26.04-amd64-v${SYSTEM_VERSION}.iso" \
+    "$STAGING/ifba-os-ubuntu-26.04-amd64-v${SYSTEM_VERSION}.iso.manifest.json"
+  printf 'Published verified v%s ARM64/AMD64 pair to output/latest\n' "$SYSTEM_VERSION"
+else
+  printf 'Staged v%s %s; latest remains unchanged until both architectures are built.\n' \
+    "$SYSTEM_VERSION" "${ARCHES[0]}"
+fi

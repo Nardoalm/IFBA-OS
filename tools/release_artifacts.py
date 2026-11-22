@@ -267,6 +267,65 @@ def publish(iso, manifest, root):
     refresh_latest(root)
 
 
+def publish_pair(arm64_iso, arm64_manifest, amd64_iso, amd64_manifest, root):
+    """Atomically replace latest with one complete, verified architecture pair."""
+    root = Path(root).resolve()
+    artifacts = {
+        "arm64": (Path(arm64_iso), Path(arm64_manifest)),
+        "amd64": (Path(amd64_iso), Path(amd64_manifest)),
+    }
+    data_by_arch = {}
+    for arch, (iso, manifest) in artifacts.items():
+        data = inspect(iso, manifest)
+        if data.get("source_dirty") is not False:
+            raise ValueError("refusing to publish an artifact without a clean source tree")
+        if data.get("architecture") != arch:
+            raise ValueError(f"expected {arch} artifact, got {data.get('architecture')}")
+        data_by_arch[arch] = data
+    arm64 = data_by_arch["arm64"]
+    amd64 = data_by_arch["amd64"]
+    if (arm64.get("system_version") != amd64.get("system_version")
+            or arm64.get("source_commit") != amd64.get("source_commit")):
+        raise ValueError("architecture pair must share product version and source commit")
+
+    candidate = root / f".latest-candidate-{uuid.uuid4().hex}"
+    candidate.mkdir(parents=True)
+    try:
+        for arch, (src_iso, src_manifest) in artifacts.items():
+            arch_dir = candidate / arch
+            arch_dir.mkdir()
+            shutil.copyfile(src_iso, arch_dir / src_iso.name)
+            shutil.copyfile(src_manifest, arch_dir / "manifest.json")
+            inspect(arch_dir / src_iso.name, arch_dir / "manifest.json")
+        atomic_json(candidate / "release-status.json", {
+            "complete_pair": True,
+            "version": arm64["system_version"],
+            "source_commit": arm64["source_commit"],
+        })
+
+        latest = root / "latest"
+        backup = root / f".latest-previous-{uuid.uuid4().hex}"
+        had_latest = latest.exists() or latest.is_symlink()
+        if had_latest:
+            os.replace(latest, backup)
+        try:
+            os.replace(candidate, latest)
+        except Exception:
+            if had_latest:
+                os.replace(backup, latest)
+            raise
+        if had_latest:
+            if backup.is_symlink() or backup.is_file():
+                backup.unlink()
+            else:
+                shutil.rmtree(backup)
+    except Exception:
+        if candidate.exists():
+            shutil.rmtree(candidate, ignore_errors=True)
+        raise
+    print(f"latest -> v{arm64['system_version']} (verified ARM64/AMD64 source pair)")
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -276,6 +335,10 @@ def main():
     p.add_argument("--output", default="output")
     p = sub.add_parser("publish")
     p.add_argument("iso"); p.add_argument("manifest"); p.add_argument("--output", default="output")
+    p = sub.add_parser("publish-pair")
+    p.add_argument("arm64_iso"); p.add_argument("arm64_manifest")
+    p.add_argument("amd64_iso"); p.add_argument("amd64_manifest")
+    p.add_argument("--output", default="output")
     p = sub.add_parser("list")
     p.add_argument("--output", default="output")
     args = parser.parse_args()
@@ -284,9 +347,13 @@ def main():
             d = inspect(args.iso, args.manifest); print(json.dumps(d, indent=2))
         elif args.cmd == "migrate": migrate(args.output)
         elif args.cmd == "publish": publish(args.iso, args.manifest, args.output)
+        elif args.cmd == "publish-pair":
+            publish_pair(args.arm64_iso, args.arm64_manifest, args.amd64_iso, args.amd64_manifest, args.output)
         else:
             root = Path(args.output)
-            for m in sorted((root / "versions").glob("v*/*/manifest.json")):
+            manifests = list((root / "versions").glob("v*/*/manifest.json"))
+            manifests.extend((root / "latest").glob("*/manifest.json"))
+            for m in sorted(set(manifests)):
                 d = json.loads(m.read_text())
                 iso = m.parent / d.get("artifact", {}).get("file", "")
                 try:
