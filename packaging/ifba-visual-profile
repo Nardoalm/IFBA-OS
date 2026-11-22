@@ -12,12 +12,33 @@ if [ "$#" -ne 1 ]; then
 fi
 
 profile=$1
+
+read_motion_duration() {
+  key=$1
+  fallback=$2
+  value=$fallback
+  if command -v kreadconfig6 >/dev/null 2>&1; then
+    value=$(kreadconfig6 --file /usr/share/ifba-os/design-system/visual-motionrc \
+      --group Motion --key "$key" --default "$fallback" 2>/dev/null) || value=$fallback
+  fi
+  case "$value" in
+    ''|*[!0-9]*) value=$fallback ;;
+  esac
+  printf '%s\n' "$value"
+}
+
+standard_duration=$(read_motion_duration DurationStandardMs 180)
+slow_duration=$(read_motion_duration DurationSlowMs 240)
+
 case "$profile" in
   status)
     if command -v kreadconfig6 >/dev/null 2>&1; then
       enabled=$(kreadconfig6 --file kwinrc --group Plugins --key blurEnabled --default false)
       strength=$(kreadconfig6 --file kwinrc --group Effect-Blur --key BlurStrength --default 0)
-      printf 'blur=%s\nblur_strength=%s\n' "$enabled" "$strength"
+      magiclamp=$(kreadconfig6 --file kwinrc --group Plugins --key magiclampEnabled --default false)
+      duration=$(kreadconfig6 --file kwinrc --group Effect-magiclamp --key AnimationDuration --default 0)
+      printf 'blur=%s\nblur_strength=%s\nmagiclamp=%s\nmagiclamp_duration_ms=%s\n' \
+        "$enabled" "$strength" "$magiclamp" "$duration"
       exit 0
     fi
     printf 'kreadconfig6 não está disponível nesta sessão.\n' >&2
@@ -26,14 +47,20 @@ case "$profile" in
   leve)
     blur=false
     strength=0
+    magiclamp=false
+    duration=$standard_duration
     ;;
   equilibrado)
     blur=true
     strength=2
+    magiclamp=true
+    duration=$standard_duration
     ;;
   avancado)
     blur=true
     strength=4
+    magiclamp=true
+    duration=$slow_duration
     ;;
   *)
     usage
@@ -46,10 +73,24 @@ if ! command -v kwriteconfig6 >/dev/null 2>&1; then
   exit 1
 fi
 
+# Respect the KDE reduced-motion preference. A zero factor means the user has
+# disabled animation; never change that preference or enable Magic Lamp then.
+motion_factor=1
+if command -v kreadconfig6 >/dev/null 2>&1; then
+  motion_factor=$(kreadconfig6 --file kdeglobals --group KDE \
+    --key AnimationDurationFactor --default 1 2>/dev/null || printf '1')
+fi
+if awk -v factor="$motion_factor" \
+  'BEGIN { exit (factor ~ /^[0-9]+([.][0-9]*)?$/ && factor + 0 == 0) ? 0 : 1 }'; then
+  magiclamp=false
+fi
+
 # These are user-invoked, current-user KWin settings. Do not use sudo, edit
-# other users' files, or change animation/accessibility preferences.
+# other users' files, or change global speed/accessibility preferences.
 kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled "$blur"
 kwriteconfig6 --file kwinrc --group Effect-Blur --key BlurStrength "$strength"
+kwriteconfig6 --file kwinrc --group Plugins --key magiclampEnabled "$magiclamp"
+kwriteconfig6 --file kwinrc --group Effect-magiclamp --key AnimationDuration "$duration"
 
 if command -v qdbus6 >/dev/null 2>&1 && qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1; then
   :
@@ -57,4 +98,5 @@ else
   printf 'Perfil salvo; KWin aplicará a alteração ao reconfigurar ou iniciar novamente.\n' >&2
 fi
 
-printf 'Perfil visual %s aplicado (blur=%s, intensidade=%s).\n' "$profile" "$blur" "$strength"
+printf 'Perfil visual %s aplicado (blur=%s, intensidade=%s, Magic Lamp=%s, duração=%sms).\n' \
+  "$profile" "$blur" "$strength" "$magiclamp" "$duration"

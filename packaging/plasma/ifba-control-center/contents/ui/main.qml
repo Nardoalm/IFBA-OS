@@ -18,6 +18,7 @@ import org.kde.plasma.private.batterymonitor
 import org.kde.plasma.private.battery
 import plasma.applet.org.kde.plasma.notifications as Notifications
 import org.kde.plasma.private.mpris as Mpris
+import "."
 
 PlasmoidItem {
     id: root
@@ -27,15 +28,15 @@ PlasmoidItem {
         && preferredDevice.sink !== null && preferredDevice.sink.name !== "auto_null"
     readonly property var currentPlayer: mprisModel.currentPlayer
 
-    switchWidth: Kirigami.Units.gridUnit * 24
-    switchHeight: Kirigami.Units.gridUnit * 27
+    switchWidth: Kirigami.Units.gridUnit * 20
+    switchHeight: Kirigami.Units.gridUnit * 24
     toolTipMainText: i18n("Central de controle")
     toolTipSubText: i18n("Rede, áudio, tela, sistema e reprodução")
     Plasmoid.title: i18n("Central de controle")
     Plasmoid.icon: "settings-configure"
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
 
-    compactRepresentation: PlasmaComponents3.ToolButton {
+    compactRepresentation: IfbaAnimatedToolButton {
         id: controlButton
         icon.name: "settings-configure"
         text: i18n("Controle")
@@ -48,10 +49,10 @@ PlasmoidItem {
     fullRepresentation: PlasmaExtras.Representation {
         id: panel
         collapseMarginsHint: true
-        Layout.minimumWidth: Kirigami.Units.gridUnit * 23
-        Layout.maximumWidth: Kirigami.Units.gridUnit * 29
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 24
-        Layout.maximumHeight: Kirigami.Units.gridUnit * 34
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 20
+        Layout.maximumWidth: Kirigami.Units.gridUnit * 25
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 18
+        Layout.maximumHeight: Kirigami.Units.gridUnit * 30
         focus: true
         Keys.onEscapePressed: root.expanded = false
 
@@ -110,7 +111,7 @@ PlasmoidItem {
                                 onToggled: networkHandler.enableWireless(checked)
                             }
                         }
-                        PlasmaComponents3.Button {
+                        IfbaAnimatedButton {
                             Layout.alignment: Qt.AlignRight
                             text: i18n("Configurações de rede")
                             icon.name: "configure"
@@ -152,7 +153,7 @@ PlasmoidItem {
                             text: i18n("Nenhum dispositivo conectado")
                             opacity: 0.75
                         }
-                        PlasmaComponents3.Button {
+                        IfbaAnimatedButton {
                             Layout.alignment: Qt.AlignRight
                             text: i18n("Configurações de Bluetooth")
                             icon.name: "configure"
@@ -178,7 +179,7 @@ PlasmoidItem {
                                 text: root.hasOutput ? Math.round(preferredDevice.sink.volume / PulseAudio.NormalVolume * 100) + "%" : ""
                                 opacity: 0.75
                             }
-                            PlasmaComponents3.ToolButton {
+                            IfbaAnimatedToolButton {
                                 icon.name: preferredDevice.sink && preferredDevice.sink.muted ? "audio-volume-muted" : "audio-volume-high"
                                 Accessible.name: preferredDevice.sink && preferredDevice.sink.muted ? i18n("Ativar som") : i18n("Silenciar")
                                 enabled: root.hasOutput
@@ -202,7 +203,7 @@ PlasmoidItem {
                             spacing: Kirigami.Units.smallSpacing
                             Repeater {
                                 model: sinkFilterModel
-                                delegate: PlasmaComponents3.Button {
+                                delegate: IfbaAnimatedButton {
                                     required property var model
                                     text: model.Description
                                     checkable: true
@@ -212,7 +213,7 @@ PlasmoidItem {
                                 }
                             }
                         }
-                        PlasmaComponents3.Button {
+                        IfbaAnimatedButton {
                             Layout.alignment: Qt.AlignRight
                             text: i18n("Configurações de áudio")
                             icon.name: "configure"
@@ -265,7 +266,7 @@ PlasmoidItem {
                             Accessible.name: i18n("Suspender ou retomar a luz noturna")
                             onToggled: NightLightInhibitor.toggleInhibition()
                         }
-                        PlasmaComponents3.Button {
+                        IfbaAnimatedButton {
                             Layout.alignment: Qt.AlignRight
                             text: i18n("Configurações de tela")
                             icon.name: "configure"
@@ -300,7 +301,7 @@ PlasmoidItem {
                                     { id: "balanced", label: i18n("Equilibrado") },
                                     { id: "performance", label: i18n("Desempenho") }
                                 ]
-                                delegate: PlasmaComponents3.Button {
+                                delegate: IfbaAnimatedButton {
                                     required property var modelData
                                     visible: powerProfiles.profiles.includes(modelData.id)
                                     text: modelData.label
@@ -319,7 +320,7 @@ PlasmoidItem {
                             Accessible.name: i18n("Ativar não perturbe")
                             onToggled: Notifications.Globals.toggleDoNotDisturbMode()
                         }
-                        PlasmaComponents3.Button {
+                        IfbaAnimatedButton {
                             Layout.alignment: Qt.AlignRight
                             text: i18n("Informações do sistema")
                             icon.name: "configure"
@@ -354,13 +355,13 @@ PlasmoidItem {
                         }
                         RowLayout {
                             Layout.alignment: Qt.AlignHCenter
-                            PlasmaComponents3.ToolButton {
+                            IfbaAnimatedToolButton {
                                 icon.name: "media-skip-backward"
                                 Accessible.name: i18n("Faixa anterior")
                                 enabled: root.currentPlayer && root.currentPlayer.canGoPrevious
                                 onClicked: root.currentPlayer.Previous()
                             }
-                            PlasmaComponents3.ToolButton {
+                            IfbaAnimatedToolButton {
                                 icon.name: root.currentPlayer && root.currentPlayer.playbackStatus === Mpris.PlaybackStatus.Playing
                                     ? "media-playback-pause" : "media-playback-start"
                                 Accessible.name: root.currentPlayer && root.currentPlayer.playbackStatus === Mpris.PlaybackStatus.Playing
@@ -370,7 +371,7 @@ PlasmoidItem {
                                 onClicked: root.currentPlayer.playbackStatus === Mpris.PlaybackStatus.Playing
                                     ? root.currentPlayer.Pause() : root.currentPlayer.Play()
                             }
-                            PlasmaComponents3.ToolButton {
+                            IfbaAnimatedToolButton {
                                 icon.name: "media-skip-forward"
                                 Accessible.name: i18n("Próxima faixa")
                                 enabled: root.currentPlayer && root.currentPlayer.canGoNext

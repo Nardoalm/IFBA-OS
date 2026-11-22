@@ -11,6 +11,7 @@ O IFBA OS mantém uma linguagem visual própria, baseada em superfícies verdes 
 - `packaging/gtk/gtk.css` e `packaging/gtk/settings.ini`: acentos e superfícies GTK 3/4 alinhados com KDE.
 - `packaging/ifba-ai.css`: CSS da interface GTK própria do IFBA AI, gerado com os mesmos tokens.
 - `packaging/design-system/ifba-welcome.qss`: stylesheet da janela nativa Qt IFBA Welcome.
+- `packaging/plasma/ifba-control-center/contents/ui/IfbaAnimationTokens.qml` e `packaging/design-system/visual-motionrc`: tempos e curvas QML/KWin derivados dos tokens centrais; Kirigami escala as transições QML pela preferência nativa de animação do KDE.
 
 A decoração Aurorae em `packaging/plasma/window-decoration/IFBA-Window/` usa as mesmas cores semânticas dos tokens. Aurorae não oferece uma variável de cor global para SVG; por isso, testes verificam que os valores semânticos da decoração permanecem alinhados com a fonte canônica. Espaçamento, radius, sombra e motion são tokens de projeto: Plasma nativo não dispõe de API global para aplicar cada valor uniformemente a qualquer aplicativo de terceiros; componentes implementados pelo IFBA devem consultá-los e respeitar movimento reduzido.
 
@@ -19,6 +20,10 @@ A decoração Aurorae em `packaging/plasma/window-decoration/IFBA-Window/` usa a
 O script de geração de ISO instala esquema KDE, CSS/configuração GTK e defaults do Plasma no sistema e em `/etc/skel`. O primeiro perfil Live recebe as mesmas configurações se ainda não as tiver. Arquivos GTK e `kdeglobals` já existentes no perfil não são substituídos. O setup Plasma conserva marcadores de primeira aplicação e não reaplica layout ou tema a perfis já inicializados. Uma instalação pelo Calamares copia o rootfs da sessão Live; depois da instalação, `/etc/skel` fornece esses defaults aos usuários criados.
 
 O CSS do sistema dá um padrão consistente a GTK; configurações CSS/GTK locais do usuário continuam prioritárias. O tema Breeze GTK nativo é mantido como base. Aplicativos Qt recebem o esquema KDE e Breeze escuro, sem instalar Kvantum ou temas globais de terceiros. O tema nativo do Plasma, seu painel e Kickoff, blur padrão do KWin e lock screen IFBA continuam sendo os componentes visuais do produto.
+
+### Motion e perfis KWin
+
+`motion` em `tokens.json` é a fonte única para animações próprias e perfis KWin. O gerador publica um QML com durações rápida/padrão/lenta e curvas semânticas; `Kirigami.Units.longDuration` escala os valores conforme a preferência de velocidade do KDE. Como essa unidade limita durações a 1 ms, o QML desativa Behaviors próprios no piso, respeitando movimento reduzido. O arquivo INI gerado fornece as durações padrão/lenta ao seletor de perfil KWin. Leve desativa blur e Magic Lamp; Equilibrado usa blur moderado e 180 ms; Avançado usa blur mais forte e 240 ms. Se o usuário definir o fator de animação KDE como zero, o helper não ativa Magic Lamp nem altera essa preferência. O perfil muda apenas as chaves do usuário atual. Valores e aparência ainda precisam de confirmação em Plasma executando numa VM.
 
 ## Dock e barra superior do Plasma
 

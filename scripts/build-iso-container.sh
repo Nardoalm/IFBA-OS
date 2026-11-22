@@ -99,6 +99,14 @@ chroot "$ROOTFS" env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-inst
 mkdir -p "$ROOTFS/tmp/ifba-control-center-check"
 cp /work/packaging/plasma/ifba-control-center/contents/ui/main.qml "$ROOTFS/tmp/ifba-control-center-check/main.qml"
 chroot "$ROOTFS" /usr/lib/qt6/bin/qmlformat /tmp/ifba-control-center-check/main.qml >/dev/null
+cp /work/packaging/plasma/ifba-control-center/contents/ui/IfbaAnimationTokens.qml \
+  "$ROOTFS/tmp/ifba-control-center-check/IfbaAnimationTokens.qml"
+chroot "$ROOTFS" /usr/lib/qt6/bin/qmlformat /tmp/ifba-control-center-check/IfbaAnimationTokens.qml >/dev/null
+for qml_file in IfbaAnimatedButton.qml IfbaAnimatedToolButton.qml; do
+  cp "/work/packaging/plasma/ifba-control-center/contents/ui/$qml_file" \
+    "$ROOTFS/tmp/ifba-control-center-check/$qml_file"
+  chroot "$ROOTFS" "/usr/lib/qt6/bin/qmlformat" "/tmp/ifba-control-center-check/$qml_file" >/dev/null
+done
 rm -rf "$ROOTFS/tmp/ifba-control-center-check"
 mkdir -p "$ROOTFS/tmp/ifba-app-description-runner"
 cp -R /work/packaging/plasma/ifba-app-description-runner/. "$ROOTFS/tmp/ifba-app-description-runner/"
@@ -184,6 +192,8 @@ install -D -m 0644 /work/packaging/konsole/IFBA\ Terminal.profile \
   "$ROOTFS/usr/share/konsole/IFBA Terminal.profile"
 install -D -m 0755 /work/packaging/ifba-visual-profile "$ROOTFS/usr/bin/ifba-visual-profile"
 install -D -m 0755 /work/packaging/ifba-visual-profile-dialog "$ROOTFS/usr/bin/ifba-visual-profile-dialog"
+install -D -m 0644 /work/packaging/design-system/visual-motionrc \
+  "$ROOTFS/usr/share/ifba-os/design-system/visual-motionrc"
 install -D -m 0644 /work/packaging/ifba-visual-profile.desktop \
   "$ROOTFS/usr/share/applications/ifba-visual-profile.desktop"
 install -D -m 0644 /work/packaging/konsole/IFBA\ Glass.colorscheme \
@@ -315,6 +325,12 @@ install -D -m 0644 /work/packaging/plasma/ifba-control-center/metadata.json \
   "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/metadata.json"
 install -D -m 0644 /work/packaging/plasma/ifba-control-center/contents/ui/main.qml \
   "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/main.qml"
+install -D -m 0644 /work/packaging/plasma/ifba-control-center/contents/ui/IfbaAnimationTokens.qml \
+  "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimationTokens.qml"
+for qml_file in IfbaAnimatedButton.qml IfbaAnimatedToolButton.qml; do
+  install -D -m 0644 "/work/packaging/plasma/ifba-control-center/contents/ui/$qml_file" \
+    "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/$qml_file"
+done
 python3 /work/tools/package_plasma_lockscreen.py "$ROOTFS" \
   /work/packaging/plasma/ifbaos-shell/contents/lockscreen
 for decoration_file in metadata.desktop IFBA-Windowrc decoration.svg minimize.svg maximize.svg restore.svg close.svg; do
@@ -361,6 +377,7 @@ test -s "$ROOTFS/usr/share/ifba-os/ifba-welcome.qss"
 test -x "$ROOTFS/usr/bin/ifba-visual-profile"
 test -x "$ROOTFS/usr/bin/ifba-visual-profile-dialog"
 test -s "$ROOTFS/usr/share/applications/ifba-visual-profile.desktop"
+test -s "$ROOTFS/usr/share/ifba-os/design-system/visual-motionrc"
 test -s "$ROOTFS/usr/share/sddm/themes/breeze/theme.conf.user"
 for file in /etc/NetworkManager/conf.d/10-globally-managed-devices.conf \
   /etc/NetworkManager/conf.d/20-ifba-managed-ethernet.conf \
@@ -389,6 +406,9 @@ find "$ROOTFS/usr/lib" -path '*/kf6/krunner/ifba_app_description_runner.so' -pri
 test -s "$ROOTFS/usr/share/plasma/plasmoids/org.kde.plasma.icontasks/metadata.json"
 test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/metadata.json"
 test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/main.qml"
+test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimationTokens.qml"
+test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimatedButton.qml"
+test -s "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter/contents/ui/IfbaAnimatedToolButton.qml"
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskmanager.so' -print -quit | grep -q .
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.trash.so' -print -quit | grep -q .
 for launcher in firefox.desktop org.kde.dolphin.desktop org.kde.konsole.desktop ifba-ai.desktop \

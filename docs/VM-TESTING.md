@@ -2,6 +2,12 @@
 
 Use a disposable UTM/QEMU/VirtualBox VM with 4 GB RAM, 2 CPUs, a 30 GB virtual disk, and NAT networking. Do not mount host folders or pass through personal credentials. Select the live boot entry only; this ISO is not an installer.
 
+## Visual motion and Control Center sizing source update — 2026-11-21
+
+- `tokens.json` now generates the Control Center's QML timing/curve component and an INI read by the per-user KWin profile tool. QML durations scale with `Kirigami.Units.longDuration`; the custom QML Behaviors are disabled when KDE clamps reduced motion to 1 ms. The profile sets Magic Lamp to 180 ms (Equilibrado) or 240 ms (Avançado) from the generated tokens. Setting KDE's `AnimationDurationFactor` to zero disables Magic Lamp without rewriting the preference.
+- The Control Center popup width changed from a 23–29 grid-unit range to 20–25; its height is 18–30 grid units and uses its existing ScrollView when modules exceed available space. This aims to keep it compact at normal resolutions while retaining controls at smaller sizes.
+- Automated source tests verify generated-file freshness, profile values, zero-factor reduced motion, QML component packaging and popup bounds. The macOS host lacks Plasma/QML tools; no ISO was built and no current-source VM screenshot or rendered visual check is available. Verify both profiles, reduced motion, popup clipping/scaling and KWin fallback in fresh ARM64 and AMD64 guests before claiming visual acceptance.
+
 ## Control Center source update — 2026-11-21
 
 - Added the `org.ifbaos.controlcenter` Plasma applet to the top-panel layout and image packaging. It reads network status and Wi-Fi control from NetworkManager, adapter/device state from BlueZ, outputs/volume from Plasma Audio, brightness and night-light inhibition from PowerDevil/KWin, available battery/profile state, Plasma Do Not Disturb, and MPRIS players/actions.

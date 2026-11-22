@@ -1,0 +1,5 @@
+# Generated from packaging/design-system/tokens.json.
+[Motion]
+DurationFastMs=120
+DurationStandardMs=180
+DurationSlowMs=240

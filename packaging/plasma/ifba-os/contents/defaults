@@ -27,9 +27,14 @@ AnimationSpeed=2
 
 [kwinrc][Plugins]
 blurEnabled=true
+magiclampEnabled=true
+overviewEnabled=true
 
 [kwinrc][Effect-Blur]
 BlurStrength=2
+
+[kwinrc][Effect-magiclamp]
+AnimationDuration=180
 
 [kwinrc][Effect-PresentWindows]
 BorderActivate=9
