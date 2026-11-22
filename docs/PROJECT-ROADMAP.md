@@ -8,7 +8,7 @@
 
 ### Release follow-up — 2026-11-22
 
-- Matched v0.3.5 ARM64/AMD64 ISOs are built from commit `03828a82d0ea178ca073dcc44f139c91778562c0` and structurally verified. Both runtime statuses remain unvalidated. The historical UTM guest uses the v0.3.3 ISO and currently shows inactive video output; use a separate VM and manually choose the v0.3.5 image.
+- Matched v0.3.6 ARM64/AMD64 ISOs are built from commit `ef8481db8e5e47a11f1c96f6319bccc63d1b969d` and structurally verified. Both runtime statuses remain unvalidated. The historical UTM guest uses the v0.3.3 ISO and has inactive video output; use a separate VM and manually choose the v0.3.6 image.
 
 
 - [x] **IMPLEMENTED IN SOURCE · P1** IFBA Welcome is now bounded to 80% of the available width and 72% of its height so it does not cover the Plasma top bar or dock at common VM resolutions. The chat pane shows a greeting after conversations load, and a D-Bus failure displays an explicit message and retry action instead of a blank dark area. Kickoff with the IF symbol is now present at the left of the top panel; KRunner's native Alt+Space shortcut is discoverable from the welcome screen. Included in the v0.3.5 build; GTK/Qt targeted runtime tests passed under Linux/Xvfb, while desktop rendering and interaction in a live guest remain pending.
@@ -156,3 +156,10 @@
 - KScreenLocker now loads the stock Plasma shell with the IFBA wallpaper. The custom lock-screen shell and packaging helper were removed; a migration script changes only the old shell selector in the Live profile, preserving all other settings.
 - The dock remains the audited upstream Matt-Anis Plasma plasmoid; Kickoff, appmenu, tray, clock, KRunner, KWin effects, Aurorae, Kvantum and Breeze SDDM remain native/upstream components with IFBA styling.
 - Automated tests/syntax checks are source evidence only. No ISO or screenshot was produced for this revision; guest appearance and operation remain pending.
+
+
+## Latest ISO build — v0.3.6 (2026-11-22)
+
+- `output/latest/` now contains the verified ARM64/AMD64 pair from shared commit `ef8481db8e5e47a11f1c96f6319bccc63d1b969d` (`complete_pair: true`).
+- Both images are structurally verified; no guest boot or runtime behavior is validated. The exact paths and hashes are recorded in [`ISO-RELEASES.md`](ISO-RELEASES.md).
+- The prior v0.3.5 pair is retained in `output/versions/v0.3.5/`. UTM validation remains pending because the available historical VM must remain unchanged and the file-picker automation has been inaccessible.

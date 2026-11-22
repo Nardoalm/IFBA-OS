@@ -215,3 +215,15 @@ At the time of the 2026-11-20 migration, `output/latest/amd64/` pointed to v0.3.
 - **Latest and archive:** `output/latest/{arm64,amd64}/` contains only the v0.3.5 pair. Previous v0.3.4 files were replaced there per the owner's request. `output/versions/v0.3.3/arm64/` remains untouched because the historical UTM VM references that exact ISO.
 - **Automated/runtime checks:** The complete host suite passed 127 tests with 5 target-platform skips. Separate Ubuntu Linux/Xvfb tests passed 2 GTK assistant runtime cases and 3 Qt Welcome runtime cases. These do not replace live desktop testing.
 - **UTM:** No v0.3.5 ISO was attached or booted. UTM still shows the historical ARM64 `IFBA OS` VM (4 vCPUs, 6144 MiB, QEMU/HVF) with v0.3.3 attached; its `virtio-gpu-pci` display is disabled and UTM reports “Display output is not active.” The file picker previously failed with `noWindowsAvailable`. Create a separate test VM and manually select the paths recorded in `VM-TESTING.md`; do not modify the historical VM.
+
+## 0.3.6 — Plasma native-component simplification and release guard fix — 2026-11-22 UTC
+
+| Architecture | Build ID | Source commit | Build time (UTC) | Size (bytes) | SHA-256 | Build status | Runtime status |
+|---|---|---|---|---:|---|---|---|
+| arm64 | `ifba-20261122T033749Z-arm64-ef8481db8e5e` | `ef8481db8e5e47a11f1c96f6319bccc63d1b969d` | `2026-11-22T03:37:49Z` | 2,018,113,536 | `cf3b620d9ec5ac546ee6eaa1ecfc51dc9e0adbe09ef3b2472d2d73af63b033f9` | built and structurally verified | unvalidated |
+| amd64 | `ifba-20261122T034047Z-amd64-ef8481db8e5e` | `ef8481db8e5e47a11f1c96f6319bccc63d1b969d` | `2026-11-22T03:40:47Z` | 2,076,028,928 | `de3d959aa6f5c7d61474208878db19b67e86836c6de116cebabad11d2a395649` | built and structurally verified | unvalidated |
+
+- **Build method:** Official `./scripts/build-iso.sh --both` pipeline from a clean detached worktree at the shared source commit. The v0.3.5 images were first preserved in `output/versions/v0.3.5/`; the verified v0.3.6 pair was then published to `output/latest/`. `release-status.json` reports `complete_pair: true` and the shared commit.
+- **Verification:** `tools/release_artifacts.py verify` passed for both architecture/manifest pairs. Embedded build metadata reports `source_dirty: false`; pipeline checks inspected kernel, initrd, rootfs and GRUB configuration. Runtime remains unvalidated: no UTM boot, screenshots, networking, AI interaction or Calamares installation is claimed.
+- **Automated checks:** 137 tests passed, 5 skipped because GTK/PyQt target dependencies are unavailable on the host; the build's CTest checks passed 2/2 on each architecture. `git diff --check` and syntax checks passed. Nonfatal build notices included initramfs gzip fallback without `zstd`, SquashFS ACL xattr-prefix notices, xorriso volume-ID/MBR geometry notices, chroot apt logging/D-Bus notices and Qt locale fallback.
+- **GitHub release:** Not published; `gh auth status` reports no authenticated GitHub host in this environment.

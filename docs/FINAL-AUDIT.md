@@ -140,3 +140,10 @@ The latest UTM screenshot confirms a usable XFCE desktop on the exact output ISO
 - Removed the custom `org.ifbaos.controlcenter` QML sources from the build inputs because its private Plasma imports were syntax-checked but never resolved or rendered in the target session. The ISO pipeline asserts the retired plasmoid is absent and that the native applet plugins exist.
 - Removed the derived `org.ifbaos.plasma` shell package and custom lock-screen QML. New/live profiles select `org.kde.plasma.desktop`; an idempotent migration changes only the obsolete shell-package setting while preserving the rest of the Live user's config. The IFBA lock-screen wallpaper remains configured.
 - Added regressions for native-shell selection, migration idempotence/user-setting preservation, native tray composition and absence of the retired plasmoid. These are source-level checks; no ISO build, guest boot, interaction or screenshot was performed for this change. ARM64/AMD64 runtime appearance, lock/unlock, tray popups and persistence remain open.
+
+
+## v0.3.6 artifact status — 2026-11-22 UTC
+
+- The official pipeline generated matching ARM64 and AMD64 images from clean source commit `ef8481db8e5e47a11f1c96f6319bccc63d1b969d`; both manifests and `output/latest/release-status.json` were verified (`complete_pair: true`). Exact checksums, byte sizes, build IDs, and nonfatal warnings are recorded in `ISO-RELEASES.md`.
+- Automated host suite: 137 passed, 5 skipped for missing host GTK/PyQt dependencies. Build CTest: 2/2 passed for each architecture. Both guest runtime statuses remain unvalidated; no UTM screenshot or Calamares/network/IFBA AI runtime result is claimed.
+- The v0.3.5 pair is preserved under `output/versions/v0.3.5/`. GitHub release publication is pending because `gh auth status` reports no authenticated host.

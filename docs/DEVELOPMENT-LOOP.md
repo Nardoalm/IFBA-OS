@@ -259,3 +259,12 @@
 - Full host suite passed 127 tests with 5 target-platform skips. Separate Linux/Xvfb runtime tests passed 2 GTK assistant cases and 3 Qt Welcome cases. Python/JavaScript syntax, generated design-system check, and `git diff --check` passed.
 - Built ARM64 and AMD64 with `./scripts/build-iso.sh --both` in a clean detached worktree from the same commit. Both `release_artifacts.py verify` runs passed. Artifacts and hashes are in `ISO-RELEASES.md`; `output/latest/release-status.json` records a complete pair. `latest` now contains only v0.3.5, while the v0.3.3 ARM64 ISO referenced by the historical VM remains unchanged.
 - UTM's historical ARM64 screen had no active virtio GPU output. ISO selection in a separate VM remains blocked by the macOS picker error; neither v0.3.5 architecture has boot/runtime evidence.
+
+
+## Matched v0.3.6 ISO build — 2026-11-22 UTC
+
+- Bumped shared product version and fixed the rootfs guard to inspect the installed Look-and-Feel defaults for `IFBA-WhiteSur-Dark`; added a regression test. Source commits `5128047` and `ef8481d` were pushed to `origin/development` before the build.
+- Full suite passed 137 tests with 5 host skips. The official `./scripts/build-iso.sh --both` pipeline built ARM64 and AMD64 from clean commit `ef8481db8e5e47a11f1c96f6319bccc63d1b969d`; CTest passed 2/2 for each target. `release_artifacts.py verify` passed on each final artifact.
+- The v0.3.5 images were preserved in `output/versions/v0.3.5/`; `output/latest/release-status.json` now marks the verified v0.3.6 pair complete. Hashes, sizes, build IDs and warnings are recorded in `ISO-RELEASES.md`.
+- Disk had 49 GiB free before build (30 GiB documented requirement); after build, 35 GiB remained. No historical media, VM or Docker volume was deleted.
+- UTM was not used to boot v0.3.6; runtime and screenshots remain unvalidated. `gh auth status` is unauthenticated, so no GitHub Release was published. Existing local user changes, including `AGENTS.md`, `.DS_Store` files, `.impeccable/` and the supplied artwork, were preserved and excluded from this documentation update.
