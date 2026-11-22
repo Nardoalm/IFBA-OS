@@ -344,3 +344,10 @@ This prototype has no installer, disk persistence, real educational-app installe
 - AMD64 ISO: `/Users/leonardo/Documents/IFBA-OS/output/versions/v0.3.7/amd64/ifba-os-ubuntu-26.04-amd64-v0.3.7.iso` (2,080,104,448 bytes; SHA-256 `1b3262f6dbe63bd4a4e35edd4a871c57bbdab5815ff9654fd092dadd9f377bcf`). Both were built from source commit `cb21dbbfe972c4f2cf5aafd300f51d308105e711`, structurally verified, and have runtime status `unvalidated`.
 - UTM showed the existing ARM64 `IFBA OS` VM running with a v0.3.6 image filename. The backing path could not be read from its VM configuration; the VM was left untouched, and `output/latest/` remains at v0.3.6. Do not change the VM or replace any v0.3.6 media until its image path is confirmed and preserved.
 - To test, create separate disposable ARM64 and AMD64 VMs, attach the corresponding versioned path above, and use new virtual disks. Capture actual boot and desktop screenshots. Test audio output/YouTube, decoration controls and IFBA AI, then inspect Ethernet ownership, DHCP, route, DNS and HTTPS. Do not infer those results from ISO structure checks.
+
+## v0.3.8 VSCodium images — UTM pending — 2026-11-22 UTC
+
+- ARM64: `/Users/leonardo/Documents/IFBA-OS/output/versions/v0.3.8/arm64/ifba-os-ubuntu-26.04-arm64-v0.3.8.iso` (2,151,831,552 bytes; SHA-256 `01b5cbe0938fb186588d699aeb16e01f38885da68e19e7d9afbe3a1af9fed7e1`).
+- AMD64: `/Users/leonardo/Documents/IFBA-OS/output/versions/v0.3.8/amd64/ifba-os-ubuntu-26.04-amd64-v0.3.8.iso` (2,219,005,952 bytes; SHA-256 `d41b9a4b0b5acd6933477bc6c3362bb88f469391d36609d65863f4b4e34cd2dc`). Both share source commit `c9ec60405f4c0a560210cae34991c1354ced49e3` and structurally verified manifests.
+- The ARM64 and AMD64 source build assertions confirm VSCodium `1.143.17232` is installed and the Thonny package absent. This is package/build evidence only; no guest was booted and no app launch or UI result is claimed.
+- Use separate disposable UTM VMs with new virtual disks. Preserve the historical VM and its unknown v0.3.6 media path. Capture real screenshots and test VSCodium startup before accepting the integration.

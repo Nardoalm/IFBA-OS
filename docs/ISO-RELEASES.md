@@ -242,3 +242,20 @@ At the time of the 2026-11-20 migration, `output/latest/amd64/` pointed to v0.3.
 - **Artifacts:** Archived under `output/versions/v0.3.7/{arm64,amd64}/`. The v0.3.6 `output/latest/` pointers and `release-status.json` were deliberately left untouched: UTM showed a running historical VM with a v0.3.6 ISO filename, but its backing image path could not be established from the VM configuration. This preserves the possibly attached file; v0.3.7 is built and archived but is not the current `latest` pointer.
 - **UTM/runtime:** No v0.3.7 guest was booted and no screenshots were captured. Audio playback, YouTube, window decorations, IFBA AI controls, desktop layout, network and Calamares remain unvalidated on these images. Existing UTM VMs were not stopped, reconfigured or modified.
 - **GitHub release:** Not published in this build session; check the current `gh` authentication state before uploading assets.
+
+
+## 0.3.8 — VSCodium replaces Thonny — 2026-11-22 UTC
+
+| Architecture | Build ID | Source commit | Build time (UTC) | Size (bytes) | SHA-256 | Build status | Runtime status |
+|---|---|---|---|---:|---|---|---|
+| arm64 | `ifba-20261122T143449Z-arm64-c9ec60405f4c` | `c9ec60405f4c0a560210cae34991c1354ced49e3` | `2026-11-22T14:34:49Z` | 2,151,831,552 | `01b5cbe0938fb186588d699aeb16e01f38885da68e19e7d9afbe3a1af9fed7e1` | built and structurally verified | unvalidated |
+| amd64 | `ifba-20261122T143839Z-amd64-c9ec60405f4c` | `c9ec60405f4c0a560210cae34991c1354ced49e3` | `2026-11-22T14:38:39Z` | 2,219,005,952 | `d41b9a4b0b5acd6933477bc6c3362bb88f469391d36609d65863f4b4e34cd2dc` | built and structurally verified | unvalidated |
+
+- **Build method:** Official `./scripts/build-iso.sh --arch arm64` and `--arch amd64` from clean detached worktree commit `c9ec60405f4c0a560210cae34991c1354ced49e3`; both manifests record `source_dirty: false` and version 0.3.8.
+- **VSCodium:** Both rootfs builds installed VSCodium `1.143.17232`, verified the official repository key fingerprint and architecture-specific package SHA-256 from signed APT metadata, confirmed the real `com.visualstudio.CodeOSS.desktop` launcher, and removed any cached Thonny package. The project tests also verify these build contracts.
+- **Verification:** Both `release_artifacts.py verify` checks passed; `file` identifies architecture-specific bootable ISO 9660 DOS/MBR images, and the pipeline extracted kernel, initrd, SquashFS and GRUB files. Per-ISO `.sha256` files are in each version directory. This does not prove guest boot or runtime.
+- **Tests:** The complete host suite passed 142 tests with 6 target-GTK/PyQt skips. Shell syntax, Python compilation, design-system generated-file check and `git diff --check` passed. Both architecture builds passed their rootfs assertions and internal CTest checks (2/2 each).
+- **Warnings:** Nonfatal `mksquashfs` ACL xattr-prefix and `xorriso` volume-ID/MBR geometry notices; Qt changed the AMD64 container locale from `C` to `C.UTF-8`; both initramfs builds used gzip because zstd was unavailable; AMD64 cleanup noted `/dev/pts` was not mounted for apt logging.
+- **Local artifacts:** `output/versions/v0.3.8/{arm64,amd64}/`. `output/latest/` was not changed because the active historical ARM64 UTM VM has an unresolved v0.3.6 image path. Inspection also found that `output/latest/amd64/` has a manifest but no ISO, so its old `release-status.json` claim of `complete_pair: true` was corrected to false. No existing VM media was changed.
+- **GitHub Release:** Not published. Both ISOs exceed GitHub's 2 GiB per-file release asset limit: ARM64 is 2,151,831,552 bytes and AMD64 is 2,219,005,952 bytes. No partial release was created. The source and local artifacts remain available at the paths above.
+- **UTM:** Neither v0.3.8 image was booted; no screenshot or audio/YouTube, VSCodium launch, network, or Calamares runtime result is claimed.
