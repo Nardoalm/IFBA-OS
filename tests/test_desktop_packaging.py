@@ -345,12 +345,16 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("ButtonsOnLeft=XIA\nButtonsOnRight=", defaults)
         self.assertIn("library=org.kde.kwin.aurorae", defaults)
         self.assertIn("theme=__aurorae__svg__IFBA-Window", defaults)
-        self.assertIn("AnimationSpeed=2", defaults)
+        self.assertNotIn("AnimationSpeed=", defaults)
         self.assertIn("magiclampEnabled=true", defaults)
         self.assertIn("overviewEnabled=true", defaults)
         motion = json.loads((ROOT / "packaging/design-system/tokens.json").read_text())["motion"]
         self.assertIn(
             f"[kwinrc][Effect-magiclamp]\nAnimationDuration={motion['duration_standard_ms']}",
+            defaults,
+        )
+        self.assertIn(
+            f"[kwinrc][Effect-scale]\nDuration={motion['duration_standard_ms']}",
             defaults,
         )
         self.assertIn("[kwinrc][Effect-overview]", defaults)

@@ -22,9 +22,6 @@ library=org.kde.kwin.aurorae
 theme=__aurorae__svg__IFBA-Window
 BorderSize=Tiny
 
-[kwinrc][Compositing]
-AnimationSpeed=2
-
 [kwinrc][Plugins]
 blurEnabled=true
 magiclampEnabled=true
@@ -42,8 +39,8 @@ BlurStrength=2
 [kwinrc][Effect-magiclamp]
 AnimationDuration=180
 
-[kwinrc][Effect-PresentWindows]
-BorderActivate=9
+[kwinrc][Effect-scale]
+Duration=180
 
 [kwinrc][Effect-overview]
 BorderActivate=9
