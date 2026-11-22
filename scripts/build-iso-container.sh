@@ -400,6 +400,16 @@ if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmashellrc" ]]; then
 fi
 install -D -m 0644 /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
+# KWin reads KConfig defaults before plasmashell evaluates the initial layout.
+# Derive them from the same Look-and-Feel source without applying a theme in
+# an existing user session.
+awk '
+  /^\[/ {
+    kwin = /^\[kwinrc\]\[/
+    if (kwin) sub(/^\[kwinrc\]/, "")
+  }
+  kwin
+' /work/packaging/plasma/ifba-os/contents/defaults > "$ROOTFS/etc/xdg/kwinrc"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
 cp -R /work/packaging/plasma/window-decoration/IFBA-Window \
   "$ROOTFS/usr/share/aurorae/themes/"
@@ -426,16 +436,15 @@ chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-plasma-session-setup"
 cat > "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" <<'AUTOSTART'
 [Desktop Entry]
 Type=Application
-Name=IFBA OS Desktop Setup
+Name=IFBA OS Window Decoration Migration
 Exec=/usr/local/bin/ifba-os-plasma-session-setup
 OnlyShowIn=KDE;
 Terminal=false
 StartupNotify=false
 AUTOSTART
-if [[ ! -e "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.desktop" ]]; then
-  cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/home/ubuntu/.config/autostart/"
-fi
-cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/etc/skel/.config/autostart/"
+# Remove the redundant copies shipped by older builds of the live image.
+rm -f "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.desktop" \
+  "$ROOTFS/etc/skel/.config/autostart/ifba-os-plasma-session-setup.desktop"
 chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu
 chmod 0700 "$ROOTFS/home/ubuntu/.config/ifba-ai" "$ROOTFS/home/ubuntu/.local/share/ifba-ai" "$ROOTFS/home/ubuntu/.cache/ifba-ai" \
   "$ROOTFS/etc/skel/.config/ifba-ai" "$ROOTFS/etc/skel/.local/share/ifba-ai" "$ROOTFS/etc/skel/.cache/ifba-ai"
@@ -523,8 +532,9 @@ cmp -s /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasm
 cmp -s /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
 grep -q '^ShellPackage=org.kde.plasma.desktop$' "$ROOTFS/etc/skel/.config/plasmashellrc"
 grep -q '^ShellPackage=org.kde.plasma.desktop$' "$ROOTFS/etc/xdg/plasmashellrc"
+grep -q '^LookAndFeelPackage=org.ifbaos.desktop$' "$ROOTFS/etc/xdg/kdeglobals"
+grep -qx 'theme=__aurorae__svg__IFBA-Window' "$ROOTFS/etc/xdg/kwinrc"
 test -s "$ROOTFS/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml"
-test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
 for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio pipewire-pulse wireplumber ffmpeg kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 codium libreoffice-writer gcompris-qt; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'

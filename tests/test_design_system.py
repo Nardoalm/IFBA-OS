@@ -99,7 +99,7 @@ class DesignSystemTests(unittest.TestCase):
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/Kvantum/kvantum.kvconfig" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/kscreenlockerrc" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmashellrc" ]]; then', self.build)
-        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.desktop" ]]; then', self.build)
+        self.assertIn('rm -f "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.desktop"', self.build)
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop" ]]; then', self.build)
         self.assertNotIn('chmod +x "$ROOTFS/home/ubuntu/Desktop/"*.desktop', self.build)
@@ -107,16 +107,12 @@ class DesignSystemTests(unittest.TestCase):
         self.assertIn('if [[ ! -e "$home_root/.config/gtk-4.0/gtk.css" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$home_root/.config/gtk-3.0/settings.ini" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$home_root/.config/gtk-4.0/settings.ini" ]]; then', self.build)
-        setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
-        self.assertIn('if [ -e "$legacy_marker" ] && [ ! -e "$layout_marker" ]; then', setup)
-        self.assertIn('touch "$layout_marker"', setup)
-        self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop --resetLayout", setup)
-
     def test_build_validates_plasma_theme_in_global_theme_defaults(self):
         defaults = (ROOT / "packaging/plasma/ifba-os/contents/defaults").read_text()
         self.assertIn("[plasmarc][Theme]", defaults)
         self.assertIn("name=IFBA-WhiteSur-Dark", defaults)
         self.assertIn("$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults", self.build)
+        self.assertIn('/work/packaging/plasma/ifba-os/contents/defaults > "$ROOTFS/etc/xdg/kwinrc"', self.build)
         self.assertNotIn("grep -q '^name=IFBA-WhiteSur-Dark$' \"$ROOTFS/etc/skel/.config/plasmarc\"", self.build)
 
 

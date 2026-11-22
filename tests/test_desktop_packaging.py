@@ -360,16 +360,10 @@ class DesktopPackagingTests(unittest.TestCase):
         )
         self.assertIn("[kwinrc][Effect-overview]", defaults)
         setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
-        self.assertIn('legacy_marker="$state_dir/plasma-layout-applied"', setup)
-        self.assertIn('layout_marker="$state_dir/plasma-layout-applied-v2"', setup)
-        self.assertIn('wallpaper_marker="$state_dir/plasma-wallpaper-attempted-v2"', setup)
-        self.assertIn('touch "$layout_marker"', setup)
-        self.assertGreater(setup.rindex('touch "$wallpaper_marker"'), setup.index("plasma-apply-wallpaperimage"))
-
-        self.assertIn('if [ -e "$legacy_marker" ] && [ ! -e "$layout_marker" ]; then', setup)
-        self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop --resetLayout", setup)
-        self.assertIn("plasma-apply-wallpaperimage /usr/share/backgrounds/ifba-os/wallpaper.png", setup)
-        self.assertIn('cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/etc/skel/.config/autostart/"', build)
+        self.assertNotIn("--resetLayout", setup)
+        self.assertNotIn("plasma-apply-wallpaperimage", setup)
+        self.assertNotIn("plasma-org.kde.plasma.desktop-appletsrc", setup)
+        self.assertIn('^LookAndFeelPackage=org.ifbaos.desktop$', build)
         self.assertIn('find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so"', build)
         for applet in (
             "org.kde.milou",
@@ -464,34 +458,11 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("ShellPackage=org.kde.plasma.desktop", defaults)
         self.assertIn("ShellPackage=org.kde.plasma.desktop", shell_config)
         self.assertIn("org.ifbaos.plasma", build)  # targeted migration only
-        self.assertIn("migrate_plasma_shell.py", build)
+        self.assertNotIn("migrate_plasma_shell.py", build)
         self.assertNotIn("package_plasma_lockscreen.py", build)
         self.assertNotIn("/work/packaging/plasma/ifbaos-shell/contents/lockscreen", build)
         self.assertIn("lockscreen-wallpaper.png", (ROOT / "packaging/plasma/ifba-os-lockscreen.conf").read_text())
         self.assertIn("org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml", build)
-
-    def test_plasma_session_setup_applies_panels_only_once(self):
-        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp = Path(temp_dir)
-            mock_bin = temp / "bin"
-            mock_bin.mkdir()
-            log = temp / "calls.log"
-            for command in ("plasma-apply-lookandfeel", "plasma-apply-wallpaperimage"):
-                mock = mock_bin / command
-                mock.write_text("#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$TEST_LOG\"\n")
-                if command == "plasma-apply-lookandfeel":
-                    mock.write_text(mock.read_text() + 'mkdir -p "$HOME/.config"\nprintf "[Containments][1]\\nplugin=org.kde.panel\\n" > "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"\n')
-                mock.chmod(0o755)
-            env = os.environ.copy()
-            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
-            for _ in range(2):
-                subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
-            self.assertEqual(log.read_text().splitlines(), [
-                "--apply org.ifbaos.desktop --resetLayout",
-                "/usr/share/backgrounds/ifba-os/wallpaper.png",
-            ])
-            self.assertTrue((temp / "home/.config/ifba-os/plasma-layout-applied-v2").is_file())
 
     def test_plasma_session_setup_migrates_only_the_old_ifba_titlebar_defaults(self):
         setup = ROOT / "packaging/plasma/ifba-os-session-setup"
@@ -509,11 +480,9 @@ class DesktopPackagingTests(unittest.TestCase):
                 'esac\n'
             )
             kread.chmod(0o755)
-            for command in ("kwriteconfig6", "qdbus6", "plasma-apply-lookandfeel", "plasma-apply-wallpaperimage"):
+            for command in ("kwriteconfig6", "qdbus6"):
                 mock = mock_bin / command
                 mock.write_text('#!/bin/sh\nprintf "%s %s\\n" "' + command + '" "$*" >> "$TEST_LOG"\n')
-                if command == "plasma-apply-lookandfeel":
-                    mock.write_text(mock.read_text() + 'mkdir -p "$HOME/.config"\nprintf "[Containments][1]\\nplugin=org.kde.panel\\n" > "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"\n')
                 mock.chmod(0o755)
             env = os.environ.copy()
             env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
@@ -549,7 +518,7 @@ class DesktopPackagingTests(unittest.TestCase):
                 'esac\n'
             )
             kread.chmod(0o755)
-            for command in ("kwriteconfig6", "qdbus6", "plasma-apply-wallpaperimage"):
+            for command in ("kwriteconfig6", "qdbus6"):
                 mock = mock_bin / command
                 mock.write_text('#!/bin/sh\nprintf "%s %s\\n" "' + command + '" "$*" >> "$TEST_LOG"\n')
                 mock.chmod(0o755)
@@ -559,68 +528,49 @@ class DesktopPackagingTests(unittest.TestCase):
             self.assertFalse(log.exists())
             self.assertTrue((state / "kwin-decoration-migrated-v1").is_file())
 
-    def test_plasma_session_setup_preserves_existing_panels_without_marker(self):
+    def test_decoration_autostart_leaves_layout_and_wallpaper_to_plasma(self):
         setup = ROOT / "packaging/plasma/ifba-os-session-setup"
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp = Path(temp_dir)
-            config = temp / "home/.config"
-            config.mkdir(parents=True)
-            (config / "plasma-org.kde.plasma.desktop-appletsrc").write_text(
-                "[Containments][1]\nplugin=org.kde.panel\n"
-            )
-            mock_bin = temp / "bin"
-            mock_bin.mkdir()
-            mock = mock_bin / "plasma-apply-lookandfeel"
-            mock.write_text("#!/bin/sh\nexit 99\n")
-            mock.chmod(0o755)
-            env = os.environ.copy()
-            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin"})
-            subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
-            self.assertTrue((config / "ifba-os/plasma-layout-applied-v2").is_file())
+        profiles = {
+            "clean": None,
+            "screen mapping only": "[ScreenMapping]\nitemsOnDisabledScreens=\n",
+            "custom desktop without panel": (
+                "[Containments][1]\nplugin=org.kde.plasma.folder\n"
+                "[Containments][1][Wallpaper][org.kde.image][General]\nImage=file:///personal.png\n"
+            ),
+            "custom panel": "[Containments][1]\nplugin=org.kde.panel\nlocation=3\n",
+        }
+        for name, content in profiles.items():
+            with self.subTest(profile=name), tempfile.TemporaryDirectory() as directory:
+                home = Path(directory)
+                config = home / ".config"
+                state = config / "ifba-os"
+                state.mkdir(parents=True)
+                marker = state / "plasma-layout-applied-v2"
+                marker.write_text("legacy marker\n")
+                appletsrc = config / "plasma-org.kde.plasma.desktop-appletsrc"
+                if content is not None:
+                    appletsrc.write_text(content)
+                bin_dir = home / "bin"
+                bin_dir.mkdir()
+                log = home / "unexpected-write"
+                for command in ("plasma-apply-lookandfeel", "plasma-apply-wallpaperimage"):
+                    mock = bin_dir / command
+                    mock.write_text('#!/bin/sh\ntouch "$TEST_LOG"\nexit 1\n')
+                    mock.chmod(0o755)
+                env = os.environ | {
+                    "HOME": str(home), "XDG_CONFIG_HOME": str(config),
+                    "PATH": f"{bin_dir}:/usr/bin:/bin", "TEST_LOG": str(log),
+                }
 
-    def test_plasma_setup_retries_when_theme_returns_success_without_panels(self):
-        with tempfile.TemporaryDirectory() as directory:
-            temp = Path(directory)
-            mock_bin = temp / "bin"
-            mock_bin.mkdir()
-            log = temp / "calls"
-            mock = mock_bin / "plasma-apply-lookandfeel"
-            mock.write_text('#!/bin/sh\nprintf "apply\\n" >> "$TEST_LOG"\n')
-            mock.chmod(0o755)
-            env = os.environ.copy()
-            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
-            for _ in range(2):
-                subprocess.run([str(ROOT / "packaging/plasma/ifba-os-session-setup")], env=env, check=True, capture_output=True)
-            self.assertEqual(log.read_text().splitlines(), ["apply", "apply"])
-            self.assertFalse((temp / "home/.config/ifba-os/plasma-layout-applied-v2").exists())
+                for _ in range(2):
+                    subprocess.run([str(setup)], env=env, check=True, capture_output=True)
 
-    def test_plasma_setup_repairs_stale_layout_marker_when_saved_panel_is_missing(self):
-        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
-        with tempfile.TemporaryDirectory() as directory:
-            temp = Path(directory)
-            config = temp / "home/.config"
-            state = config / "ifba-os"
-            state.mkdir(parents=True)
-            (state / "plasma-layout-applied-v2").write_text("old marker\n")
-            (state / "plasma-wallpaper-attempted-v2").write_text("preserve wallpaper\n")
-            appletsrc = config / "plasma-org.kde.plasma.desktop-appletsrc"
-            appletsrc.write_text("[ScreenMapping]\nitemsOnDisabledScreens=\n")
-            mock_bin = temp / "bin"
-            mock_bin.mkdir()
-            log = temp / "calls"
-            mock = mock_bin / "plasma-apply-lookandfeel"
-            mock.write_text(
-                '#!/bin/sh\nprintf "%s\\n" "$*" >> "$TEST_LOG"\n'
-                'printf "[Containments][1]\\nplugin=org.kde.panel\\n" > "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"\n'
-            )
-            mock.chmod(0o755)
-            env = os.environ.copy()
-            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
-
-            subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
-            self.assertEqual(log.read_text().splitlines(), ["--apply org.ifbaos.desktop --resetLayout"])
-            self.assertTrue((state / "plasma-layout-applied-v2").is_file())
-            self.assertTrue((state / "plasma-wallpaper-attempted-v2").is_file())
+                self.assertFalse(log.exists())
+                self.assertEqual(marker.read_text(), "legacy marker\n")
+                if content is None:
+                    self.assertFalse(appletsrc.exists())
+                else:
+                    self.assertEqual(appletsrc.read_text(), content)
 
     def test_ifba_aurorae_decoration_is_installed_and_has_native_window_controls(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()

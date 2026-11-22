@@ -1,6 +1,10 @@
-// Native Plasma 6 panels only. Keep menus and actions tied to real applets.
-// The session setup applies this layout once to a new profile; existing panel
-// customizations are left untouched after first login.
+// Plasma evaluates this Look-and-Feel layout when there are no saved containments.
+for (const desktop of desktops()) {
+    desktop.wallpaperPlugin = "org.kde.image"
+    desktop.currentConfigGroup = ["Wallpaper", "org.kde.image", "General"]
+    desktop.writeConfig("Image", "file:///usr/share/backgrounds/ifba-os/wallpaper.png")
+}
+
 var topPanel = new Panel
 topPanel.location = "top"
 topPanel.height = 36
