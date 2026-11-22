@@ -583,6 +583,13 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(theme["General"]["leftbuttons"], "XIA")
         self.assertEqual(theme["General"].get("rightbuttons", ""), "")
         self.assertEqual(theme["Layout"]["titleheight"], "16")
+        for edge in ("titleedgetop", "titleedgebottom", "titleedgetopmaximized", "titleedgebottommaximized"):
+            self.assertEqual(theme["Layout"][edge], "6")
+        self.assertFalse(theme["General"].getboolean("usetextshadow"))
+        colors = json.loads((ROOT / "packaging/design-system/tokens.json").read_text())["colors"]
+        for title_state, token in (("activetextcolor", "text_primary"), ("inactivetextcolor", "text_secondary")):
+            rgb = bytes.fromhex(colors[token][1:])
+            self.assertEqual(theme["General"][title_state], ",".join(map(str, rgb)))
         self.assertEqual(theme["Layout"]["paddingtop"], "20")
         self.assertEqual(theme["Layout"]["paddingbottom"], "79")
         self.assertEqual(theme["Layout"]["paddingleft"], "40")
