@@ -6,6 +6,7 @@ Font=Inter,10,-1,5,50,0,0,0,0,0
 [kdeglobals][KDE]
 LookAndFeelPackage=org.ifbaos.desktop
 SingleClick=false
+widgetStyle=Breeze
 
 [kwinrc][Desktops]
 Number=1

@@ -34,19 +34,18 @@ def generate(tokens):
     radius = tokens["radius_px"]
     motion = tokens["motion"]
     easing = motion["easing"]
+    kde = tokens["kde_surfaces"]
     palette = {
         "[General]": {"Name": "IFBA OS Dark", "ColorScheme": "IFBA-OS-Dark", "shadeSortColumn": "true"},
-        "[Colors:Window]": {"BackgroundNormal": colors["surface"], "BackgroundAlternate": colors["surface_elevated"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
-        "[Colors:View]": {"BackgroundNormal": colors["background"], "BackgroundAlternate": colors["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
-        "[Colors:Button]": {"BackgroundNormal": colors["surface_elevated"], "BackgroundAlternate": colors["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
-        "[Colors:Selection]": {"BackgroundNormal": colors["accent"], "BackgroundAlternate": colors["accent_hover"], "ForegroundNormal": colors["background"], "ForegroundInactive": colors["text_primary"]},
-        "[Colors:Tooltip]": {"BackgroundNormal": colors["surface_elevated"], "BackgroundAlternate": colors["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
-        "[Colors:Complementary]": {"BackgroundNormal": colors["surface_elevated"], "BackgroundAlternate": colors["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
-        "[Colors:Header]": {"BackgroundNormal": colors["surface"], "BackgroundAlternate": colors["surface_elevated"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
-        "[Colors:Header][ Inactive]": {"BackgroundNormal": colors["background"], "BackgroundAlternate": colors["surface"], "ForegroundNormal": colors["text_secondary"], "ForegroundInactive": colors["text_secondary"]},
-        "[Colors:Button][Hover]": {"BackgroundNormal": colors["accent_hover"], "ForegroundNormal": colors["text_primary"]},
-        "[Colors:Button][Focus]": {"BackgroundNormal": colors["surface_elevated"], "ForegroundNormal": colors["text_primary"]},
-        "[WM]": {"activeBackground": colors["surface"], "activeForeground": colors["text_primary"], "inactiveBackground": colors["background"], "inactiveForeground": colors["text_secondary"]},
+        "[Colors:Window]": {"BackgroundNormal": kde["surface"], "BackgroundAlternate": kde["surface_elevated"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"], "DecorationHover": colors["accent"], "DecorationFocus": colors["focus"]},
+        "[Colors:View]": {"BackgroundNormal": kde["background"], "BackgroundAlternate": kde["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"], "DecorationHover": colors["accent"], "DecorationFocus": colors["focus"]},
+        "[Colors:Button]": {"BackgroundNormal": kde["surface_elevated"], "BackgroundAlternate": kde["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"], "DecorationHover": colors["accent"], "DecorationFocus": colors["focus"]},
+        "[Colors:Selection]": {"BackgroundNormal": kde["selection"], "BackgroundAlternate": kde["surface_elevated"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
+        "[Colors:Tooltip]": {"BackgroundNormal": kde["surface_elevated"], "BackgroundAlternate": kde["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
+        "[Colors:Complementary]": {"BackgroundNormal": kde["surface_elevated"], "BackgroundAlternate": kde["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
+        "[Colors:Header]": {"BackgroundNormal": kde["surface"], "BackgroundAlternate": kde["surface_elevated"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"]},
+        "[Colors:Header][Inactive]": {"BackgroundNormal": kde["background"], "BackgroundAlternate": kde["surface"], "ForegroundNormal": colors["text_secondary"], "ForegroundInactive": colors["text_secondary"]},
+        "[WM]": {"activeBackground": kde["surface"], "activeForeground": colors["text_primary"], "inactiveBackground": kde["background"], "inactiveForeground": colors["text_secondary"]},
     }
     color_text = []
     for section, values in palette.items():

@@ -4,63 +4,61 @@ ColorScheme=IFBA-OS-Dark
 shadeSortColumn=true
 
 [Colors:Window]
-BackgroundNormal=16,26,21
-BackgroundAlternate=25,40,32
+BackgroundNormal=34,42,52
+BackgroundAlternate=41,47,57
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
+DecorationHover=34,197,94
+DecorationFocus=74,222,128
 
 [Colors:View]
-BackgroundNormal=8,14,11
-BackgroundAlternate=16,26,21
+BackgroundNormal=25,30,37
+BackgroundAlternate=34,42,52
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
+DecorationHover=34,197,94
+DecorationFocus=74,222,128
 
 [Colors:Button]
-BackgroundNormal=25,40,32
-BackgroundAlternate=16,26,21
+BackgroundNormal=41,47,57
+BackgroundAlternate=34,42,52
+ForegroundNormal=241,245,242
+ForegroundInactive=148,163,154
+DecorationHover=34,197,94
+DecorationFocus=74,222,128
+
+[Colors:Selection]
+BackgroundNormal=55,69,82
+BackgroundAlternate=41,47,57
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 
-[Colors:Selection]
-BackgroundNormal=34,197,94
-BackgroundAlternate=22,163,74
-ForegroundNormal=8,14,11
-ForegroundInactive=241,245,242
-
 [Colors:Tooltip]
-BackgroundNormal=25,40,32
-BackgroundAlternate=16,26,21
+BackgroundNormal=41,47,57
+BackgroundAlternate=34,42,52
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 
 [Colors:Complementary]
-BackgroundNormal=25,40,32
-BackgroundAlternate=16,26,21
+BackgroundNormal=41,47,57
+BackgroundAlternate=34,42,52
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 
 [Colors:Header]
-BackgroundNormal=16,26,21
-BackgroundAlternate=25,40,32
+BackgroundNormal=34,42,52
+BackgroundAlternate=41,47,57
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 
-[Colors:Header][ Inactive]
-BackgroundNormal=8,14,11
-BackgroundAlternate=16,26,21
+[Colors:Header][Inactive]
+BackgroundNormal=25,30,37
+BackgroundAlternate=34,42,52
 ForegroundNormal=148,163,154
 ForegroundInactive=148,163,154
 
-[Colors:Button][Hover]
-BackgroundNormal=22,163,74
-ForegroundNormal=241,245,242
-
-[Colors:Button][Focus]
-BackgroundNormal=25,40,32
-ForegroundNormal=241,245,242
-
 [WM]
-activeBackground=16,26,21
+activeBackground=34,42,52
 activeForeground=241,245,242
-inactiveBackground=8,14,11
+inactiveBackground=25,30,37
 inactiveForeground=148,163,154

@@ -108,7 +108,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou \
   sddm sddm-theme-breeze breeze-gtk-theme breeze-icon-theme breeze-cursor-theme \
   qt-style-kvantum=1.1.5-1 qt-style-kvantum-themes=1.1.5-1 \
-  dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter \
+  dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter kde-config-sddm kde-config-screenlocker \
   powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio ffmpeg kscreen fastfetch \
   xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter fonts-noto-core \
   xdg-desktop-portal-kde xdg-desktop-portal-gtk \
@@ -358,12 +358,18 @@ Theme=breeze-dark
 [KDE]
 LookAndFeelPackage=org.ifbaos.desktop
 SingleClick=false
-widgetStyle=kvantum
+widgetStyle=Breeze
 KDEGLOBALS
+# Keep system fallback keys separate so an existing profile can still resolve
+# its own named scheme. A fresh user gets the full native KDE palette.
+install -D -m 0644 "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/etc/xdg/kdeglobals"
+awk '
+  /^\[/ { palette = /^\[Colors:/ || /^\[WM\]/ }
+  palette
+' "$ROOTFS/usr/share/color-schemes/IFBA-OS-Dark.colors" >> "$ROOTFS/etc/skel/.config/kdeglobals"
 if [[ ! -e "$ROOTFS/home/ubuntu/.config/kdeglobals" ]]; then
   cp "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/home/ubuntu/.config/kdeglobals"
 fi
-install -D -m 0644 "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/etc/xdg/kdeglobals"
 install -D -m 0644 /work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/metadata.json \
   "$ROOTFS/usr/share/plasma/desktoptheme/IFBA-WhiteSur-Dark/metadata.json"
 cp -R /work/packaging/plasma/desktoptheme/IFBA-WhiteSur-Dark/. \
@@ -538,10 +544,13 @@ cmp -s /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-la
 grep -q '^ShellPackage=org.kde.plasma.desktop$' "$ROOTFS/etc/skel/.config/plasmashellrc"
 grep -q '^ShellPackage=org.kde.plasma.desktop$' "$ROOTFS/etc/xdg/plasmashellrc"
 grep -q '^LookAndFeelPackage=org.ifbaos.desktop$' "$ROOTFS/etc/xdg/kdeglobals"
+grep -qx 'widgetStyle=Breeze' "$ROOTFS/etc/skel/.config/kdeglobals"
+grep -qx '\[Colors:View\]' "$ROOTFS/etc/skel/.config/kdeglobals"
+! grep -q '^\[Colors:' "$ROOTFS/etc/xdg/kdeglobals"
 grep -qx 'theme=__aurorae__svg__IFBA-Window' "$ROOTFS/etc/xdg/kwinrc"
 test -s "$ROOTFS/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
-for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio pipewire-pulse wireplumber ffmpeg kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 codium libreoffice-writer gcompris-qt; do
+for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter kde-config-sddm kde-config-screenlocker powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio pipewire-pulse wireplumber ffmpeg kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 codium libreoffice-writer gcompris-qt; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
 test "$(chroot "$ROOTFS" dpkg-query -W -f='${Version}' codium)" = "$CODIUM_VERSION"
