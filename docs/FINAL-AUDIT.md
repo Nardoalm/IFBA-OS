@@ -155,3 +155,7 @@ The latest UTM screenshot confirms a usable XFCE desktop on the exact output ISO
 - A decoração reutiliza as medidas do arquivo Aurorae `WhiteSur-darkrc` no commit auditado `cf4df59ce91004f7ea39358b1b8ff917d5c329f7`, com o conjunto IFBA de cores e formas mantido. Os botões passam para `XIA` (fechar, minimizar, maximizar) à esquerda. A migração é de uma vez e só transforma o arranjo antigo conhecido `IAX` à direita; valores personalizados permanecem intactos.
 - O IFBA AI agora solicita os controles nativos GTK `close,minimize,maximize` para a `Gtk.HeaderBar`. Testes estáticos e regressões da migração passaram; testes de renderização GTK foram pulados no macOS sem PyGObject, e não houve teste gráfico em KWin.
 - Suíte após alterações: 141 passaram, 6 foram pulados por dependências gráficas ausentes no host. Sintaxe Bash/Python e `git diff --check` passaram. Esta correção ainda não está em ISO e os resultados funcionais aguardam build e validação em VM.
+
+## Validação final do Plasma — 22/11/2026
+
+A [validação da Etapa 08](FINAL-VALIDATION.md) registra as correções, as capturas reais em UTM ARM64, o teste AMD64 em contêiner e a verificação das mídias históricas. A fonte atual passou pelas suítes disponíveis. O build de um novo par parou na checagem de espaço de uma árvore limpa, antes de preparar os artefatos.
