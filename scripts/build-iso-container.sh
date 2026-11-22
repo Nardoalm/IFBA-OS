@@ -235,8 +235,10 @@ install -D -m 0644 /work/assets/wallpapers/ifba-os-lockscreen.png \
   "$ROOTFS/usr/share/backgrounds/ifba-os/lockscreen-wallpaper.png"
 install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
   "$ROOTFS/etc/skel/.config/kscreenlockerrc"
-install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
-  "$ROOTFS/home/ubuntu/.config/kscreenlockerrc"
+if [[ ! -e "$ROOTFS/home/ubuntu/.config/kscreenlockerrc" ]]; then
+  install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
+    "$ROOTFS/home/ubuntu/.config/kscreenlockerrc"
+fi
 install -D -m 0644 /work/packaging/plasma/ifba-os-lockscreen.conf \
   "$ROOTFS/etc/xdg/kscreenlockerrc"
 install -D -m 0644 /work/packaging/sddm/ifba-theme.conf.user \
@@ -251,7 +253,6 @@ cp /work/packaging/ifba-ai.desktop "$ROOTFS/usr/share/applications/ifba-ai.deskt
 cp /work/packaging/ifba-ai.css "$ROOTFS/usr/share/ifba-os/ifba-ai.css"
 cp /work/packaging/org.ifba.OS.AI.service "$ROOTFS/usr/share/dbus-1/services/"
 cp /work/packaging/ifba-ai.service "$ROOTFS/usr/lib/systemd/user/"
-ln -sfn ../ifba-ai.service "$ROOTFS/usr/lib/systemd/user/default.target.wants/ifba-ai.service"
 cp /work/packaging/firefox.desktop /work/packaging/suap-ifba.desktop /work/packaging/ava-ifba.desktop "$ROOTFS/usr/share/applications/"
 cp /work/welcome/ifba_welcome.py "$ROOTFS/usr/bin/ifba-welcome"
 install -D -m 0644 /work/packaging/design-system/ifba-welcome.qss \
@@ -272,14 +273,26 @@ cp /work/packaging/calamares/branding.desc "$ROOTFS/etc/calamares/branding/ifba-
 cp /work/packaging/ifba-os-installer "$ROOTFS/usr/bin/ifba-os-installer"
 chmod 0755 "$ROOTFS/usr/bin/ifba-os-installer"
 cp /work/packaging/ifba-os-installer.desktop "$ROOTFS/usr/share/applications/"
-cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop"
-cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
+if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop" ]]; then
+  cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop"
+  chmod +x "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop"
+fi
+if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop" ]]; then
+  cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
+  chmod +x "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
+fi
 cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/etc/skel/Desktop/SUAP.desktop"
 cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/etc/skel/Desktop/AVA-IFBA.desktop"
-cp /work/packaging/ifba-ai.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop"
-cp /work/packaging/ifba-os-installer.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop"
+if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop" ]]; then
+  cp /work/packaging/ifba-ai.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop"
+  chmod +x "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop"
+fi
+if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop" ]]; then
+  cp /work/packaging/ifba-os-installer.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop"
+  chmod +x "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop"
+fi
 cp /work/packaging/ifba-ai.desktop "$ROOTFS/etc/skel/Desktop/IFBA-AI.desktop"
-chmod +x "$ROOTFS/home/ubuntu/Desktop/"*.desktop "$ROOTFS/etc/skel/Desktop/"*.desktop
+chmod +x "$ROOTFS/etc/skel/Desktop/"*.desktop
 install -D -m 0644 /work/packaging/color-schemes/IFBA-OS-Dark.colors \
   "$ROOTFS/usr/share/color-schemes/IFBA-OS-Dark.colors"
 install -D -m 0644 /work/packaging/gtk/gtk.css "$ROOTFS/etc/gtk-3.0/gtk.css"
@@ -317,7 +330,9 @@ fi
 install -D -m 0644 "$ROOTFS/etc/skel/.config/kdeglobals" "$ROOTFS/etc/xdg/kdeglobals"
 install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/etc/xdg/plasmashellrc"
 install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/etc/skel/.config/plasmashellrc"
-install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/home/ubuntu/.config/plasmashellrc"
+if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmashellrc" ]]; then
+  install -D -m 0644 /work/packaging/plasma/ifba-os-shell.conf "$ROOTFS/home/ubuntu/.config/plasmashellrc"
+fi
 install -D -m 0644 /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/defaults "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults"
 install -D -m 0644 /work/packaging/plasma/ifba-os/contents/layouts/org.kde.plasma.desktop-layout.js "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js"
@@ -348,7 +363,9 @@ OnlyShowIn=KDE;
 Terminal=false
 StartupNotify=false
 AUTOSTART
-cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/home/ubuntu/.config/autostart/"
+if [[ ! -e "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.desktop" ]]; then
+  cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/home/ubuntu/.config/autostart/"
+fi
 cp "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" "$ROOTFS/etc/skel/.config/autostart/"
 chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu
 chmod 0700 "$ROOTFS/home/ubuntu/.config/ifba-ai" "$ROOTFS/home/ubuntu/.local/share/ifba-ai" "$ROOTFS/home/ubuntu/.cache/ifba-ai" \

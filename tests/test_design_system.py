@@ -85,6 +85,12 @@ class DesignSystemTests(unittest.TestCase):
 
     def test_existing_live_user_preferences_are_not_replaced(self):
         self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/kdeglobals" ]]; then', self.build)
+        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/kscreenlockerrc" ]]; then', self.build)
+        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/plasmashellrc" ]]; then', self.build)
+        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.desktop" ]]; then', self.build)
+        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop" ]]; then', self.build)
+        self.assertIn('if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop" ]]; then', self.build)
+        self.assertNotIn('chmod +x "$ROOTFS/home/ubuntu/Desktop/"*.desktop', self.build)
         self.assertIn('if [[ ! -e "$home_root/.config/gtk-3.0/gtk.css" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$home_root/.config/gtk-4.0/gtk.css" ]]; then', self.build)
         self.assertIn('if [[ ! -e "$home_root/.config/gtk-3.0/settings.ini" ]]; then', self.build)
