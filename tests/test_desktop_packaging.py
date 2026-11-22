@@ -383,7 +383,7 @@ class DesktopPackagingTests(unittest.TestCase):
             "org.kde.plasma.battery",
         ):
             self.assertIn(applet, build)
-        self.assertIn("Session=plasmax11.desktop", build)
+        self.assertIn("Session=plasma.desktop", build)
         self.assertIn("/lib/systemd/system/sddm.service", build)
         self.assertNotIn("xfce4-session", build)
         self.assertNotIn("lightdm", build.lower())
@@ -440,6 +440,22 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertNotIn("ifba-control-center/metadata.json", build)
         self.assertNotIn('install -D -m 0644 /work/packaging/plasma/ifba-control-center', build)
         self.assertIn('test ! -e "$ROOTFS/usr/share/plasma/plasmoids/org.ifbaos.controlcenter"', build)
+
+    def test_live_and_installed_session_policies_are_explicit(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        cleanup = (ROOT / "packaging/calamares/shellprocess.conf").read_text()
+        displaymanager = (ROOT / "packaging/calamares/displaymanager.conf").read_text()
+        self.assertIn("DisplayServer=x11", build)
+        self.assertIn(r"User=ubuntu\nSession=plasma.desktop\nRelogin=false", build)
+        self.assertIn(r'printf "[Last]\nSession=plasmax11.desktop\n" > /var/lib/sddm/state.conf', build)
+        self.assertIn("chown sddm:sddm /var/lib/sddm/state.conf", build)
+        self.assertIn('test -s "$ROOTFS/usr/share/wayland-sessions/plasma.desktop"', build)
+        self.assertIn('test -s "$ROOTFS/usr/share/xsessions/plasmax11.desktop"', build)
+        self.assertIn("rm -f /etc/sddm.conf.d/10-ifba-os.conf", cleanup)
+        self.assertNotIn("state.conf", cleanup)
+        self.assertIn("desktopFile: plasmax11.desktop", displaymanager)
+        users = (ROOT / "packaging/calamares/users.conf").read_text()
+        self.assertIn("doAutologin: false", users)
 
     def test_kscreenlocker_uses_native_plasma_shell_with_ifba_wallpaper(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
