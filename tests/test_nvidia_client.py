@@ -3,16 +3,21 @@ import json
 import base64
 import unittest
 from urllib.error import HTTPError, URLError
+from urllib.request import Request
 
 from ifba_ai.nvidia import (
     API_URL,
     CancellationToken,
     GenerationCancelled,
+    MAX_RESPONSE_BYTES,
+    MAX_SSE_LINE_BYTES,
     MULTIMODAL_MODEL,
     MODEL_ENDPOINTS,
     NvidiaClient,
     NvidiaError,
+    RejectRedirectHandler,
     bounded_context,
+    open_without_redirects,
 )
 from ifba_ai.model_registry import DEFAULT_MODEL
 
@@ -29,9 +34,31 @@ class FakeResponse:
         self.closed = True
 
 
+class ReadableFakeResponse(FakeResponse):
+    def __init__(self, chunks):
+        super().__init__(chunks)
+        self.stream = io.BytesIO(b"".join(chunks))
+        self.maximum_read_size = 0
+
+    def readline(self, size=-1):
+        self.maximum_read_size = max(self.maximum_read_size, size)
+        return self.stream.readline(size)
+
+
 class ClientTests(unittest.TestCase):
+    def test_authenticated_client_refuses_redirects(self):
+        self.assertIs(NvidiaClient().opener, open_without_redirects)
+        request = Request(API_URL, data=b"{}", method="POST", headers={"Authorization": "Bearer test-secret"})
+        with self.assertRaises(HTTPError) as raised:
+            RejectRedirectHandler().redirect_request(
+                request, io.BytesIO(b""), 302, "Found", {}, "https://attacker.invalid/collect"
+            )
+        self.assertEqual(raised.exception.code, 302)
+        self.assertNotIn("attacker.invalid", str(raised.exception))
+        self.assertTrue(raised.exception.fp.closed)
+
     def test_streaming_uses_nvidia_endpoint_and_never_logs_key(self):
-        response = FakeResponse([
+        response = ReadableFakeResponse([
             b'data: {"choices":[{"delta":{"content":"Ola"}}]}\n\n',
             b'data: {"choices":[{"delta":{"content":" mundo"}}]}\n\n',
             b'data: [DONE]\n\n',
@@ -55,6 +82,38 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(captured["timeout"], 45)
         self.assertTrue(captured["body"]["stream"])
         self.assertNotIn(secret, repr(captured["body"]))
+        self.assertTrue(response.closed)
+
+    def test_oversized_sse_line_is_rejected_with_bounded_reads(self):
+        response = ReadableFakeResponse([b"data: " + b"x" * MAX_SSE_LINE_BYTES])
+        client = NvidiaClient(opener=lambda *_args, **_kwargs: response)
+
+        with self.assertRaisesRegex(NvidiaError, "excedeu o limite"):
+            list(client.stream_chat("secret", DEFAULT_MODEL, [], 100))
+
+        self.assertEqual(response.maximum_read_size, MAX_SSE_LINE_BYTES + 1)
+        self.assertTrue(response.closed)
+
+    def test_oversized_line_is_also_rejected_from_iterable_response_objects(self):
+        response = FakeResponse([b"data: " + b"x" * (MAX_SSE_LINE_BYTES + 1)])
+        client = NvidiaClient(opener=lambda *_args, **_kwargs: response)
+
+        with self.assertRaisesRegex(NvidiaError, "excedeu o limite"):
+            list(client.stream_chat("secret", DEFAULT_MODEL, [], 100))
+
+        self.assertTrue(response.closed)
+
+    def test_oversized_total_response_is_rejected(self):
+        delta_bytes = 100 * 1024
+        event = (b'data: {"choices":[{"delta":{"content":"'
+                 + b"a" * delta_bytes + b'"}}]}\n')
+        lines = [event] * (MAX_RESPONSE_BYTES // delta_bytes + 2)
+        response = ReadableFakeResponse(lines)
+        client = NvidiaClient(opener=lambda *_args, **_kwargs: response)
+
+        with self.assertRaisesRegex(NvidiaError, "excedeu o limite"):
+            list(client.stream_chat("secret", DEFAULT_MODEL, [], 32768))
+
         self.assertTrue(response.closed)
 
     def test_reasoning_deltas_are_never_exposed_as_chat_text(self):

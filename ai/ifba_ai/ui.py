@@ -37,6 +37,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.proxy = None
         self.bus = None
         self.service_connection_started = False
+        self.live_demo = False
         self.current_conversation = None
         self.generating = False
         self.last_visual_context = None
@@ -115,12 +116,12 @@ class AssistantWindow(Gtk.ApplicationWindow):
         settings_button = Gtk.Button(label="Configurações")
         settings_button.connect("clicked", lambda *_: self.stack.set_visible_child_name("settings"))
         header.pack_end(settings_button)
-        data_button = Gtk.Button(label="Memórias e dados")
-        data_button.connect("clicked", self._manage_data)
-        header.pack_end(data_button)
-        tools_button = Gtk.Button(label="Ferramentas")
-        tools_button.connect("clicked", self._open_tools)
-        header.pack_end(tools_button)
+        self.data_button = Gtk.Button(label="Memórias e dados")
+        self.data_button.connect("clicked", self._manage_data)
+        header.pack_end(self.data_button)
+        self.tools_button = Gtk.Button(label="Ferramentas")
+        self.tools_button.connect("clicked", self._open_tools)
+        header.pack_end(self.tools_button)
         self.visual_button = Gtk.Button(label="Orientação visual")
         self.visual_button.set_tooltip_text("Capturar a janela ativa, revisar a prévia e decidir se deseja enviá-la à NVIDIA")
         self.visual_button.set_sensitive(False)
@@ -252,6 +253,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         remove.connect("clicked", self._remove_key)
         actions.add(remove)
         save = Gtk.Button(label="Salvar configurações")
+        self.save_settings_button = save
         save.get_style_context().add_class("suggested-action")
         save.connect("clicked", self._save_settings)
         actions.add(save)
@@ -302,8 +304,24 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.bus = None
         self._connect_service()
 
-    def _on_service_status(self, configured, store_available, _model):
+    def _on_service_status(self, configured, store_available, live_demo, _model):
         self.retry_service_button.hide()
+        self.live_demo = bool(live_demo)
+        if self.live_demo:
+            self.status.set_text(
+                "Sessão Live de demonstração: o IFBA AI não armazena chaves, conversas, memórias ou capturas. "
+                "Instale o sistema e use uma conta individual para ativar o assistente."
+            )
+            self.new_chat.set_sensitive(False)
+            self.input.set_sensitive(False)
+            self.send_button.set_sensitive(False)
+            self.visual_button.set_sensitive(False)
+            self.data_button.set_sensitive(False)
+            self.tools_button.set_sensitive(False)
+            self.key_entry.set_sensitive(False)
+            self.save_settings_button.set_sensitive(False)
+            self.stack.set_visible_child_name("settings")
+            return
         if not store_available:
             self.status.set_text("Cofre indisponível ou bloqueado. Desbloqueie-o na sessão antes de salvar uma chave.")
         else:
@@ -387,7 +405,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
             self._append_text(("Você" if str(role) == "user" else "IFBA AI") + "\n" + str(content) + "\n\n")
 
     def _new_conversation(self, *_):
-        if not self.proxy or self.generating:
+        if self.live_demo or not self.proxy or self.generating:
             return
         self.current_conversation = str(self.proxy.CreateConversation("Nova conversa"))
         self._load_conversations()
@@ -403,9 +421,9 @@ class AssistantWindow(Gtk.ApplicationWindow):
 
     def _send_message(self, *_):
         prompt = self.input.get_text().strip()
-        if not self.proxy or not prompt or self.generating:
+        if self.live_demo or not self.proxy or not prompt or self.generating:
             return
-        configured, _store, _model = self.proxy.GetStatus()
+        configured, _store, _live_demo, _model = self.proxy.GetStatus()
         if not configured:
             self.status.set_text("Configure sua chave NVIDIA pessoal para iniciar uma conversa.")
             self.stack.set_visible_child_name("settings")
@@ -455,7 +473,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.visual_button.set_sensitive(bool(self.new_chat.get_sensitive()))
 
     def _capture_visual(self, *_):
-        if not self.proxy or self.generating:
+        if self.live_demo or not self.proxy or self.generating:
             return
         selected_model = self.model.get_active_id() or DEFAULT_MODEL
         if selected_model not in MODELS:
@@ -713,7 +731,10 @@ class AssistantWindow(Gtk.ApplicationWindow):
                 self.key_entry.set_text("")
             self.proxy.SaveSettings(json.dumps(values, ensure_ascii=False))
             self.proxy.PruneData(values["history_retention_days"], values["memory_retention_days"])
-            configured, store_available, _ = self.proxy.GetStatus()
+            configured, store_available, live_demo, _ = self.proxy.GetStatus()
+            if live_demo:
+                self.status.set_text("O IFBA AI não armazena dados na sessão Live compartilhada.")
+                return
             if not store_available:
                 self.status.set_text("Configurações salvas, mas o cofre está indisponível; a chave não foi armazenada.")
                 return
@@ -733,7 +754,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         return response == Gtk.ResponseType.ACCEPT
 
     def _manage_data(self, *_):
-        if not self.proxy:
+        if self.live_demo or not self.proxy:
             return
         dialog = Gtk.Dialog(title="Memórias e dados deste usuário", transient_for=self, modal=True)
         dialog.set_default_size(700, 500)
@@ -871,7 +892,7 @@ class AssistantWindow(Gtk.ApplicationWindow):
         dialog.destroy()
 
     def _open_tools(self, *_):
-        if not self.proxy:
+        if self.live_demo or not self.proxy:
             return
         dialog = Gtk.Dialog(title="Ferramentas locais autorizadas", transient_for=self, modal=True)
         dialog.set_default_size(620, 520)

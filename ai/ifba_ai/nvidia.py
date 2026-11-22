@@ -6,7 +6,7 @@ import json
 import re
 import threading
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .model_registry import DEFAULT_MODEL, IMAGE_MODELS, ModelRegistryError
 from .model_registry import fallback_instruction, request_options
@@ -17,6 +17,8 @@ MULTIMODAL_MODEL = DEFAULT_MODEL
 MULTIMODAL_MODELS = IMAGE_MODELS
 MODEL_ENDPOINTS = {}
 MAX_INLINE_IMAGE_BYTES = 180 * 1024
+MAX_RESPONSE_BYTES = 2 * 1024 * 1024
+MAX_SSE_LINE_BYTES = 128 * 1024
 SYSTEM_PROMPT = (
     "Você é o assistente educacional do IFBA OS. Explique com clareza em português, "
     "adapte a explicação ao nível informado, ajude o estudante a compreender e "
@@ -31,6 +33,43 @@ class NvidiaError(Exception):
 
 class GenerationCancelled(NvidiaError):
     pass
+
+
+class RejectRedirectHandler(HTTPRedirectHandler):
+    """Refuse API redirects so bearer credentials remain bound to API_URL."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        try:
+            fp.close()
+        except Exception:
+            pass
+        raise HTTPError(req.full_url, code, "Redirects are not allowed for authenticated API calls.", headers, fp)
+
+
+def open_without_redirects(request, timeout):
+    opener = build_opener(RejectRedirectHandler())
+    return opener.open(request, timeout=timeout)
+
+
+def bounded_response_lines(response):
+    """Read bounded SSE lines without allowing urllib to allocate an unlimited line."""
+    readline = getattr(response, "readline", None)
+    if callable(readline):
+        while True:
+            raw_line = readline(MAX_SSE_LINE_BYTES + 1)
+            if not raw_line:
+                return
+            if len(raw_line) > MAX_SSE_LINE_BYTES:
+                raise NvidiaError("A resposta NVIDIA excedeu o limite permitido.")
+            yield raw_line
+        return
+
+    # Compatibility with response-like objects used by alternate clients and tests.
+    # Production urllib responses expose readline(), which enforces the allocation cap.
+    for raw_line in response:
+        if len(raw_line) > MAX_SSE_LINE_BYTES:
+            raise NvidiaError("A resposta NVIDIA excedeu o limite permitido.")
+        yield raw_line
 
 
 class CancellationToken:
@@ -87,7 +126,7 @@ def bounded_context(history, max_chars=24000, max_messages=24):
 
 class NvidiaClient:
     def __init__(self, opener=None, timeout=45, retries=2):
-        self.opener = opener or urlopen
+        self.opener = opener or open_without_redirects
         self.timeout = timeout
         self.retries = max(0, min(int(retries), 3))
 
@@ -228,12 +267,21 @@ class NvidiaClient:
                     raise GenerationCancelled("Geração interrompida.")
 
         emitted = False
+        response_bytes = 0
+        answer_bytes = 0
         if hasattr(cancel_event, "attach"):
             cancel_event.attach(response)
         try:
-            for raw_line in response:
+            for raw_line in bounded_response_lines(response):
                 if cancel_event.is_set():
                     raise GenerationCancelled("Geração interrompida.")
+                raw_bytes = (len(raw_line) if isinstance(raw_line, bytes)
+                             else len(raw_line.encode("utf-8")) if isinstance(raw_line, str) else 0)
+                if raw_bytes == 0 and raw_line:
+                    raise NvidiaError("A resposta NVIDIA tem um formato inválido.")
+                response_bytes += raw_bytes
+                if response_bytes > MAX_RESPONSE_BYTES:
+                    raise NvidiaError("A resposta NVIDIA excedeu o limite permitido.")
                 line = raw_line.decode("utf-8", errors="replace").strip() if isinstance(raw_line, bytes) else raw_line.strip()
                 if not line.startswith("data:"):
                     continue
@@ -248,6 +296,10 @@ class NvidiaClient:
                 except (ValueError, TypeError, AttributeError, IndexError):
                     continue
                 if isinstance(delta, str) and delta:
+                    delta_bytes = len(delta.encode("utf-8"))
+                    if answer_bytes + delta_bytes > MAX_RESPONSE_BYTES:
+                        raise NvidiaError("A resposta NVIDIA excedeu o limite permitido.")
+                    answer_bytes += delta_bytes
                     emitted = True
                     yield delta
         except GenerationCancelled:

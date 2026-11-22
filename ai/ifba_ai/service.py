@@ -2,21 +2,31 @@
 
 import json
 import threading
+from pathlib import Path
 
 from .paths import AppPaths
 from .secrets import CredentialStoreError, SecretStore
-from .settings import SettingsStore
+from .settings import DEFAULTS, SettingsStore
 from .storage import ConversationStore
 from .nvidia import CancellationToken, NvidiaClient, NvidiaError, GenerationCancelled
+from .nvidia import MAX_RESPONSE_BYTES
 from .nvidia import MULTIMODAL_MODELS
 from .visual import VisualContextError, capture_active_window, validate_visual_result
 
+LIVE_DEMO_MARKER = Path("/etc/ifba-os/live-demo")
+LIVE_DEMO_NOTICE = (
+    "IFBA AI fica desativado na sessão Live compartilhada para proteger chaves, conversas e memórias. "
+    "Instale o sistema e use sua conta individual para ativar o assistente."
+)
+
 
 class AssistantService:
-    def __init__(self, paths=None, secret_store=None, nvidia_client=None, emit=None):
+    def __init__(self, paths=None, secret_store=None, nvidia_client=None, emit=None,
+                 live_demo_marker=LIVE_DEMO_MARKER):
         self.paths = paths or AppPaths()
+        self.live_demo = Path(live_demo_marker).is_file()
         self.settings = SettingsStore(self.paths)
-        self.storage = ConversationStore(self.paths)
+        self.storage = None if self.live_demo else ConversationStore(self.paths)
         self.secrets = secret_store or SecretStore()
         self.client = nvidia_client or NvidiaClient()
         from .tools import SystemTools
@@ -26,6 +36,9 @@ class AssistantService:
         self._generation = None
 
     def status(self):
+        if self.live_demo:
+            return {"api_key_configured": False, "credential_store_available": False,
+                    "live_demo": True, "settings": dict(DEFAULTS)}
         try:
             configured = bool(self.secrets.get())
             store_available = True
@@ -33,9 +46,19 @@ class AssistantService:
             configured = False
             store_available = False
         return {"api_key_configured": configured, "credential_store_available": store_available,
-                "settings": self.settings.read()}
+                "live_demo": False, "settings": self.settings.read()}
+
+    def get_settings(self):
+        if self.live_demo:
+            return dict(DEFAULTS)
+        return self.settings.read()
+
+    def require_live_ai_data_enabled(self):
+        if self.live_demo:
+            raise ValueError(LIVE_DEMO_NOTICE)
 
     def save_settings(self, serialized):
+        self.require_live_ai_data_enabled()
         try:
             values = json.loads(serialized)
         except (TypeError, ValueError) as error:
@@ -45,29 +68,35 @@ class AssistantService:
         return self.settings.write(values)
 
     def store_api_key(self, secret):
+        self.require_live_ai_data_enabled()
         self.secrets.store(secret)
 
     def delete_api_key(self):
+        self.require_live_ai_data_enabled()
         self.secrets.delete()
 
     def start_generation(self, conversation_id, prompt):
         self._start_generation(conversation_id, prompt)
 
     def list_visible_windows(self):
+        self.require_live_ai_data_enabled()
         from .visual import list_visible_windows
         return list_visible_windows()
 
     def capture_visual_preview(self, window_id):
+        self.require_live_ai_data_enabled()
         from .visual import active_window_context
         context = active_window_context(window_id=int(window_id))
         image = capture_active_window(context=context)
         return json.dumps({"context": context, "image": image}, ensure_ascii=False)
 
     def get_active_window_context(self):
+        self.require_live_ai_data_enabled()
         from .visual import active_window_context
         return active_window_context()
 
     def get_accessible_control_bounds(self, window_id, target_id):
+        self.require_live_ai_data_enabled()
         from .visual import active_window_context
         context = active_window_context(window_id=window_id)
         for control in context.get("controls", []):
@@ -81,6 +110,7 @@ class AssistantService:
         raise VisualContextError("O controle não está mais disponível na janela.")
 
     def start_visual_generation(self, conversation_id, prompt, image_data_url, serialized_context):
+        self.require_live_ai_data_enabled()
         if not isinstance(serialized_context, str) or len(serialized_context) > 30000:
             raise ValueError("O contexto visual excede o limite permitido.")
         try:
@@ -95,6 +125,7 @@ class AssistantService:
                                visual_context=context)
 
     def _start_generation(self, conversation_id, prompt, image_data_url=None, visual_context=None):
+        self.require_live_ai_data_enabled()
         if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 20000:
             raise ValueError("A mensagem está vazia ou excede o limite permitido.")
         if not self._generation_lock.acquire(False):
@@ -119,6 +150,7 @@ class AssistantService:
 
         def run():
             answer = []
+            answer_bytes = 0
             try:
                 for chunk in self.client.stream_chat(
                     api_key, settings["model_id"], history, settings["max_tokens"], token,
@@ -128,6 +160,12 @@ class AssistantService:
                     educational_context=self._educational_context(
                         prompt, conversation_id, include_memories=settings["memory_enabled"]),
                 ):
+                    if not isinstance(chunk, str) or len(chunk) > MAX_RESPONSE_BYTES:
+                        raise NvidiaError("A resposta excedeu o limite permitido.")
+                    chunk_bytes = len(chunk.encode("utf-8"))
+                    if answer_bytes + chunk_bytes > MAX_RESPONSE_BYTES:
+                        raise NvidiaError("A resposta excedeu o limite permitido.")
+                    answer_bytes += chunk_bytes
                     answer.append(chunk)
                     if visual_context is None:
                         self.emit("delta", conversation_id, chunk)

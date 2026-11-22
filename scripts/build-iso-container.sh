@@ -138,6 +138,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
   apt-get clean
   rm -rf /var/lib/apt/lists/* /tmp/*
 '
+install -D -m 0644 /dev/null "$ROOTFS/etc/ifba-os/live-demo"
 mkdir -p "$ROOTFS/etc/systemd/system/multi-user.target.wants" "$ROOTFS/etc/NetworkManager/system-connections" \
   "$ROOTFS/etc/NetworkManager/conf.d" \
   "$ROOTFS/usr/local/bin" "$ROOTFS/usr/lib/python3/dist-packages" \

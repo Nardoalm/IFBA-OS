@@ -66,3 +66,29 @@ Foi corrigida uma falha reproduzível no verificador/publicador de releases: um 
 | Recursos/estabilidade | Sem benchmark do desktop atual | Pendente; só há consumo histórico do build, que não representa runtime |
 
 Nenhuma ISO foi anunciada como boot-testada nesta auditoria. Para liberar, construir o commit auditado em ambas as arquiteturas, gerar um par com manifesto íntegro, instalar/bootar em VMs UEFI descartáveis e testar login, atualizações, serviços, privacidade, reinício e consumo de recursos.
+
+## Revisão de segurança, estabilidade e desempenho — 2026-11-21
+
+### Mudanças aplicadas no código-fonte
+
+- O serviço de usuário do IFBA AI deixou de ser ligado a `default.target`; o arquivo D-Bus continua configurado com `SystemdService=ifba-ai.service`, então a inicialização é sob demanda quando o aplicativo solicita o serviço.
+- O build passou a preservar configurações existentes no home Live reutilizado: `kscreenlockerrc`, `plasmashellrc`, autostart da configuração Plasma e atalhos IFBA/SUAP/AVA só são adicionados se ausentes. O `chmod +x` foi limitado aos atalhos novos e ao `/etc/skel`, sem alterar os modos de todos os arquivos `.desktop` do usuário.
+- O cliente NVIDIA agora rejeita respostas de redirecionamento ao enviar uma chave Bearer; a regressão confirma que o handler autenticado recusa 30x sem acessar a rede.
+- O cliente SSE limita cada linha a 128 KiB e o corpo/resposta a 2 MiB; o serviço aplica o limite acumulado novamente antes de emitir ou persistir texto, inclusive para clientes alternativos.
+- O build cria `/etc/ifba-os/live-demo`; IFBA AI não inicializa SQLite nem aceita credenciais, conversas, memórias, captura, exportação ou geração no modo demo. A UI desabilita os controles correspondentes e o Calamares remove o marcador no alvo instalado.
+- Regressões cobrem ausência de autostart do daemon, ativação D-Bus mantida e guards de persistência/permissões.
+
+### Auditoria estática
+
+- Os repositórios de temas avaliados não estão vendorizados no build; Plasma Liquid Glass continua excluído. Não foram encontrados instaladores remotos executados nem downloads de scripts. O único download explícito de chave no pipeline Plasma é o signing key do repositório Mozilla, baixado via HTTPS e aceito apenas se o fingerprint fixo `35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3` coincidir; APT valida metadados/pacotes assinados.
+- Ubuntu/Firefox ainda são resolvidos de repositórios móveis, após `apt-get upgrade`; uma origem/hash identifica o build, mas não fixa as versões ou o snapshot APT. Isso mantém atualizações de segurança disponíveis e impede reprodutibilidade byte a byte sem reter os metadados e pacotes exatos.
+- O serviço AI é per-user, com `NoNewPrivileges`, `ProtectSystem=strict`, `ProtectHome=read-only`, `UMask=0077` e caminhos graváveis limitados. Ferramentas do cliente são tipadas/allowlisted; gravação de arquivo requer confirmação de uso único. Não foi identificada execução de comandos fornecidos pelo modelo.
+- O agente QEMU é iniciado explicitamente para diagnóstico em VM. Seu consumo não foi medido e a necessidade em hardware sem QEMU permanece uma possível redução futura de serviços.
+- A procedência/licença de todos os logotipos/imagens institucionais e de portal ainda precisa de inventário autorizado. A licença geral do repositório não substitui permissão de uso de marcas institucionais.
+
+### Validação e pendências
+
+- **119 testes passaram e 2 foram ignorados** por `PYTHONPATH=ai python3 -m unittest discover -s tests -q`; os 48 testes focados em NVIDIA, IFBA AI e empacotamento também passaram. `bash -n` no build, `python3 -m py_compile` nos módulos Python alterados e `git diff --check` passaram.
+- Nenhum build/ISO foi feito. A revisão não executou instaladores externos, chamadas autenticadas, Calamares, sessão Plasma, boot, rede em guest ou benchmark. Os ISO v0.3.3 foram estruturalmente validados anteriormente, mas precedem os últimos commits de fonte e não estão runtime-validados.
+- Permanecem bloqueadores: conta Live única compartilhada sem senha (IFBA AI está limitado a demo, mas arquivos de outros apps continuam compartilhados); autorização/licença dos assets institucionais; pacote-base resolvido de repositórios móveis; Calamares/reboot/login sem teste; NetworkManager/Wi-Fi/AI sem teste nas imagens atuais; compatibilidade real Wayland/ARM64; ausência de medição comparável de memória, CPU/GPU, boot e falhas.
+- Nenhuma CVE scanner/banco de vulnerabilidades foi consultado neste ciclo, e nenhuma assinatura criptográfica de release foi produzida.

@@ -54,16 +54,17 @@ class AssistantObject(dbus.service.Object):
     def VisualGuide(self, conversation_id, serialized_result):
         pass
 
-    @dbus.service.method(INTERFACE, out_signature="bbs")
+    @dbus.service.method(INTERFACE, out_signature="bbbs")
     def GetStatus(self):
         status = self.service.status()
         return (dbus.Boolean(status["api_key_configured"]),
                 dbus.Boolean(status["credential_store_available"]),
+                dbus.Boolean(status["live_demo"]),
                 dbus.String(status["settings"]["model_id"]))
 
     @dbus.service.method(INTERFACE, out_signature="s")
     def GetSettings(self):
-        return json.dumps(self.service.settings.read(), ensure_ascii=False)
+        return json.dumps(self.service.get_settings(), ensure_ascii=False)
 
     @dbus.service.method(INTERFACE, in_signature="s", out_signature="b")
     def SaveSettings(self, serialized):
@@ -82,22 +83,28 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, in_signature="s", out_signature="s")
     def CreateConversation(self, title):
+        self.service.require_live_ai_data_enabled()
         return dbus.String(self.service.storage.create_conversation(str(title)))
 
     @dbus.service.method(INTERFACE, out_signature="a(sss)")
     def ListConversations(self):
+        if self.service.live_demo:
+            return []
         rows = self.service.storage.list_conversations()
         return [(dbus.String(row["id"]), dbus.String(row["title"]),
                  dbus.String(row["updated_at"])) for row in rows]
 
     @dbus.service.method(INTERFACE, in_signature="s", out_signature="a(sss)")
     def ListMessages(self, conversation_id):
+        if self.service.live_demo:
+            return []
         rows = self.service.storage.list_messages(str(conversation_id))
         return [(dbus.String(row["role"]), dbus.String(row["content"]),
                  dbus.String(row["created_at"])) for row in rows]
 
     @dbus.service.method(INTERFACE, in_signature="sss", out_signature="b")
     def AddMessage(self, conversation_id, role, content):
+        self.service.require_live_ai_data_enabled()
         self.service.storage.add_message(str(conversation_id), str(role), str(content))
         return dbus.Boolean(True)
 
@@ -131,35 +138,48 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, out_signature="s")
     def ListMemories(self):
+        if self.service.live_demo:
+            return "[]"
         return json.dumps(self.service.storage.list_memories(), ensure_ascii=False)
 
     @dbus.service.method(INTERFACE, in_signature="ssb", out_signature="u")
     def AddMemory(self, category, content, inferred):
+        self.service.require_live_ai_data_enabled()
         return dbus.UInt32(self.service.storage.add_memory(str(category), str(content), bool(inferred)))
 
     @dbus.service.method(INTERFACE, in_signature="ussb", out_signature="b")
     def UpdateMemory(self, memory_id, category, content, inferred):
+        self.service.require_live_ai_data_enabled()
         return dbus.Boolean(self.service.storage.update_memory(int(memory_id), str(category),
                                                                 str(content), bool(inferred)))
 
     @dbus.service.method(INTERFACE, in_signature="u", out_signature="b")
     def DeleteMemory(self, memory_id):
+        if self.service.live_demo:
+            return dbus.Boolean(False)
         return dbus.Boolean(self.service.storage.delete_memory(int(memory_id)))
 
     @dbus.service.method(INTERFACE, out_signature="u")
     def ClearMemories(self):
+        if self.service.live_demo:
+            return dbus.UInt32(0)
         return dbus.UInt32(self.service.storage.clear_memories())
 
     @dbus.service.method(INTERFACE, out_signature="u")
     def ClearHistory(self):
+        if self.service.live_demo:
+            return dbus.UInt32(0)
         return dbus.UInt32(self.service.storage.clear_history())
 
     @dbus.service.method(INTERFACE, out_signature="s")
     def ExportData(self):
+        self.service.require_live_ai_data_enabled()
         return self.service.storage.export_json()
 
     @dbus.service.method(INTERFACE, in_signature="uu", out_signature="s")
     def PruneData(self, history_days, memory_days):
+        if self.service.live_demo:
+            return json.dumps({"memories": 0, "conversations": 0})
         return json.dumps(self.service.storage.prune(int(history_days), int(memory_days)))
 
     @dbus.service.method(INTERFACE, out_signature="s")

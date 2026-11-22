@@ -4,12 +4,25 @@ import unittest
 from pathlib import Path
 
 from ifba_ai.paths import AppPaths
+from ifba_ai.nvidia import MAX_RESPONSE_BYTES
 from ifba_ai.service import AssistantService
 
 
 class FakeSecretStore:
+    def __init__(self):
+        self.get_calls = 0
+        self.store_calls = 0
+        self.delete_calls = 0
+
     def get(self):
+        self.get_calls += 1
         return "test-only-key"
+
+    def store(self, _secret):
+        self.store_calls += 1
+
+    def delete(self):
+        self.delete_calls += 1
 
 
 class FakeStreamingClient:
@@ -31,7 +44,56 @@ class FakeVisualStreamingClient(FakeStreamingClient):
         yield '"target_id":"control-1","confidence":0.9,"needs_confirmation":true}'
 
 
+class OversizedStreamingClient(FakeStreamingClient):
+    def stream_chat(self, *arguments, **kwargs):
+        self.arguments = arguments
+        self.options = kwargs
+        yield "x" * (MAX_RESPONSE_BYTES + 1)
+
+
 class GenerationTests(unittest.TestCase):
+    def test_live_demo_disables_personal_ai_data_and_does_not_create_history_db(self):
+        with tempfile.TemporaryDirectory() as home:
+            marker = Path(home, "live-demo")
+            marker.touch()
+            paths = AppPaths(home=home, env={"HOME": home})
+            secret_store = FakeSecretStore()
+            service = AssistantService(paths=paths, secret_store=secret_store,
+                                       live_demo_marker=marker)
+
+            status = service.status()
+            self.assertTrue(status["live_demo"])
+            self.assertFalse(status["api_key_configured"])
+            self.assertFalse(status["credential_store_available"])
+            self.assertEqual(service.get_settings(), status["settings"])
+            self.assertIsNone(service.storage)
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.store_api_key("test-only-key")
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.delete_api_key()
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.save_settings('{"model_id":"test-model"}')
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.start_generation("conversation-id", "Não persistir")
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.start_visual_generation("conversation-id", "Não capturar", "", "{}")
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.capture_visual_preview(1)
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.get_active_window_context()
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.get_accessible_control_bounds(1, "control")
+            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
+                service.list_visible_windows()
+            self.assertEqual(secret_store.get_calls, 0)
+            self.assertEqual(secret_store.store_calls, 0)
+            self.assertEqual(secret_store.delete_calls, 0)
+            self.assertFalse(paths.settings.exists())
+            self.assertFalse(paths.config.exists())
+            self.assertFalse(paths.data.exists())
+            self.assertFalse(paths.cache.exists())
+            self.assertFalse(paths.database.exists())
+
     def test_generation_streams_and_persists_both_messages_per_user(self):
         with tempfile.TemporaryDirectory() as home:
             events = []
@@ -60,6 +122,29 @@ class GenerationTests(unittest.TestCase):
             self.assertEqual(client.arguments[5], "iniciante")
             self.assertIsNone(client.options["image_data_url"])
             self.assertTrue(Path(home, ".local/share/ifba-ai/assistant.sqlite3").exists())
+
+    def test_service_rejects_oversized_chunk_from_any_streaming_client(self):
+        with tempfile.TemporaryDirectory() as home:
+            events = []
+            done = threading.Event()
+
+            def emit(event, conversation_id, value):
+                events.append((event, conversation_id, value))
+                if event in ("finished", "failed"):
+                    done.set()
+
+            service = AssistantService(
+                paths=AppPaths(home=home, env={"HOME": home}),
+                secret_store=FakeSecretStore(), nvidia_client=OversizedStreamingClient(), emit=emit,
+            )
+            conversation_id = service.storage.create_conversation("Limite")
+            service.start_generation(conversation_id, "Teste de limite")
+            self.assertTrue(done.wait(2), "generation worker did not finish")
+
+            messages = service.storage.list_messages(conversation_id)
+            self.assertEqual([message["role"] for message in messages], ["user"])
+            self.assertEqual(events[-1][0], "failed")
+            self.assertIn("limite permitido", events[-1][2])
 
     def test_visual_generation_keeps_image_ephemeral_and_validates_control(self):
         with tempfile.TemporaryDirectory() as home:

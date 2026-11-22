@@ -133,9 +133,26 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("dbus-x11", build)
         self.assertIn("/usr/lib/systemd/user/", build)
         self.assertIn("/usr/share/dbus-1/services/", build)
+        self.assertNotIn("default.target.wants/ifba-ai.service", build)
         self.assertEqual(service["Service"]["Type"], "dbus")
         self.assertEqual(service["Service"]["BusName"], "org.ifba.OS.AI")
         self.assertEqual(dbus_service["D-BUS Service"]["SystemdService"], "ifba-ai.service")
+
+    def test_live_demo_blocks_ai_personal_data_and_is_removed_by_installer(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        installer = (ROOT / "packaging/calamares/shellprocess.conf").read_text()
+        service = (ROOT / "ai/ifba_ai/service.py").read_text()
+        daemon = (ROOT / "ai/ifba_ai/daemon.py").read_text()
+        ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
+
+        self.assertIn('install -D -m 0644 /dev/null "$ROOTFS/etc/ifba-os/live-demo"', build)
+        self.assertIn("/usr/bin/rm -f /etc/ifba-os/live-demo", installer)
+        self.assertIn('self.storage = None if self.live_demo else ConversationStore(self.paths)', service)
+        self.assertIn("self.require_live_ai_data_enabled()", service)
+        self.assertIn('out_signature="bbbs"', daemon)
+        self.assertIn("self.service.require_live_ai_data_enabled()", daemon)
+        self.assertIn("def _on_service_status(self, configured, store_available, live_demo, _model):", ui)
+        self.assertIn("não armazena chaves, conversas, memórias ou capturas", ui)
 
     def test_konsole_glass_is_default_for_new_users_without_replacing_existing_user_settings(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
