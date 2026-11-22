@@ -17,6 +17,11 @@ if ! git -C "$ROOT" diff-index --quiet HEAD -- || [[ -n "$(git -C "$ROOT" ls-fil
   printf 'Refusing release build from a dirty worktree; commit all build inputs first.\n' >&2
   exit 2
 fi
+FREE_KIB="$(df -Pk "$ROOT" | awk 'END { print $4 }')"
+if [[ ! "$FREE_KIB" =~ ^[0-9]+$ ]] || (( FREE_KIB < 30 * 1024 * 1024 )); then
+  printf 'Release build requires at least 30 GiB free on the output filesystem (available: %s KiB).\n' "$FREE_KIB" >&2
+  exit 2
+fi
 BUILD_COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
 STAGING="$ROOT/output/.staging"
 mkdir -p "$STAGING"

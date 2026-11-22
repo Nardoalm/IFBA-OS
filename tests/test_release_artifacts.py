@@ -73,7 +73,7 @@ def make_artifact(root, arch, version, commit="abc123", series="26.04"):
 
 
 class ReleaseArtifactsTests(unittest.TestCase):
-    def test_publish_pair_places_both_directly_in_latest(self):
+    def test_publish_pair_archives_both_and_creates_latest_links(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td) / "output"
             source = Path(td) / "incoming"
@@ -88,9 +88,10 @@ class ReleaseArtifactsTests(unittest.TestCase):
                 iso = latest_arch / f"ifba-os-ubuntu-26.04-{arch}-v0.3.4.iso"
                 manifest = latest_arch / "manifest.json"
                 self.assertTrue(iso.is_file())
-                self.assertFalse(iso.is_symlink())
+                self.assertTrue(iso.is_symlink())
                 self.assertTrue(manifest.is_file())
-                self.assertFalse(manifest.is_symlink())
+                self.assertTrue(manifest.is_symlink())
+                self.assertEqual(iso.resolve().parent, root.resolve() / "versions/v0.3.4" / arch)
                 self.assertEqual(release.inspect(iso, manifest)["source_commit"], "release-commit")
             status = json.loads((root / "latest/release-status.json").read_text())
             self.assertEqual(status, {
@@ -98,7 +99,47 @@ class ReleaseArtifactsTests(unittest.TestCase):
                 "version": "0.3.4",
                 "source_commit": "release-commit",
             })
-            self.assertFalse((root / "versions/v0.3.4").exists())
+            self.assertTrue((root / "versions/v0.3.4").is_dir())
+
+    def test_publish_pair_preserves_previous_regular_iso_and_manifest(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "output"
+            old_dir = root / "latest/arm64"
+            old_dir.mkdir(parents=True)
+            old_iso, old_manifest = make_artifact(old_dir, "arm64", "0.3.3", "old-commit")
+            current = old_dir / "manifest.json"
+            old_manifest.rename(current)
+            old_bytes = current.read_bytes()
+            old_inode = old_iso.stat().st_ino
+            source = Path(td) / "incoming"
+            source.mkdir()
+            arm = make_artifact(source, "arm64", "0.3.4", "new-commit")
+            amd = make_artifact(source, "amd64", "0.3.4", "new-commit")
+
+            release.publish_pair(*arm, *amd, root)
+            release.publish_pair(*arm, *amd, root)
+
+            self.assertEqual(old_iso.stat().st_ino, old_inode)
+            self.assertFalse(old_iso.is_symlink())
+            self.assertEqual(old_manifest.read_bytes(), old_bytes)
+            self.assertTrue(current.is_symlink())
+            self.assertTrue(json.loads((root / "latest/release-status.json").read_text())["complete_pair"])
+
+    def test_publish_pair_does_not_overwrite_archived_version(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "output"
+            source = Path(td) / "incoming"
+            source.mkdir()
+            arm = make_artifact(source, "arm64", "0.3.4", "old-commit")
+            amd = make_artifact(source, "amd64", "0.3.4", "old-commit")
+            release.publish_pair(*arm, *amd, root)
+            arm = make_artifact(source, "arm64", "0.3.4", "new-commit")
+            amd = make_artifact(source, "amd64", "0.3.4", "new-commit")
+
+            with self.assertRaisesRegex(ValueError, "refusing overwrite"):
+                release.publish_pair(*arm, *amd, root)
+            status = json.loads((root / "latest/release-status.json").read_text())
+            self.assertEqual(status["source_commit"], "old-commit")
 
     def test_publish_pair_rejects_mixed_architecture_provenance(self):
         with tempfile.TemporaryDirectory() as td:

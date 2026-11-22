@@ -2,6 +2,7 @@
 """Verify and organize local IFBA OS ISO artifacts without rewriting history."""
 
 import argparse
+import fcntl
 import hashlib
 import json
 import os
@@ -267,8 +268,23 @@ def publish(iso, manifest, root):
     refresh_latest(root)
 
 
+def preserve_latest_manifest(manifest):
+    if not manifest.is_file() or manifest.is_symlink():
+        return
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    name = data.get("artifact", {}).get("file", "")
+    if not isinstance(name, str) or not NAME.fullmatch(name):
+        raise ValueError(f"cannot archive existing latest manifest: {manifest}")
+    archived = manifest.with_name(name + ".manifest.json")
+    if archived.exists() or archived.is_symlink():
+        if archived.is_symlink() or archived.read_bytes() != manifest.read_bytes():
+            raise ValueError(f"conflicting historical manifest: {archived}")
+    else:
+        os.link(manifest, archived)
+
+
 def publish_pair(arm64_iso, arm64_manifest, amd64_iso, amd64_manifest, root):
-    """Atomically replace latest with one complete, verified architecture pair."""
+    """Archive the verified pair before advancing the latest references."""
     root = Path(root).resolve()
     artifacts = {
         "arm64": (Path(arm64_iso), Path(arm64_manifest)),
@@ -284,46 +300,62 @@ def publish_pair(arm64_iso, arm64_manifest, amd64_iso, amd64_manifest, root):
         data_by_arch[arch] = data
     arm64 = data_by_arch["arm64"]
     amd64 = data_by_arch["amd64"]
-    if (arm64.get("system_version") != amd64.get("system_version")
-            or arm64.get("source_commit") != amd64.get("source_commit")):
+    version = arm64["system_version"]
+    if (version != amd64["system_version"]
+            or arm64["source_commit"] != amd64["source_commit"]):
         raise ValueError("architecture pair must share product version and source commit")
 
-    candidate = root / f".latest-candidate-{uuid.uuid4().hex}"
-    candidate.mkdir(parents=True)
-    try:
-        for arch, (src_iso, src_manifest) in artifacts.items():
-            arch_dir = candidate / arch
-            arch_dir.mkdir()
-            shutil.copyfile(src_iso, arch_dir / src_iso.name)
-            shutil.copyfile(src_manifest, arch_dir / "manifest.json")
-            inspect(arch_dir / src_iso.name, arch_dir / "manifest.json")
-        atomic_json(candidate / "release-status.json", {
-            "complete_pair": True,
-            "version": arm64["system_version"],
-            "source_commit": arm64["source_commit"],
-        })
-
+    root.mkdir(parents=True, exist_ok=True)
+    with (root / ".publish-pair.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        archive = root / "versions" / f"v{version}"
         latest = root / "latest"
-        backup = root / f".latest-previous-{uuid.uuid4().hex}"
-        had_latest = latest.exists() or latest.is_symlink()
-        if had_latest:
-            os.replace(latest, backup)
-        try:
-            os.replace(candidate, latest)
-        except Exception:
-            if had_latest:
-                os.replace(backup, latest)
-            raise
-        if had_latest:
-            if backup.is_symlink() or backup.is_file():
-                backup.unlink()
-            else:
-                shutil.rmtree(backup)
-    except Exception:
-        if candidate.exists():
-            shutil.rmtree(candidate, ignore_errors=True)
-        raise
-    print(f"latest -> v{arm64['system_version']} (verified ARM64/AMD64 source pair)")
+        if latest.is_symlink() or any((latest / arch).is_symlink() for arch in artifacts):
+            raise ValueError("latest and its architecture directories must be real directories")
+        for arch, (iso, _) in artifacts.items():
+            pointer = latest / arch / iso.name
+            target = archive / arch / iso.name
+            if (pointer.exists() or pointer.is_symlink()) and (
+                not pointer.is_symlink() or pointer.resolve() != target
+            ):
+                raise ValueError(f"refusing to replace existing ISO path: {pointer}")
+
+        if archive.exists() or archive.is_symlink():
+            if archive.is_symlink() or any(
+                inspect(archive / arch / iso.name, archive / arch / "manifest.json") != data_by_arch[arch]
+                for arch, (iso, _) in artifacts.items()
+            ):
+                raise ValueError(f"release already exists; refusing overwrite: {archive}")
+        else:
+            archive.parent.mkdir(parents=True, exist_ok=True)
+            pending = archive.with_name(f".{archive.name}.pending-{uuid.uuid4().hex}")
+            pending.mkdir()
+            try:
+                for arch, (src_iso, src_manifest) in artifacts.items():
+                    arch_dir = pending / arch
+                    arch_dir.mkdir()
+                    shutil.copyfile(src_iso, arch_dir / src_iso.name)
+                    shutil.copyfile(src_manifest, arch_dir / "manifest.json")
+                    inspect(arch_dir / src_iso.name, arch_dir / "manifest.json")
+                os.rename(pending, archive)
+            finally:
+                if pending.exists():
+                    shutil.rmtree(pending)
+
+        for arch in artifacts:
+            preserve_latest_manifest(latest / arch / "manifest.json")
+        status = {
+            "complete_pair": False,
+            "version": version,
+            "source_commit": arm64["source_commit"],
+        }
+        atomic_json(latest / "release-status.json", status)
+        for arch, (iso, _) in artifacts.items():
+            atomic_link(latest / arch / iso.name, archive / arch / iso.name)
+            atomic_link(latest / arch / "manifest.json", archive / arch / "manifest.json")
+        status["complete_pair"] = True
+        atomic_json(latest / "release-status.json", status)
+    print(f"latest -> v{version} (verified ARM64/AMD64 source pair)")
 
 
 def main():
