@@ -112,6 +112,13 @@ class DesignSystemTests(unittest.TestCase):
         self.assertIn('touch "$layout_marker"', setup)
         self.assertIn("plasma-apply-lookandfeel --apply org.ifbaos.desktop --resetLayout", setup)
 
+    def test_build_validates_plasma_theme_in_global_theme_defaults(self):
+        defaults = (ROOT / "packaging/plasma/ifba-os/contents/defaults").read_text()
+        self.assertIn("[plasmarc][Theme]", defaults)
+        self.assertIn("name=IFBA-WhiteSur-Dark", defaults)
+        self.assertIn("$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/contents/defaults", self.build)
+        self.assertNotIn("grep -q '^name=IFBA-WhiteSur-Dark$' \"$ROOTFS/etc/skel/.config/plasmarc\"", self.build)
+
 
 if __name__ == "__main__":
     unittest.main()
