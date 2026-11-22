@@ -52,6 +52,9 @@ class AssistantWindow(Gtk.ApplicationWindow):
         self.add(root)
         header = Gtk.HeaderBar(title="IFBA AI")
         header.set_show_close_button(True)
+        # Keep the native GTK titlebar, but expose the full window controls
+        # (minimize, maximize/restore and close) instead of close alone.
+        header.set_decoration_layout("close,minimize,maximize:")
         self.set_titlebar(header)
 
         body = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)

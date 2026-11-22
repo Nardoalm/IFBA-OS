@@ -38,6 +38,12 @@ class AssistantUiRuntimeTests(unittest.TestCase):
         self.assertIn("Olá, estudante!", self._message_text())
         self.assertIn("Faça uma pergunta", self._message_text())
 
+    def test_headerbar_exposes_native_minimize_maximize_and_close_controls(self):
+        header = self.window.get_titlebar()
+
+        self.assertTrue(header.get_show_close_button())
+        self.assertEqual(header.get_decoration_layout(), "close,minimize,maximize:")
+
     def test_service_failure_displays_recovery_instead_of_an_empty_chat(self):
         self.window._on_service_error()
 

@@ -347,7 +347,7 @@ class DesktopPackagingTests(unittest.TestCase):
             self.assertIn(required_file, build)
         self.assertIn("LookAndFeelPackage=org.ifbaos.desktop", defaults)
         self.assertIn("[kwinrc][Desktops]\nNumber=1", defaults)
-        self.assertIn("ButtonsOnLeft=\nButtonsOnRight=IAX", defaults)
+        self.assertIn("ButtonsOnLeft=XIA\nButtonsOnRight=", defaults)
         self.assertIn("library=org.kde.kwin.aurorae", defaults)
         self.assertIn("theme=__aurorae__svg__IFBA-Window", defaults)
         self.assertIn("AnimationSpeed=2", defaults)
@@ -477,6 +477,72 @@ class DesktopPackagingTests(unittest.TestCase):
             ])
             self.assertTrue((temp / "home/.config/ifba-os/plasma-layout-applied-v2").is_file())
 
+    def test_plasma_session_setup_migrates_only_the_old_ifba_titlebar_defaults(self):
+        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
+        with tempfile.TemporaryDirectory() as directory:
+            temp = Path(directory)
+            mock_bin = temp / "bin"
+            mock_bin.mkdir()
+            log = temp / "calls.log"
+            kread = mock_bin / "kreadconfig6"
+            kread.write_text(
+                '#!/bin/sh\n'
+                'case "$*" in\n'
+                '  *"--key theme"*) echo __aurorae__svg__IFBA-Window ;;\n'
+                '  *"--key ButtonsOnRight"*) echo IAX ;;\n'
+                'esac\n'
+            )
+            kread.chmod(0o755)
+            for command in ("kwriteconfig6", "qdbus6", "plasma-apply-lookandfeel", "plasma-apply-wallpaperimage"):
+                mock = mock_bin / command
+                mock.write_text('#!/bin/sh\nprintf "%s %s\\n" "' + command + '" "$*" >> "$TEST_LOG"\n')
+                if command == "plasma-apply-lookandfeel":
+                    mock.write_text(mock.read_text() + 'mkdir -p "$HOME/.config"\nprintf "[Containments][1]\\nplugin=org.kde.panel\\n" > "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"\n')
+                mock.chmod(0o755)
+            env = os.environ.copy()
+            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
+            subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
+            calls = log.read_text().splitlines()
+            self.assertTrue(any("ButtonsOnLeft XIA" in call for call in calls))
+            self.assertTrue(any("ButtonsOnRight" in call for call in calls))
+            self.assertTrue(any("org.kde.KWin /KWin reconfigure" in call for call in calls))
+            self.assertTrue((temp / "home/.config/ifba-os/kwin-decoration-migrated-v1").is_file())
+
+    def test_plasma_session_setup_preserves_custom_window_button_layout(self):
+        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
+        with tempfile.TemporaryDirectory() as directory:
+            temp = Path(directory)
+            config = temp / "home/.config"
+            config.mkdir(parents=True)
+            (config / "plasma-org.kde.plasma.desktop-appletsrc").write_text(
+                "[Containments][1]\nplugin=org.kde.panel\n"
+            )
+            state = config / "ifba-os"
+            state.mkdir()
+            (state / "plasma-wallpaper-attempted-v2").write_text("already applied\n")
+            mock_bin = temp / "bin"
+            mock_bin.mkdir()
+            log = temp / "calls.log"
+            kread = mock_bin / "kreadconfig6"
+            kread.write_text(
+                '#!/bin/sh\n'
+                'case "$*" in\n'
+                '  *"--key theme"*) echo __aurorae__svg__IFBA-Window ;;\n'
+                '  *"--key ButtonsOnLeft"*) echo CustomLayout ;;\n'
+                '  *"--key ButtonsOnRight"*) echo IAX ;;\n'
+                'esac\n'
+            )
+            kread.chmod(0o755)
+            for command in ("kwriteconfig6", "qdbus6", "plasma-apply-wallpaperimage"):
+                mock = mock_bin / command
+                mock.write_text('#!/bin/sh\nprintf "%s %s\\n" "' + command + '" "$*" >> "$TEST_LOG"\n')
+                mock.chmod(0o755)
+            env = os.environ.copy()
+            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
+            subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
+            self.assertFalse(log.exists())
+            self.assertTrue((state / "kwin-decoration-migrated-v1").is_file())
+
     def test_plasma_session_setup_preserves_existing_panels_without_marker(self):
         setup = ROOT / "packaging/plasma/ifba-os-session-setup"
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -553,9 +619,13 @@ class DesktopPackagingTests(unittest.TestCase):
         }
 
         self.assertEqual(metadata["Desktop Entry"]["x-kde-plugininfo-name"], "IFBA-Window")
-        self.assertEqual(theme["General"]["rightbuttons"], "IAX")
-        self.assertEqual(theme["General"]["leftbuttons"], "")
+        self.assertEqual(theme["General"]["leftbuttons"], "XIA")
+        self.assertEqual(theme["General"].get("rightbuttons", ""), "")
         self.assertEqual(theme["Layout"]["titleheight"], "16")
+        self.assertEqual(theme["Layout"]["paddingtop"], "20")
+        self.assertEqual(theme["Layout"]["paddingbottom"], "79")
+        self.assertEqual(theme["Layout"]["paddingleft"], "40")
+        self.assertEqual(theme["Layout"]["paddingright"], "40")
         self.assertEqual(theme["Layout"]["buttonwidth"], "16")
         self.assertEqual(theme["Layout"]["buttonheight"], "16")
         for frame in ("decoration-top", "decoration-inactive-top", "decoration-center", "decoration-left"):
@@ -575,6 +645,11 @@ class DesktopPackagingTests(unittest.TestCase):
             scaled = ROOT / f"packaging/plasma/window-decoration/IFBA-Window{scale}"
             self.assertTrue((scaled / "decoration.svg").is_file())
             self.assertIn(f"IFBA-Window${{decoration_scale}}rc", build)
+
+    def test_live_image_installs_pipewire_audio_stack_and_ffmpeg_for_browser_media(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        self.assertRegex(build, r"powerdevil[^\n]*pipewire-audio[^\n]*ffmpeg")
+        self.assertRegex(build, r"for package in[^\n]*pipewire-audio[^\n]*pipewire-pulse[^\n]*wireplumber[^\n]*ffmpeg")
 
     def test_audited_upstream_theme_components_are_pinned_licensed_and_packaged(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()

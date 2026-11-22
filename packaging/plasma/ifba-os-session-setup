@@ -4,7 +4,23 @@ state_dir="$HOME/.config/ifba-os"
 legacy_marker="$state_dir/plasma-layout-applied"
 layout_marker="$state_dir/plasma-layout-applied-v2"
 wallpaper_marker="$state_dir/plasma-wallpaper-attempted-v2"
+decoration_marker="$state_dir/kwin-decoration-migrated-v1"
 mkdir -p "$state_dir"
+
+# Plasma 6.6 does not consistently import title-button placement from a
+# Look-and-Feel package. Migrate only the exact old IFBA defaults; custom
+# decoration or button layouts are left untouched.
+if [ ! -e "$decoration_marker" ]; then
+  decoration_theme=$(kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key theme --default '' 2>/dev/null || true)
+  buttons_left=$(kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft --default '' 2>/dev/null || true)
+  buttons_right=$(kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight --default IAX 2>/dev/null || true)
+  if [ "$decoration_theme" = "__aurorae__svg__IFBA-Window" ] && [ -z "$buttons_left" ] && [ "$buttons_right" = "IAX" ]; then
+    kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
+    kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ''
+    qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
+  fi
+  touch "$decoration_marker"
+fi
 
 appletsrc="$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
 has_panel() {

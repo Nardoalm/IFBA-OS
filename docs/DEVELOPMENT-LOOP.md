@@ -268,3 +268,11 @@
 - The v0.3.5 images were preserved in `output/versions/v0.3.5/`; `output/latest/release-status.json` now marks the verified v0.3.6 pair complete. Hashes, sizes, build IDs and warnings are recorded in `ISO-RELEASES.md`.
 - Disk had 49 GiB free before build (30 GiB documented requirement); after build, 35 GiB remained. No historical media, VM or Docker volume was deleted.
 - UTM was not used to boot v0.3.6; runtime and screenshots remain unvalidated. `gh auth status` is unauthenticated, so no GitHub Release was published. Existing local user changes, including `AGENTS.md`, `.DS_Store` files, `.impeccable/` and the supplied artwork, were preserved and excluded from this documentation update.
+
+
+## Correção de mídia e decoração — 2026-11-22
+
+- Investigado o pipeline da ISO: `plasma-pa` estava presente, mas não havia backend PipeWire/WirePlumber garantido. Incluídos o metapacote Ubuntu `pipewire-audio` e `ffmpeg` no rootfs; o contrato do build verifica os componentes esperados. Isso corrige uma lacuna concreta de empacotamento, sem afirmar que áudio ou vídeo já funcionam em guest.
+- Comparado o Aurorae IFBA com a fonte WhiteSur aprovada no commit `cf4df59ce91004f7ea39358b1b8ff917d5c329f7`: reestabelecida a geometria upstream e ordem de controles `XIA`. Como Plasma 6.6 pode não aplicar posição de botões só via Look-and-Feel, a configuração de sessão migra o antigo default específico `IAX` e preserva qualquer configuração diferente.
+- O GTK HeaderBar do IFBA AI passa a requisitar os botões nativos de fechar, minimizar e maximizar/restaurar.
+- Validação: suíte completa 140 passou, 6 pulados por GTK/PyQt indisponível no macOS; os testes de empacotamento relacionados passaram; 3 testes runtime GTK foram pulados. Bash, Python e `git diff --check` passaram. A fonte passa à versão 0.3.7; não houve build nem teste gráfico UTM nesta etapa.

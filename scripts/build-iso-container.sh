@@ -85,7 +85,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   sddm sddm-theme-breeze breeze-gtk-theme breeze-icon-theme breeze-cursor-theme \
   qt-style-kvantum=1.1.5-1 qt-style-kvantum-themes=1.1.5-1 \
   dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter \
-  powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth kscreen fastfetch \
+  powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio ffmpeg kscreen fastfetch \
   xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter fonts-noto-core \
   xdg-desktop-portal-kde xdg-desktop-portal-gtk \
   python3-dbus python3-gi gir1.2-gtk-3.0 gnome-keyring libpam-gnome-keyring \
@@ -494,7 +494,7 @@ grep -q '^ShellPackage=org.kde.plasma.desktop$' "$ROOTFS/etc/xdg/plasmashellrc"
 test -s "$ROOTFS/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml"
 test -x "$ROOTFS/usr/bin/plasma-apply-wallpaperimage"
 test -x "$ROOTFS/usr/local/bin/ifba-os-version"
-for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
+for package in plasma-workspace plasma-desktop plasma-session-wayland plasma-session-x11 kwin-x11 kwin-style-aurorae milou sddm dolphin konsole fastfetch plasma-discover plasma-nm plasma-pa systemsettings kinfocenter powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio pipewire-pulse wireplumber ffmpeg kscreen qt-style-kvantum qt-style-kvantum-themes calamares squashfs-tools efibootmgr kdialog python3-pyqt6 thonny libreoffice-writer gcompris-qt; do
   chroot "$ROOTFS" dpkg-query -s "$package" | grep -q 'Status: install ok installed'
 done
 for package in "${INSTALLER_BOOT_PACKAGES[@]}"; do

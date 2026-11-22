@@ -163,3 +163,11 @@
 - `output/latest/` now contains the verified ARM64/AMD64 pair from shared commit `ef8481db8e5e47a11f1c96f6319bccc63d1b969d` (`complete_pair: true`).
 - Both images are structurally verified; no guest boot or runtime behavior is validated. The exact paths and hashes are recorded in [`ISO-RELEASES.md`](ISO-RELEASES.md).
 - The prior v0.3.5 pair is retained in `output/versions/v0.3.5/`. UTM validation remains pending because the available historical VM must remain unchanged and the file-picker automation has been inaccessible.
+
+
+### Próxima correção de desktop — fonte v0.3.7
+
+- [x] Instalar o stack PipeWire áudio do Ubuntu junto ao Plasma Audio e FFmpeg; regressões de empacotamento passaram.
+- [x] Restaurar medidas e ordem XIA da decoração Aurorae a partir do WhiteSur aprovado; migrar apenas o default anterior e preservar botões customizados.
+- [x] Pedir ao GTK HeaderBar nativo os botões de fechar, minimizar e maximizar/restaurar do IFBA AI.
+- [ ] Gerar a próxima ISO pareada após commit da fonte; testar saída de áudio, vídeo do Firefox/YouTube, controles de janela do IFBA AI e consistência visual em VM.

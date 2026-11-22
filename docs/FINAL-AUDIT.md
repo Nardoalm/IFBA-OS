@@ -147,3 +147,11 @@ The latest UTM screenshot confirms a usable XFCE desktop on the exact output ISO
 - The official pipeline generated matching ARM64 and AMD64 images from clean source commit `ef8481db8e5e47a11f1c96f6319bccc63d1b969d`; both manifests and `output/latest/release-status.json` were verified (`complete_pair: true`). Exact checksums, byte sizes, build IDs, and nonfatal warnings are recorded in `ISO-RELEASES.md`.
 - Automated host suite: 137 passed, 5 skipped for missing host GTK/PyQt dependencies. Build CTest: 2/2 passed for each architecture. Both guest runtime statuses remain unvalidated; no UTM screenshot or Calamares/network/IFBA AI runtime result is claimed.
 - The v0.3.5 pair is preserved under `output/versions/v0.3.5/`. GitHub release publication is pending because `gh auth status` reports no authenticated host.
+
+
+## Áudio, codecs de mídia e consistência das janelas — 2026-11-22
+
+- Fonte corrigida para a próxima versão v0.3.7: o rootfs agora instala o metapacote Ubuntu `pipewire-audio`, que depende de `pipewire-pulse` e WirePlumber, mantendo o applet nativo `plasma-pa`. `ffmpeg` foi adicionado para decodificação de mídia suportada pelo sistema no Firefox. Mozilla documenta dependência das bibliotecas/codecs de mídia do sistema no Linux; a disponibilidade de H.264 depende dos pacotes/licenças do Ubuntu. Ainda não houve reprodução real de vídeo/áudio após o rebuild.
+- A decoração reutiliza as medidas do arquivo Aurorae `WhiteSur-darkrc` no commit auditado `cf4df59ce91004f7ea39358b1b8ff917d5c329f7`, com o conjunto IFBA de cores e formas mantido. Os botões passam para `XIA` (fechar, minimizar, maximizar) à esquerda. A migração é de uma vez e só transforma o arranjo antigo conhecido `IAX` à direita; valores personalizados permanecem intactos.
+- O IFBA AI agora solicita os controles nativos GTK `close,minimize,maximize` para a `Gtk.HeaderBar`. Testes estáticos e regressões da migração passaram; testes de renderização GTK foram pulados no macOS sem PyGObject, e não houve teste gráfico em KWin.
+- Suíte após alterações: 141 passaram, 6 foram pulados por dependências gráficas ausentes no host. Sintaxe Bash/Python e `git diff --check` passaram. Esta correção ainda não está em ISO e os resultados funcionais aguardam build e validação em VM.
