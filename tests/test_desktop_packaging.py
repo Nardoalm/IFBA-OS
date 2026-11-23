@@ -223,6 +223,8 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(profile["General"].getint("TerminalMargin"), 12)
         fetch = json.loads((ROOT / "packaging/konsole/fastfetch.jsonc").read_text())
         self.assertTrue(fetch["logo"]["source"].endswith("/ifba-institutional-symbol.png"))
+        self.assertEqual(fetch["logo"]["type"], "sixel")
+        self.assertIn("libmagickcore-7.q16-10", build)
         self.assertIn("fastfetch", build)
         self.assertIn("! -e \"$home_root/.config/konsolerc\"", build)
         self.assertIn("! -e \"$home_root/.local/share/konsole/IFBA Terminal.profile\"", build)
@@ -346,7 +348,7 @@ class DesktopPackagingTests(unittest.TestCase):
         ai_desktop = (ROOT / "packaging/ifba-ai.desktop").read_text()
         ai_preview = (ROOT / "ai/ifba_ai/ui_preview.py").read_text()
         self.assertIn("ai-assistant-orb.png", ai_desktop)
-        self.assertIn("ai-assistant-orb.png", ai_preview)
+        self.assertIn("ifba-institutional-symbol.png", ai_preview)
         launcher_line = re.search(r'tasks\.writeConfig\("launchers", \[(.*?)\]', dock, re.S)
         self.assertIsNotNone(launcher_line)
         self.assertEqual(

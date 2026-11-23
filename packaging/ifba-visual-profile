@@ -27,8 +27,9 @@ read_motion_duration() {
   printf '%s\n' "$value"
 }
 
-standard_duration=$(read_motion_duration DurationStandardMs 180)
-slow_duration=$(read_motion_duration DurationSlowMs 240)
+fast_duration=$(read_motion_duration DurationFastMs 140)
+standard_duration=$(read_motion_duration DurationStandardMs 210)
+slow_duration=$(read_motion_duration DurationSlowMs 270)
 
 case "$profile" in
   status)
@@ -103,6 +104,10 @@ kwriteconfig6 --file kwinrc --group Plugins --key maximizeEnabled "$animated"
 kwriteconfig6 --file kwinrc --group Plugins --key slideEnabled "$animated"
 kwriteconfig6 --file kwinrc --group Plugins --key fadedesktopEnabled false
 kwriteconfig6 --file kwinrc --group Effect-scale --key Duration "$duration"
+kwriteconfig6 --file kwinrc --group Plugins --key slidingpopupsEnabled "$animated"
+kwriteconfig6 --file kwinrc --group Plugins --key fadingpopupsEnabled "$animated"
+kwriteconfig6 --file kwinrc --group Effect-slidingpopups --key SlideInTime "$duration"
+kwriteconfig6 --file kwinrc --group Effect-slidingpopups --key SlideOutTime "$fast_duration"
 
 # Reuse the packaged opaque Kvantum variant on low-end machines. Only switch
 # IFBA themes: a personally selected third-party theme belongs to the user.

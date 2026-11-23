@@ -12,7 +12,7 @@ from .ui import (
 )
 
 STYLE = Path("/usr/share/ifba-os/ifba-ai-preview.css")
-LOGO = Path("/usr/share/ifba-os/assets/icons/ai-assistant-orb.png")
+LOGO = Path("/usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")
 APPLICATION_ID = "org.ifba.OS.Assistant.Preview"
 
 
@@ -138,15 +138,15 @@ class PreviewWindow(AssistantWindow):
         brand = Gtk.Box(spacing=10)
         mark = logo(34)
         brand.pack_start(mark, False, False, 0)
-        brand.pack_start(label("IFBA AI", "sidebar-brand"), False, False, 0)
-        brand.pack_start(label("Beta", "beta-badge"), False, False, 0)
+        brand.pack_start(styled(Gtk.Label(label="IFBA AI"), "sidebar-brand"), False, False, 0)
+        brand.pack_start(styled(Gtk.Label(label="Beta"), "beta-badge"), False, False, 0)
         sidebar.pack_start(brand, False, False, 4)
 
         self.new_chat = styled(Gtk.Button(), "primary-action")
         new_row = Gtk.Box(spacing=8)
         new_row.pack_start(Gtk.Image.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON), False, False, 0)
         new_row.pack_start(Gtk.Label(label="Nova conversa", xalign=0), True, True, 0)
-        new_row.pack_end(label("Ctrl+N", "shortcut-hint"), False, False, 0)
+        new_row.pack_end(styled(Gtk.Label(label="Ctrl+N"), "shortcut-hint"), False, False, 0)
         self.new_chat.add(new_row)
         self.new_chat.connect("clicked", self._new_conversation)
         self.new_chat.set_tooltip_text("Nova conversa (Ctrl+N)")

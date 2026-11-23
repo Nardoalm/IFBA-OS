@@ -1,6 +1,6 @@
 {
   "logo": {
-    "type": "kitty-direct",
+    "type": "sixel",
     "source": "/usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png",
     "width": 12,
     "height": 7,
@@ -8,7 +8,13 @@
   },
   "display": { "color": { "keys": "green", "title": "green" } },
   "modules": [
-    "title", "separator", "os", "host", "kernel", "de", "wm",
+    "title", "separator",
+    {
+      "type": "command",
+      "key": "OS",
+      "text": ". /etc/os-release; ifba=$(ifba-os-version 2>/dev/null | sed -n 's/^IFBA OS: /IFBA OS /p'); if [ -n \"$ifba\" ]; then printf '%s (%s) %s\\n' \"$ifba\" \"$PRETTY_NAME\" \"$(uname -m)\"; else printf '%s %s\\n' \"$PRETTY_NAME\" \"$(uname -m)\"; fi"
+    },
+    "host", "kernel", "de", "wm",
     "theme", "icons", "terminal", "cpu", "memory", "break", "colors"
   ]
 }

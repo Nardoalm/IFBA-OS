@@ -33,16 +33,22 @@ scaleEnabled=true
 fadeEnabled=false
 maximizeEnabled=true
 slideEnabled=true
+slidingpopupsEnabled=true
+fadingpopupsEnabled=true
 fadedesktopEnabled=false
 
 [kwinrc][Effect-Blur]
 BlurStrength=2
 
 [kwinrc][Effect-magiclamp]
-AnimationDuration=180
+AnimationDuration=210
 
 [kwinrc][Effect-scale]
-Duration=180
+Duration=210
+
+[kwinrc][Effect-slidingpopups]
+SlideInTime=210
+SlideOutTime=140
 
 [kwinrc][Effect-overview]
 BorderActivate=9

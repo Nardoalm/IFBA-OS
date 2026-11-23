@@ -115,9 +115,10 @@ class PlasmaFirstLoginTests(unittest.TestCase):
         return (
             len(live_state["panels"]) == 2
             and {panel["location"] for panel in live_state["panels"]} == {"top", "bottom"}
-            and sum(panel["widgets"].count("org.kde.plasma.kickoff") for panel in live_state["panels"]) == 1
+            and all(panel["widgets"].count("org.kde.plasma.kickoff") == 1
+                    for panel in live_state["panels"])
             and any(panel["location"] == "bottom" and panel["widgets"] ==
-                    ["org.kde.plasma.icontasks", "org.kde.plasma.trash"]
+                    ["org.kde.plasma.kickoff", "org.kde.plasma.icontasks", "org.kde.plasma.trash"]
                     for panel in live_state["panels"])
             and all(image == wallpaper for image in live_state["desktops"])
             and content.count("plugin=org.kde.panel\n") == 2

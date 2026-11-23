@@ -109,7 +109,7 @@ chroot "$ROOTFS" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y 
   sddm sddm-theme-breeze breeze-gtk-theme breeze-icon-theme breeze-cursor-theme \
   qt-style-kvantum=1.1.5-1 qt-style-kvantum-themes=1.1.5-1 \
   dolphin konsole plasma-discover plasma-nm plasma-pa systemsettings kinfocenter kde-config-sddm kde-config-screenlocker \
-  powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio ffmpeg kscreen fastfetch \
+  powerdevil power-profiles-daemon upower bluedevil bluez libspa-0.2-bluetooth pipewire-audio ffmpeg kscreen fastfetch libmagickcore-7.q16-10 \
   xserver-xorg xinit network-manager xdg-utils xdg-user-dirs fonts-inter fonts-noto-core \
   xdg-desktop-portal-kde xdg-desktop-portal-gtk \
   python3-dbus python3-gi gir1.2-gtk-3.0 gnome-keyring libpam-gnome-keyring \

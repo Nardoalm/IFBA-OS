@@ -62,7 +62,7 @@ esac
                 result = subprocess.run(["sh", str(SCRIPT), name], env=environment, text=True, capture_output=True)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 calls = log.read_text().splitlines()
-                self.assertEqual(len(calls), 11)
+                self.assertEqual(len(calls), 15)
                 self.assertIn(f"--group Plugins --key blurEnabled {enabled}", calls[0])
                 self.assertIn(f"--group Effect-Blur --key BlurStrength {strength}", calls[1])
                 self.assertIn(f"--group Plugins --key magiclampEnabled {magiclamp}", calls[2])
@@ -73,6 +73,9 @@ esac
                 self.assertIn("--key fadeEnabled false", calls[5])
                 for index in (6, 7, 8):
                     self.assertTrue(calls[index].endswith(animated))
+                self.assertIn(f"--key slidingpopupsEnabled {animated}", calls[11])
+                self.assertIn(f"--key fadingpopupsEnabled {animated}", calls[12])
+                self.assertIn(f"--key SlideInTime {duration}", calls[13])
 
             for selected, expected_theme in (("IFBA-Glass", "IFBA-Glass-Opaque"), ("IFBA-Glass-Opaque", "IFBA-Glass-Opaque"), ("PersonalTheme", None)):
                 log.write_text("")
@@ -114,6 +117,8 @@ esac
             self.assertEqual(result.returncode, 0, result.stderr)
             calls = log.read_text().splitlines()
             self.assertIn("--group Plugins --key magiclampEnabled false", calls[2])
+            self.assertIn("--group Plugins --key slidingpopupsEnabled false", calls[11])
+            self.assertIn("--group Plugins --key fadingpopupsEnabled false", calls[12])
             self.assertIn(
                 f"--group Effect-magiclamp --key AnimationDuration {MOTION_TOKENS['duration_slow_ms']}",
                 calls[3],

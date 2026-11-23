@@ -368,3 +368,9 @@ This prototype has no installer, disk persistence, real educational-app installe
 ## Etapa 08 — Validação final — 22/11/2026
 
 A VM descartável ARM64 iniciou a mídia histórica 0.3.8 (`c9ec60405f4c0a560210cae34991c1354ced49e3`). O ensaio visual em Wayland aplicou os arquivos atuais na sessão Live e verificou uma barra superior, um dock flutuante, o wallpaper de Jacobina, a paleta do desktop e o aviso de demonstração do IFBA AI. A renderização usou llvmpipe a 1280×800 e escala de 100%. O boot da nova fonte, o Calamares e o boot AMD64 permanecem pendentes. Consulte o [relatório da Etapa 08](FINAL-VALIDATION.md) para a comparação e a matriz completa.
+
+## Revisão visual e IFBA AI no Live — 22/11/2026
+
+Em Ubuntu 26.04 ARM64, usei um contêiner descartável com Plasma 6.6.7, KWin X11, Xvfb e renderização por software. Em uma sessão nova, o Plasma criou a barra de 36 px com busca Milou e o dock flutuante de 68 px com gerenciador de tarefas e lixeira nativos. O Dolphin exibiu a seleção e as pastas verdes em sua interface Breeze. O Konsole exibiu a marca institucional em Sixel e os dados reais da sessão. A renderização de teste usa a decoração do KDE, com os botões coloridos à esquerda. Parte dos lançadores do dock aparece com ícones genéricos porque seus aplicativos da ISO estavam ausentes no contêiner.
+
+A abertura pelo lançador principal do IFBA AI mostrou a tela inicial redesenhada. Com o serviço D-Bus e o marcador Live reais no laboratório, uma conversa recebeu uma resposta local, o histórico foi limpo e a exportação foi recusada. A suíte executou o caminho NVIDIA com um cliente simulado e verificou que a chave temporária passou ao cliente, sem uso do cofre ou criação de arquivos de conversa. A inferência NVIDIA autenticada e os efeitos com aceleração gráfica aguardam ensaio em uma mídia candidata.
