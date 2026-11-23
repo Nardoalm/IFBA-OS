@@ -88,6 +88,14 @@ output/
 - `output/` ISO binaries and local build metadata are generated artifacts, not Git source. Keep them ignored; never commit `.iso`, `.qcow2`, `.raw`, VM images, build caches, or generated secret-bearing files. Track textual release documentation and sanitized JSON manifests if explicitly placed in a tracked manifests directory (not by forcing ignored files into Git).
 - Validate each artifact by SHA-256, file size, architecture, embedded metadata, boot files, rootfs, and JSON schema. Perform atomic publication of complete artifacts; partial builds must never appear as successful `latest` files.
 
+### GitHub Releases (mandatory for new releases)
+
+- Whenever the product version is advanced and new ISO artifacts are produced, publish that version as a new GitHub Release in the canonical repository once both architecture artifacts satisfy the integrity requirements below. This is a required release step for every ISO version, not an optional follow-up; do not reuse an older tag or release.
+- After the ARM64 and AMD64 ISOs of a version have passed the artifact integrity checks and share the same source commit, publish that version to the canonical GitHub repository with GitHub CLI (`gh release create`). Upload both ISO files and their SHA-256 checksums; include the architecture, build IDs, source commit, test status and known limitations in the release notes. Never describe boot or runtime as validated without a real guest test.
+- Check `gh auth status`, the intended tag, existing releases and the exact asset paths before publishing. Create the tag from the verified release source commit, never from an unrelated documentation commit. Do not overwrite an existing release or asset silently; inspect and reconcile any conflict first.
+- If only one architecture built successfully, do not publish a complete release or fabricate the missing ISO. Keep the artifact in staging and report the blocker. If GitHub authentication, network access or upload fails, preserve the local artifacts and report the exact error; do not claim publication.
+- Verify publication with `gh release view` and compare the published asset names and sizes with the local manifests. GitHub Release assets are uploaded through `gh`; ISO binaries remain ignored by Git and must never be committed.
+
 ## 7. Release documentation and UTM evidence
 
 - Preserve `docs/ISO-RELEASES.md` history without falsifying previous outcomes. It must list version, architecture, build ID, source commit, build time, hash, size, build method, status, UTM results, and unresolved issues.
@@ -110,3 +118,36 @@ output/
 - Implement requested changes, test them, review the diff, commit and push. Do not stop at analysis or documentation if implementation is feasible.
 - When a task is blocked, complete independent safe portions and state the precise blocker with evidence.
 - Before reporting done: provide a concise change summary, tests actually performed, output artifacts and versions, source commits, local commit SHA, remote `origin/development` SHA, and honest push/UTM/runtime statuses.
+
+## Definition of Done — Mandatory
+
+A task is only complete when:
+
+1. The requested functionality is implemented.
+2. Relevant automated tests pass.
+3. The feature is tested in the real target environment whenever accessible.
+4. Failures discovered during validation are corrected and retested.
+5. Changes are reviewed for regressions, security issues, and unintended modifications.
+6. Documentation is updated where necessary.
+7. Git author and email are verified.
+8. A focused commit is created on `development`.
+9. A normal push to `origin/development` succeeds.
+10. The remote commit is verified against the local commit.
+
+Automated tests alone do not prove graphical or runtime functionality.
+
+Never report an untested feature as working. If real-world validation is blocked, report it as pending and complete all independent work before stopping.
+
+Do not combine unrelated major tasks into a single implementation cycle.
+## Upstream-first development
+
+- Always prefer existing, maintained open-source implementations over custom implementations.
+- Prefer native KDE Plasma, KWin and Qt capabilities whenever available.
+- Before implementing a visual component, animation or desktop feature, investigate existing upstream solutions.
+- Reuse approved components directly instead of rewriting their functionality.
+- Custom implementations are a last resort and require a documented technical justification.
+- Audit third-party source code, licenses, dependencies and security before integration.
+- Pin external dependencies to audited versions or commits.
+- Preserve upstream licenses and attribution.
+- Adapt existing components to the IFBA OS identity rather than rebuilding them.
+- Never sacrifice security, compatibility, accessibility or performance for visual effects.
