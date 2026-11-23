@@ -165,6 +165,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
   # The greeter may stay on X11 independently of the user's session.
   # Casper selects plasma.desktop in the Live overlay. Calamares unpacks
   # the SquashFS, so the installed greeter starts with this X11 selection.
+  install -d -m 0755 -o sddm -g sddm /var/lib/sddm
   printf "[Last]\nSession=plasmax11.desktop\n" > /var/lib/sddm/state.conf
   chown sddm:sddm /var/lib/sddm/state.conf
   chmod 0644 /var/lib/sddm/state.conf
