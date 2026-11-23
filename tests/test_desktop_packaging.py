@@ -492,6 +492,7 @@ class DesktopPackagingTests(unittest.TestCase):
         cleanup = (ROOT / "packaging/calamares/shellprocess.conf").read_text()
         displaymanager = (ROOT / "packaging/calamares/displaymanager.conf").read_text()
         self.assertIn("DisplayServer=x11", build)
+        self.assertIn("localedef --inputfile=pt_BR --charmap=UTF-8 pt_BR.UTF-8", build)
         self.assertIn(r"User=ubuntu\nSession=plasma.desktop\nRelogin=false", build)
         sddm_directories = next(line for line in build.splitlines() if line.strip().startswith("mkdir -p /etc/sddm.conf.d"))
         self.assertIn("/var/lib/sddm", sddm_directories)
