@@ -152,7 +152,7 @@ done
 chroot "$ROOTFS" /bin/bash -euxc '
   id ubuntu >/dev/null 2>&1 || useradd -m -s /bin/bash -G sudo ubuntu
   passwd -d ubuntu
-  mkdir -p /etc/sddm.conf.d /usr/share/backgrounds/ifba-os /usr/share/ifba-os/assets/wallpapers \
+  mkdir -p /etc/sddm.conf.d /var/lib/sddm /usr/share/backgrounds/ifba-os /usr/share/ifba-os/assets/wallpapers \
     /usr/share/ifba-os/assets/icons /usr/share/color-schemes /etc/xdg/autostart \
     /usr/share/plasma/desktoptheme /usr/share/aurorae/themes /usr/share/Kvantum /etc/xdg/Kvantum \
     /usr/share/doc/ifba-os/third-party/WhiteSur-kde \
