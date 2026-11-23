@@ -447,17 +447,6 @@ for decoration_scale in _x1.25 _x1.5 _x1.75 _x2.0; do
   install -D -m 0644 /work/packaging/plasma/window-decoration/IFBA-Window/IFBA-Windowrc \
     "$scaled_theme_dir/${scaled_theme}rc"
 done
-install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup "$ROOTFS/usr/local/bin/ifba-os-plasma-session-setup"
-chmod 0755 "$ROOTFS/usr/local/bin/ifba-os-plasma-session-setup"
-cat > "$ROOTFS/etc/xdg/autostart/ifba-os-plasma-session-setup.desktop" <<'AUTOSTART'
-[Desktop Entry]
-Type=Application
-Name=IFBA OS Window Decoration Migration
-Exec=/usr/local/bin/ifba-os-plasma-session-setup
-OnlyShowIn=KDE;
-Terminal=false
-StartupNotify=false
-AUTOSTART
 # Remove the redundant copies shipped by older builds of the live image.
 rm -f "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.desktop" \
   "$ROOTFS/etc/skel/.config/autostart/ifba-os-plasma-session-setup.desktop"

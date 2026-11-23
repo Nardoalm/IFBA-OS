@@ -84,6 +84,14 @@ class PreviewGtkTests(unittest.TestCase):
         self.assertNotIn("<b>literal", markup)
         self.assertIn("&lt;", code_markup("print('x < y')", "python", True))
 
+    def test_primary_window_has_left_controls_and_header_actions(self):
+        header = self.window.get_titlebar()
+        self.assertTrue(header.get_show_close_button())
+        self.assertEqual(header.get_decoration_layout(), "close,minimize,maximize:")
+        tooltips = [widget.get_tooltip_text() for widget in header.get_children()]
+        self.assertIn("Alternar barra lateral", tooltips)
+        self.assertIn("Histórico de conversas", tooltips)
+
     def test_live_allows_interactive_demo_and_does_not_persist_appearance(self):
         window = self.window
         window.proxy = Mock()

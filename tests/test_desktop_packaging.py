@@ -3,11 +3,9 @@
 import configparser
 import gzip
 import json
-import os
 from pathlib import Path
 import re
 import subprocess
-import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
@@ -218,7 +216,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(profile["General"]["Name"], "IFBA Terminal")
         self.assertEqual(profile["Appearance"]["ColorScheme"], "IFBA Glass")
         self.assertEqual(colors["General"]["Description"], "IFBA Glass")
-        self.assertEqual(float(colors["General"]["Opacity"]), 0.85)
+        self.assertEqual(float(colors["General"]["Opacity"]), 0.80)
         self.assertTrue(colors["General"].getboolean("Blur"))
         self.assertEqual(profile["General"].getint("TerminalMargin"), 12)
         fetch = json.loads((ROOT / "packaging/konsole/fastfetch.jsonc").read_text())
@@ -354,9 +352,9 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(
             re.findall(r'"(applications:[^"]+)"', launcher_line.group(1)),
             [
-                "applications:ifba-ai.desktop",
                 "applications:org.kde.dolphin.desktop",
                 "applications:systemsettings.desktop",
+                "applications:ifba-ai.desktop",
                 "applications:org.kde.konsole.desktop",
                 "applications:com.visualstudio.CodeOSS.desktop",
                 "applications:firefox.desktop",
@@ -378,7 +376,7 @@ class DesktopPackagingTests(unittest.TestCase):
             self.assertIn(required_file, build)
         self.assertIn("LookAndFeelPackage=org.ifbaos.desktop", defaults)
         self.assertIn("[kwinrc][Desktops]\nNumber=1", defaults)
-        self.assertIn("ButtonsOnLeft=XIA\nButtonsOnRight=", defaults)
+        self.assertIn("ButtonsOnLeft=M\nButtonsOnRight=IAX", defaults)
         self.assertIn("library=org.kde.kwin.aurorae", defaults)
         self.assertIn("theme=__aurorae__svg__IFBA-Window", defaults)
         self.assertNotIn("AnimationSpeed=", defaults)
@@ -394,10 +392,7 @@ class DesktopPackagingTests(unittest.TestCase):
             defaults,
         )
         self.assertIn("[kwinrc][Effect-overview]", defaults)
-        setup = (ROOT / "packaging/plasma/ifba-os-session-setup").read_text()
-        self.assertNotIn("--resetLayout", setup)
-        self.assertNotIn("plasma-apply-wallpaperimage", setup)
-        self.assertNotIn("plasma-org.kde.plasma.desktop-appletsrc", setup)
+        self.assertNotIn('Exec=/usr/local/bin/ifba-os-plasma-session-setup', build)
         self.assertIn('^LookAndFeelPackage=org.ifbaos.desktop$', build)
         self.assertIn('find "$ROOTFS/usr/lib" -path "*/qt6/plugins/plasma/applets/$applet.so"', build)
         for applet in (
@@ -499,114 +494,6 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("campus-jacobina.jpg", (ROOT / "packaging/plasma/ifba-os-lockscreen.conf").read_text())
         self.assertIn("org.kde.plasma.desktop/contents/lockscreen/LockScreenUi.qml", build)
 
-    def test_plasma_session_setup_migrates_only_the_old_ifba_titlebar_defaults(self):
-        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
-        with tempfile.TemporaryDirectory() as directory:
-            temp = Path(directory)
-            mock_bin = temp / "bin"
-            mock_bin.mkdir()
-            log = temp / "calls.log"
-            kread = mock_bin / "kreadconfig6"
-            kread.write_text(
-                '#!/bin/sh\n'
-                'case "$*" in\n'
-                '  *"--key theme"*) echo __aurorae__svg__IFBA-Window ;;\n'
-                '  *"--key ButtonsOnRight"*) echo IAX ;;\n'
-                'esac\n'
-            )
-            kread.chmod(0o755)
-            for command in ("kwriteconfig6", "qdbus6"):
-                mock = mock_bin / command
-                mock.write_text('#!/bin/sh\nprintf "%s %s\\n" "' + command + '" "$*" >> "$TEST_LOG"\n')
-                mock.chmod(0o755)
-            env = os.environ.copy()
-            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
-            subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
-            calls = log.read_text().splitlines()
-            self.assertTrue(any("ButtonsOnLeft XIA" in call for call in calls))
-            self.assertTrue(any("ButtonsOnRight" in call for call in calls))
-            self.assertTrue(any("org.kde.KWin /KWin reconfigure" in call for call in calls))
-            self.assertTrue((temp / "home/.config/ifba-os/kwin-decoration-migrated-v1").is_file())
-
-    def test_plasma_session_setup_preserves_custom_window_button_layout(self):
-        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
-        with tempfile.TemporaryDirectory() as directory:
-            temp = Path(directory)
-            config = temp / "home/.config"
-            config.mkdir(parents=True)
-            (config / "plasma-org.kde.plasma.desktop-appletsrc").write_text(
-                "[Containments][1]\nplugin=org.kde.panel\n"
-            )
-            state = config / "ifba-os"
-            state.mkdir()
-            (state / "plasma-wallpaper-attempted-v2").write_text("already applied\n")
-            mock_bin = temp / "bin"
-            mock_bin.mkdir()
-            log = temp / "calls.log"
-            kread = mock_bin / "kreadconfig6"
-            kread.write_text(
-                '#!/bin/sh\n'
-                'case "$*" in\n'
-                '  *"--key theme"*) echo __aurorae__svg__IFBA-Window ;;\n'
-                '  *"--key ButtonsOnLeft"*) echo CustomLayout ;;\n'
-                '  *"--key ButtonsOnRight"*) echo IAX ;;\n'
-                'esac\n'
-            )
-            kread.chmod(0o755)
-            for command in ("kwriteconfig6", "qdbus6"):
-                mock = mock_bin / command
-                mock.write_text('#!/bin/sh\nprintf "%s %s\\n" "' + command + '" "$*" >> "$TEST_LOG"\n')
-                mock.chmod(0o755)
-            env = os.environ.copy()
-            env.update({"HOME": str(temp / "home"), "PATH": f"{mock_bin}:/usr/bin:/bin", "TEST_LOG": str(log)})
-            subprocess.run([str(setup)], env=env, check=True, capture_output=True, text=True)
-            self.assertFalse(log.exists())
-            self.assertTrue((state / "kwin-decoration-migrated-v1").is_file())
-
-    def test_decoration_autostart_leaves_layout_and_wallpaper_to_plasma(self):
-        setup = ROOT / "packaging/plasma/ifba-os-session-setup"
-        profiles = {
-            "clean": None,
-            "screen mapping only": "[ScreenMapping]\nitemsOnDisabledScreens=\n",
-            "custom desktop without panel": (
-                "[Containments][1]\nplugin=org.kde.plasma.folder\n"
-                "[Containments][1][Wallpaper][org.kde.image][General]\nImage=file:///personal.png\n"
-            ),
-            "custom panel": "[Containments][1]\nplugin=org.kde.panel\nlocation=3\n",
-        }
-        for name, content in profiles.items():
-            with self.subTest(profile=name), tempfile.TemporaryDirectory() as directory:
-                home = Path(directory)
-                config = home / ".config"
-                state = config / "ifba-os"
-                state.mkdir(parents=True)
-                marker = state / "plasma-layout-applied-v2"
-                marker.write_text("legacy marker\n")
-                appletsrc = config / "plasma-org.kde.plasma.desktop-appletsrc"
-                if content is not None:
-                    appletsrc.write_text(content)
-                bin_dir = home / "bin"
-                bin_dir.mkdir()
-                log = home / "unexpected-write"
-                for command in ("plasma-apply-lookandfeel", "plasma-apply-wallpaperimage"):
-                    mock = bin_dir / command
-                    mock.write_text('#!/bin/sh\ntouch "$TEST_LOG"\nexit 1\n')
-                    mock.chmod(0o755)
-                env = os.environ | {
-                    "HOME": str(home), "XDG_CONFIG_HOME": str(config),
-                    "PATH": f"{bin_dir}:/usr/bin:/bin", "TEST_LOG": str(log),
-                }
-
-                for _ in range(2):
-                    subprocess.run([str(setup)], env=env, check=True, capture_output=True)
-
-                self.assertFalse(log.exists())
-                self.assertEqual(marker.read_text(), "legacy marker\n")
-                if content is None:
-                    self.assertFalse(appletsrc.exists())
-                else:
-                    self.assertEqual(appletsrc.read_text(), content)
-
     def test_ifba_aurorae_decoration_is_installed_and_has_native_window_controls(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
         theme_dir = ROOT / "packaging/plasma/window-decoration/IFBA-Window"
@@ -620,8 +507,8 @@ class DesktopPackagingTests(unittest.TestCase):
         }
 
         self.assertEqual(metadata["Desktop Entry"]["x-kde-plugininfo-name"], "IFBA-Window")
-        self.assertEqual(theme["General"]["leftbuttons"], "XIA")
-        self.assertEqual(theme["General"].get("rightbuttons", ""), "")
+        self.assertEqual(theme["General"]["leftbuttons"], "M")
+        self.assertEqual(theme["General"]["rightbuttons"], "IAX")
         self.assertEqual(theme["Layout"]["titleheight"], "16")
         for edge in ("titleedgetop", "titleedgebottom", "titleedgetopmaximized", "titleedgebottommaximized"):
             self.assertEqual(theme["Layout"][edge], "6")
@@ -643,7 +530,8 @@ class DesktopPackagingTests(unittest.TestCase):
                 node.attrib.get("id")
                 for node in ET.parse(theme_dir / f"{button}.svg").iter()
             }
-            self.assertTrue(button_ids, f"upstream Aurorae control asset {button}.svg is empty")
+            self.assertTrue({"active-center", "inactive-center", "hover-center", "pressed-center"}
+                            <= button_ids, f"incomplete Aurorae control asset {button}.svg")
         self.assertIn("kwin-style-aurorae", build)
         self.assertIn("/usr/share/aurorae/themes/IFBA-Window", build)
         self.assertIn("org.kde.kdecoration3/org.kde.kwin.aurorae.so", build)

@@ -46,7 +46,7 @@ tray.currentConfigGroup = ["General"]
 tray.writeConfig("extraItems", "org.kde.plasma.notifications,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.bluetooth")
 tray.writeConfig("shownItems", "org.kde.plasma.notifications,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.bluetooth")
 tray.writeConfig("scaleIconsToFit", "true")
-tray.writeConfig("iconSpacing", "2")
+tray.writeConfig("iconSpacing", "3")
 
 var clock = topPanel.addWidget("org.kde.plasma.digitalclock")
 clock.currentConfigGroup = ["Appearance"]
@@ -81,9 +81,9 @@ dockLauncher.writeConfig("alphaSort", true)
 var tasks = dock.addWidget("org.kde.plasma.icontasks")
 tasks.currentConfigGroup = ["General"]
 tasks.writeConfig("launchers", [
-    "applications:ifba-ai.desktop",
     "applications:org.kde.dolphin.desktop",
     "applications:systemsettings.desktop",
+    "applications:ifba-ai.desktop",
     "applications:org.kde.konsole.desktop",
     "applications:com.visualstudio.CodeOSS.desktop",
     "applications:firefox.desktop",

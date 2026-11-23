@@ -147,7 +147,7 @@ class BuildMetadataTests(unittest.TestCase):
         self.assertIn('BOOT_PACKAGES=(grub-efi-arm64-bin mtools)', container_build)
         self.assertIn('BOOT_PACKAGES=(grub-pc-bin grub-efi-amd64-bin mtools)', container_build)
         self.assertIn('test "$(readlink "$ROOTFS/etc/systemd/system/display-manager.service")" = /lib/systemd/system/sddm.service', container_build)
-        self.assertIn('install -D -m 0755 /work/packaging/plasma/ifba-os-session-setup', container_build)
+        self.assertIn('> "$ROOTFS/etc/xdg/kwinrc"', container_build)
         self.assertIn('"$ROOTFS/etc/systemd/system/multi-user.target.wants/NetworkManager.service"', container_build)
 
     def test_build_recreates_the_rootfs_and_reuses_only_package_downloads(self):

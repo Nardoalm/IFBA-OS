@@ -5,24 +5,24 @@ AccentColor=38,160,77
 shadeSortColumn=true
 
 [Colors:Window]
-BackgroundNormal=34,42,52
-BackgroundAlternate=41,47,57
+BackgroundNormal=29,36,39
+BackgroundAlternate=41,49,53
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 DecorationHover=34,197,94
 DecorationFocus=74,222,128
 
 [Colors:View]
-BackgroundNormal=25,30,37
-BackgroundAlternate=34,42,52
+BackgroundNormal=19,24,27
+BackgroundAlternate=29,36,39
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 DecorationHover=34,197,94
 DecorationFocus=74,222,128
 
 [Colors:Button]
-BackgroundNormal=41,47,57
-BackgroundAlternate=34,42,52
+BackgroundNormal=41,49,53
+BackgroundAlternate=29,36,39
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 DecorationHover=34,197,94
@@ -30,36 +30,36 @@ DecorationFocus=74,222,128
 
 [Colors:Selection]
 BackgroundNormal=24,113,54
-BackgroundAlternate=41,47,57
+BackgroundAlternate=41,49,53
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 
 [Colors:Tooltip]
-BackgroundNormal=41,47,57
-BackgroundAlternate=34,42,52
+BackgroundNormal=41,49,53
+BackgroundAlternate=29,36,39
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 
 [Colors:Complementary]
-BackgroundNormal=41,47,57
-BackgroundAlternate=34,42,52
+BackgroundNormal=41,49,53
+BackgroundAlternate=29,36,39
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 
 [Colors:Header]
-BackgroundNormal=34,42,52
-BackgroundAlternate=41,47,57
+BackgroundNormal=29,36,39
+BackgroundAlternate=41,49,53
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154
 
 [Colors:Header][Inactive]
-BackgroundNormal=25,30,37
-BackgroundAlternate=34,42,52
+BackgroundNormal=19,24,27
+BackgroundAlternate=29,36,39
 ForegroundNormal=148,163,154
 ForegroundInactive=148,163,154
 
 [WM]
-activeBackground=34,42,52
+activeBackground=29,36,39
 activeForeground=241,245,242
-inactiveBackground=25,30,37
+inactiveBackground=19,24,27
 inactiveForeground=148,163,154

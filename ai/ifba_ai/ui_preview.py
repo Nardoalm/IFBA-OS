@@ -60,7 +60,7 @@ class ComposerInput(Gtk.TextView):
 
 class PreviewWindow(AssistantWindow):
     def _build(self):
-        self.set_default_size(1050, 640)
+        self.set_default_size(960, 600)
         self.set_size_request(530, 450)
         styled(self, "ai-preview")
         screen = self.get_screen()
@@ -91,6 +91,17 @@ class PreviewWindow(AssistantWindow):
         self.system_dark = Gtk.Settings.get_default().get_property("gtk-application-prefer-dark-theme")
         self._apply_appearance()
 
+        header = styled(Gtk.HeaderBar(), "preview-header")
+        header.set_custom_title(Gtk.Box())
+        header.set_has_subtitle(False)
+        header.set_show_close_button(True)
+        header.set_decoration_layout("close,minimize,maximize:")
+        header.pack_end(icon_button("document-open-recent-symbolic", "Histórico de conversas",
+                                    self._open_history))
+        header.pack_end(icon_button("view-sidetree-symbolic", "Alternar barra lateral",
+                                    self._toggle_sidebar))
+        self.set_titlebar(header)
+
         body = Gtk.Box()
         self.add(body)
         self.sidebar = Gtk.Revealer(transition_type=Gtk.RevealerTransitionType.SLIDE_RIGHT,
@@ -100,12 +111,6 @@ class PreviewWindow(AssistantWindow):
         self.sidebar.add(self._build_sidebar())
         main = styled(box(), "preview-content")
         body.pack_start(main, True, True, 0)
-        toolbar = styled(Gtk.Box(spacing=3), "preview-toolbar")
-        toolbar.pack_end(icon_button("view-sidetree-symbolic", "Alternar barra lateral", self._toggle_sidebar),
-                         False, False, 0)
-        toolbar.pack_end(icon_button("document-open-recent-symbolic", "Histórico de conversas",
-                                     self._open_history), False, False, 0)
-        main.pack_start(toolbar, False, False, 0)
         self.stack = Gtk.Stack()
         main.pack_start(self.stack, True, True, 0)
         self._build_chat()
@@ -134,7 +139,7 @@ class PreviewWindow(AssistantWindow):
 
     def _build_sidebar(self):
         sidebar = styled(box(11), "preview-sidebar")
-        sidebar.set_size_request(264, -1)
+        sidebar.set_size_request(240, -1)
         brand = Gtk.Box(spacing=10)
         mark = logo(34)
         brand.pack_start(mark, False, False, 0)
@@ -218,11 +223,11 @@ class PreviewWindow(AssistantWindow):
         self.home = box(10)
         self.home.set_halign(Gtk.Align.FILL)
         self.home.set_valign(Gtk.Align.CENTER)
-        self.home.set_margin_start(36)
-        self.home.set_margin_end(36)
-        self.home.set_margin_top(12)
-        self.home.set_margin_bottom(40)
-        mark = logo(90)
+        self.home.set_margin_start(34)
+        self.home.set_margin_end(34)
+        self.home.set_margin_top(20)
+        self.home.set_margin_bottom(24)
+        mark = logo(77)
         mark.set_margin_bottom(6)
         self.home.pack_start(mark, False, False, 0)
         self.home.pack_start(styled(Gtk.Label(label="IFBA AI"), "hero-title"), False, False, 0)
@@ -272,7 +277,7 @@ class PreviewWindow(AssistantWindow):
         self.quick_model = Gtk.ComboBoxText()
         self.quick_model.get_accessible().set_name("Modelo NVIDIA")
         self.quick_model.connect("changed", self._quick_model_changed)
-        self.send_button = styled(icon_button("mail-send-symbolic", "Enviar mensagem (Enter)",
+        self.send_button = styled(icon_button("go-next-symbolic", "Enviar mensagem (Enter)",
                                               self._send_message), "send-action")
         self.stop_button = styled(icon_button("process-stop-symbolic", "Interromper geração",
                                               self._cancel_generation), "send-action")

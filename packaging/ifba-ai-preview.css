@@ -18,8 +18,8 @@
 }
 .ai-preview.preview-dark.preview-translucent {
   background-color: transparent;
-  background-image: linear-gradient(to bottom, rgba(28, 36, 49, 0.95),
-    rgba(27, 31, 37, 0.94) 60%, rgba(22, 26, 24, 0.94));
+  background-image: linear-gradient(to bottom, rgba(28, 36, 49, 0.92),
+    rgba(27, 31, 37, 0.89) 60%, rgba(22, 26, 24, 0.92));
 }
 .ai-preview.preview-dark.preview-translucent .preview-content,
 .ai-preview.preview-dark.preview-translucent .preview-content viewport {
@@ -30,7 +30,36 @@
   background-color: rgba(255, 255, 255, 0.045);
   border-right-color: rgba(255, 255, 255, 0.075);
 }
-.ai-preview .preview-toolbar { padding: 2px 13px; }
+.ai-preview .preview-header {
+  background: @ai_bg;
+  border: 0;
+  border-radius: 13px 13px 0 0;
+  box-shadow: none;
+  min-height: 34px;
+  padding: 0 14px;
+}
+.ai-preview.preview-dark.preview-translucent .preview-header {
+  background: rgba(28, 36, 49, 0.92);
+}
+.ai-preview.preview-light .preview-header { background: #e8edf2; }
+.ai-preview .preview-header button.titlebutton {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  min-width: 19px;
+  padding: 3px;
+}
+.ai-preview .preview-header button.titlebutton image {
+  color: transparent;
+  border-radius: 22px;
+}
+.ai-preview .preview-header button.titlebutton.close image { background: #f45e62; }
+.ai-preview .preview-header button.titlebutton.minimize image { background: #f6bd36; }
+.ai-preview .preview-header button.titlebutton.maximize image { background: #36bf58; }
+.ai-preview .preview-header:backdrop button.titlebutton image { background: #818890; }
+.ai-preview .preview-header button.titlebutton:hover image,
+.ai-preview .preview-header button.titlebutton:focus image { color: #182128; }
+.ai-preview .preview-header button.titlebutton:focus { outline: 1px solid @ai_focus; }
 .ai-preview .preview-sidebar {
   background-color: @ai_sidebar;
   border-right: 1px solid @ai_border;
@@ -100,13 +129,13 @@
 .ai-preview button.send-action { border-radius: 20px; min-width: 28px; }
 .ai-preview .history-list row { border-radius: 7px; padding: 0 7px; }
 .ai-preview .history-list row:hover { background-color: @ai_surface; }
-.ai-preview .hero-title { font-size: 38pt; font-weight: 800; }
+.ai-preview .hero-title { font-size: 34pt; font-weight: 800; }
 .ai-preview .hero-subtitle { font-size: 12pt; color: @ai_muted; }
 .ai-preview .composer {
   background-color: @ai_surface;
   border: 1px solid @ai_border;
-  border-radius: 17px;
-  padding: 9px;
+  border-radius: 18px;
+  padding: 11px;
 }
 .ai-preview .composer textview, .ai-preview .composer textview text {
   background: transparent;
