@@ -175,7 +175,8 @@ chroot "$ROOTFS" /bin/bash -euxc '
   ln -sfn /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service
   printf "LANG=pt_BR.UTF-8\nLANGUAGE=pt_BR:pt:en\n" > /etc/default/locale
   printf "pt_BR.UTF-8 UTF-8\n" > /etc/locale.gen
-  localedef --inputfile=pt_BR --charmap=UTF-8 pt_BR.UTF-8
+  apt-get install -y --no-install-recommends locales
+  locale-gen pt_BR.UTF-8
   printf "America/Bahia\n" > /etc/timezone
   ln -sfn /usr/share/zoneinfo/America/Bahia /etc/localtime
   update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/firefox 100
