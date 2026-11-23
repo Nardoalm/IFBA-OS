@@ -496,6 +496,7 @@ class DesktopPackagingTests(unittest.TestCase):
         sddm_directories = next(line for line in build.splitlines() if line.strip().startswith("mkdir -p /etc/sddm.conf.d"))
         self.assertIn("/var/lib/sddm", sddm_directories)
         self.assertLess(build.index(sddm_directories), build.index(r'printf "[Last]\nSession=plasmax11.desktop\n"'))
+        self.assertIn("systemd-sysusers", build)
         self.assertIn("install -d -m 0755 -o sddm -g sddm /var/lib/sddm", build)
         self.assertIn(r'printf "[Last]\nSession=plasmax11.desktop\n" > /var/lib/sddm/state.conf', build)
         self.assertIn("chown sddm:sddm /var/lib/sddm/state.conf", build)
