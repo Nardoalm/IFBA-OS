@@ -165,7 +165,6 @@ chroot "$ROOTFS" /bin/bash -euxc '
   # The greeter may stay on X11 independently of the user's session.
   # Casper selects plasma.desktop in the Live overlay. Calamares unpacks
   # the SquashFS, so the installed greeter starts with this X11 selection.
-  systemd-sysusers
   getent group sddm >/dev/null || groupadd --system sddm
   getent passwd sddm >/dev/null || useradd --system --gid sddm --home-dir /var/lib/sddm --shell /usr/sbin/nologin sddm
   install -d -m 0755 -o sddm -g sddm /var/lib/sddm
