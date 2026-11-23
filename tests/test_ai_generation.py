@@ -6,6 +6,7 @@ from pathlib import Path
 from ifba_ai.paths import AppPaths
 from ifba_ai.nvidia import MAX_RESPONSE_BYTES
 from ifba_ai.service import AssistantService
+from ifba_ai.settings import SettingsError
 
 
 class FakeSecretStore:
@@ -58,6 +59,7 @@ class GenerationTests(unittest.TestCase):
             marker.touch()
             paths = AppPaths(home=home, env={"HOME": home})
             secret_store = FakeSecretStore()
+            client = FakeStreamingClient()
             events = []
             done = threading.Event()
 
@@ -66,7 +68,7 @@ class GenerationTests(unittest.TestCase):
                 if event in ("finished", "failed"):
                     done.set()
 
-            service = AssistantService(paths=paths, secret_store=secret_store,
+            service = AssistantService(paths=paths, secret_store=secret_store, nvidia_client=client,
                                        emit=emit, live_demo_marker=marker)
 
             status = service.status()
@@ -83,13 +85,24 @@ class GenerationTests(unittest.TestCase):
             self.assertTrue(any(event == "delta" for event, _, _ in events))
             messages = service.storage.list_messages(conversation_id)
             self.assertEqual([m["role"] for m in messages], ["user", "assistant"])
+            self.assertIsNone(client.arguments)
 
             service.store_api_key("test-only-key")
             self.assertTrue(service.status()["api_key_configured"])
+            done.clear()
+            service.start_generation(conversation_id, "Continue com a NVIDIA")
+            self.assertTrue(done.wait(timeout=3))
+            self.assertEqual(events[-1][0], "finished")
+            self.assertEqual(client.arguments[0], "test-only-key")
+            self.assertEqual(service.storage.list_messages(conversation_id)[-1]["content"], "Resposta de teste.")
             service.delete_api_key()
             self.assertFalse(service.status()["api_key_configured"])
-            service.save_settings('{"education_level":"superior"}')
-            self.assertEqual(service.get_settings()["education_level"], "superior")
+            service.save_settings('{"education_level":"avancado"}')
+            with self.assertRaises(SettingsError):
+                service.save_settings('{"context_max_messages":"inválido"}')
+            self.assertEqual(service.get_settings()["education_level"], "avancado")
+            with self.assertRaisesRegex(ValueError, "após instalar"):
+                service.list_visible_windows()
 
             self.assertEqual(secret_store.get_calls, 0)
             self.assertEqual(secret_store.store_calls, 0)

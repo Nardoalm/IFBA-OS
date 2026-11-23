@@ -100,7 +100,7 @@
 .ai-preview button.send-action { border-radius: 20px; min-width: 28px; }
 .ai-preview .history-list row { border-radius: 7px; padding: 0 7px; }
 .ai-preview .history-list row:hover { background-color: @ai_surface; }
-.ai-preview .hero-title { font-size: 38pt; font-weight: 750; }
+.ai-preview .hero-title { font-size: 38pt; font-weight: 800; }
 .ai-preview .hero-subtitle { font-size: 12pt; color: @ai_muted; }
 .ai-preview .composer {
   background-color: @ai_surface;

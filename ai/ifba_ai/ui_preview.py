@@ -13,6 +13,7 @@ from .ui import (
 
 STYLE = Path("/usr/share/ifba-os/ifba-ai-preview.css")
 LOGO = Path("/usr/share/ifba-os/assets/icons/ai-assistant-orb.png")
+APPLICATION_ID = "org.ifba.OS.Assistant.Preview"
 
 
 def box(spacing=0):
@@ -370,11 +371,10 @@ class PreviewWindow(AssistantWindow):
         self._sync_actions()
 
     def _suggest(self, prompt):
-        if not self.live_demo:
-            self.input.set_text(prompt)
-            self.input.grab_focus()
-            buffer = self.input.get_buffer()
-            buffer.place_cursor(buffer.get_end_iter())
+        self.input.set_text(prompt)
+        self.input.grab_focus()
+        buffer = self.input.get_buffer()
+        buffer.place_cursor(buffer.get_end_iter())
 
     def _show_page(self, name):
         self.stack.set_visible_child_name(name)
@@ -413,6 +413,7 @@ class PreviewWindow(AssistantWindow):
         # Reuse the legacy controls and their D-Bus settings bindings.
         model_start = children.index(self.model_section_start)
         privacy_start = children.index(self.privacy_section_start)
+        self.credential_notice = children[1]
         sections = (("Credencial NVIDIA", children[1:model_start]),
                     ("Modelo e raciocínio", children[model_start:privacy_start]),
                     ("Memórias, armazenamento e permissões", children[privacy_start:-1]))
@@ -491,27 +492,31 @@ class PreviewWindow(AssistantWindow):
         self.saved_model = str(model)
         self.service_ready = True
         if self.live_demo:
-            if not self.catalog:
-                self.catalog = tuple(MODELS)
-            self._sync_actions()
-            self._set_status("Modo demonstração (Live) ativo · Respostas locais para teste (Enter para enviar)")
-            self.catalog_retry.set_sensitive(False)
-            self._update_models()
-            self.proxy.GetSettings(reply_handler=self._on_settings_loaded,
-                                   error_handler=self._on_service_error, timeout=5)
-            return
-        self._sync_actions()
-        self._ready_status()
-        self._refresh_catalog()
+            self.credential_notice.set_text(
+                "A chave fica na memória desta sessão. Ao usá-la, as mensagens da conversa são enviadas à NVIDIA."
+            )
+        self._refresh_connection()
         self.proxy.GetSettings(reply_handler=self._on_settings_loaded,
                                error_handler=self._on_service_error, timeout=5)
 
+    @property
+    def local_demo(self):
+        return self.live_demo and not self.configured
+
+    def _refresh_connection(self):
+        if self.local_demo:
+            self.catalog = ()
+            self.catalog_error = ""
+            self._update_models()
+        self.catalog_retry.set_sensitive(not self.local_demo and not self.catalog_pending)
+        self._sync_actions()
+        self._ready_status()
+        if not self.local_demo:
+            self._refresh_catalog()
+
     def _ready_status(self):
-        if self.live_demo:
-            if self.configured:
-                self._set_status("Modo demonstração (Live) com chave temporária · Enter para enviar")
-            else:
-                self._set_status("Modo demonstração (Live) ativo · Respostas locais para teste (Enter para enviar)")
+        if self.local_demo:
+            self._set_status("Live · Respostas locais de demonstração. Configure uma chave para usar a NVIDIA.")
         elif not self.store_available:
             self._set_status("Cofre indisponível. Desbloqueie o cofre de credenciais da sessão.")
         elif not self.configured:
@@ -522,6 +527,8 @@ class PreviewWindow(AssistantWindow):
             self._set_status("Verificando modelos na NVIDIA…")
         elif self.saved_model not in self.catalog:
             self._set_status("Selecione um modelo disponível na NVIDIA para enviar mensagens.")
+        elif self.live_demo:
+            self._set_status("Live · NVIDIA com chave temporária. O histórico local é apagado ao encerrar a sessão.")
         else:
             self._set_status("Enter para enviar · Shift+Enter para nova linha")
 
@@ -538,7 +545,7 @@ class PreviewWindow(AssistantWindow):
         self._update_models()
 
     def _refresh_catalog(self, *_):
-        if self.live_demo or not self.service_ready or self.catalog_pending:
+        if self.local_demo or not self.service_ready or self.catalog_pending:
             return
         self.catalog_pending = True
         self.catalog_error = ""
@@ -557,9 +564,11 @@ class PreviewWindow(AssistantWindow):
 
     def _catalog_loaded(self, result, error):
         self.catalog_pending = False
+        if self.local_demo:
+            return False
         self.catalog = result
         self.catalog_error = error or ("" if result else "Nenhum modelo compatível retornado pela NVIDIA.")
-        self.catalog_retry.set_sensitive(self.service_ready and not self.live_demo)
+        self.catalog_retry.set_sensitive(self.service_ready)
         self._update_models()
         if self.service_ready and not self.generating:
             self._ready_status()
@@ -572,7 +581,9 @@ class PreviewWindow(AssistantWindow):
                    (self.quick_model, self.saved_model))
         for control, selection in choices:
             control.remove_all()
-            title = "Modelos indisponíveis" if self.catalog_error else "Escolher modelo"
+            title = "Demonstração local" if self.local_demo else "Escolher modelo"
+            if self.catalog_error:
+                title = "Modelos indisponíveis"
             control.append("", title)
             for model_id in self.catalog:
                 control.append(model_id, MODELS[model_id]["title"])
@@ -590,8 +601,8 @@ class PreviewWindow(AssistantWindow):
             button.set_sensitive(bool(metadata and metadata.get("reasoning")))
         if metadata:
             self.model_hint.set_text(metadata["subtitle"])
-        elif self.live_demo:
-            self.model_hint.set_text("Modo demonstração ativo; escolha um modelo para testar.")
+        elif self.local_demo:
+            self.model_hint.set_text("Adicione uma chave para escolher modelos disponíveis na NVIDIA.")
         else:
             self.model_hint.set_text(self.catalog_error or "Escolha um modelo do catálogo NVIDIA.")
 
@@ -626,8 +637,7 @@ class PreviewWindow(AssistantWindow):
             configured, store_available, _, _ = self.proxy.GetStatus(timeout=12)
             self.configured, self.store_available = bool(configured), bool(store_available)
             self._load_conversations()
-            self._update_models()
-            self._set_status("Configurações salvas nesta sessão Live." if self.live_demo else "Configurações salvas neste usuário.")
+            self._refresh_connection()
         except Exception:
             self._set_status("Não foi possível concluir o salvamento. Confira o cofre e o serviço local.")
 
@@ -640,23 +650,22 @@ class PreviewWindow(AssistantWindow):
             self.configured, self.store_available = bool(configured), bool(store_available)
         except Exception:
             self.configured = False
-        self._sync_actions()
+        self._refresh_connection()
 
     def _sync_actions(self):
-        normal = self.service_ready
-        idle = normal and not self.generating
-        demo_ready = self.live_demo and idle
-        ready = demo_ready or (idle and self.configured and self.saved_model in self.catalog and not self.catalog_pending)
+        idle = self.service_ready and not self.generating
+        ready = idle and (self.local_demo or
+                          (self.configured and self.saved_model in self.catalog and not self.catalog_pending))
         self.new_chat.set_sensitive(not self.generating)
         self.nav_home.set_sensitive(not self.generating)
-        self.data_button.set_sensitive(idle)
-        self.tools_button.set_sensitive(idle)
-        self.composer_tools.set_sensitive(idle)
+        self.data_button.set_sensitive(idle and not self.live_demo)
+        self.tools_button.set_sensitive(idle and not self.live_demo)
+        self.composer_tools.set_sensitive(idle and not self.live_demo)
         self.visual_button.set_sensitive(idle and not self.live_demo and ready and bool(MODELS.get(self.saved_model, {}).get("image")))
         self.input.set_sensitive(True)
         self.input.set_editable(not self.request_pending)
         self.suggestions.set_sensitive(not self.generating)
-        self.open_key.set_visible(idle and not self.configured and not self.live_demo)
+        self.open_key.set_visible(idle and not self.configured)
         self.send_button.set_sensitive(ready and bool(self.input.get_text().strip()))
         self.send_button.set_visible(not self.generating)
         self.stop_button.set_visible(self.generating)
@@ -763,7 +772,7 @@ class PreviewWindow(AssistantWindow):
         if len(prompt) > 20000:
             self._set_status("A mensagem ultrapassa o limite de 20 mil caracteres.")
             return
-        if not self.live_demo:
+        if not self.local_demo:
             if not self.configured:
                 self._open_settings()
                 return
@@ -904,7 +913,8 @@ class PreviewWindow(AssistantWindow):
 
 class PreviewApplication(AssistantApplication):
     def __init__(self):
-        Gtk.Application.__init__(self, application_id="org.ifba.OS.Assistant.Preview",
+        Gdk.set_program_class(APPLICATION_ID)
+        Gtk.Application.__init__(self, application_id=APPLICATION_ID,
                                  flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
 
     def do_startup(self):

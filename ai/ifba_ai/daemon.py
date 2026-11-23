@@ -83,7 +83,6 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, in_signature="s", out_signature="s")
     def CreateConversation(self, title):
-        self.service.require_live_ai_data_enabled()
         return dbus.String(self.service.storage.create_conversation(str(title)))
 
     @dbus.service.method(INTERFACE, out_signature="a(sss)")
@@ -100,7 +99,6 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, in_signature="sss", out_signature="b")
     def AddMessage(self, conversation_id, role, content):
-        self.service.require_live_ai_data_enabled()
         self.service.storage.add_message(str(conversation_id), str(role), str(content))
         return dbus.Boolean(True)
 
@@ -138,12 +136,12 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, in_signature="ssb", out_signature="u")
     def AddMemory(self, category, content, inferred):
-        self.service.require_live_ai_data_enabled()
+        self.service.require_installed_session()
         return dbus.UInt32(self.service.storage.add_memory(str(category), str(content), bool(inferred)))
 
     @dbus.service.method(INTERFACE, in_signature="ussb", out_signature="b")
     def UpdateMemory(self, memory_id, category, content, inferred):
-        self.service.require_live_ai_data_enabled()
+        self.service.require_installed_session()
         return dbus.Boolean(self.service.storage.update_memory(int(memory_id), str(category),
                                                                 str(content), bool(inferred)))
 
@@ -159,13 +157,11 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, out_signature="u")
     def ClearHistory(self):
-        if self.service.live_demo:
-            return dbus.UInt32(0)
         return dbus.UInt32(self.service.storage.clear_history())
 
     @dbus.service.method(INTERFACE, out_signature="s")
     def ExportData(self):
-        self.service.require_live_ai_data_enabled()
+        self.service.require_installed_session()
         return self.service.storage.export_json()
 
     @dbus.service.method(INTERFACE, in_signature="uu", out_signature="s")

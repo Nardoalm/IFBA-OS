@@ -5,7 +5,7 @@ from importlib.util import find_spec
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.error import URLError
 
 from ifba_ai.model_registry import DEFAULT_MODEL, MODELS
@@ -86,16 +86,33 @@ class PreviewGtkTests(unittest.TestCase):
 
     def test_live_allows_interactive_demo_and_does_not_persist_appearance(self):
         window = self.window
+        window.proxy = Mock()
         with patch.object(window, "_refresh_catalog") as refresh:
             window._on_service_status(False, True, True, DEFAULT_MODEL)
             refresh.assert_not_called()
         self.assertTrue(window.input.get_sensitive())
         self.assertTrue(window.suggestions.get_sensitive())
-        self.assertTrue(window.data_button.get_sensitive())
+        self.assertFalse(window.data_button.get_sensitive())
         self.assertFalse(window.visual_button.get_sensitive())
+        self.assertTrue(window.open_key.get_visible())
+        window._suggest("Explique a fotossíntese")
+        self.assertEqual(window.input.get_text(), "Explique a fotossíntese")
+        self.assertTrue(window.send_button.get_sensitive())
         window.appearance_control.set_active_id("light")
         self.assertFalse(window.dark)
         self.assertFalse(window.appearance_file.exists())
+
+    def test_configured_live_waits_for_catalog_and_uses_listed_models(self):
+        window = self.window
+        window.proxy = Mock()
+        with patch.object(window, "_refresh_catalog") as refresh:
+            window._on_service_status(True, True, True, DEFAULT_MODEL)
+            refresh.assert_called_once()
+        window.input.set_text("Olá")
+        self.assertFalse(window.send_button.get_sensitive())
+        window._catalog_loaded((DEFAULT_MODEL,), "")
+        self.assertTrue(window.send_button.get_sensitive())
+        self.assertFalse(window.open_key.get_visible())
 
     def test_rejected_async_send_preserves_draft(self):
         model = next(model for model in MODELS if model != DEFAULT_MODEL)
