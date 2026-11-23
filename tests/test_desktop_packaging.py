@@ -492,7 +492,7 @@ class DesktopPackagingTests(unittest.TestCase):
         cleanup = (ROOT / "packaging/calamares/shellprocess.conf").read_text()
         displaymanager = (ROOT / "packaging/calamares/displaymanager.conf").read_text()
         self.assertIn("DisplayServer=x11", build)
-        self.assertIn("apt-get install -y --no-install-recommends firefox firefox-l10n-pt-br locales", build)
+        self.assertIn("apt-get install -y --no-install-recommends firefox locales", build)
         self.assertIn("locale-gen pt_BR.UTF-8", build)
         self.assertIn("test -x /usr/bin/firefox", build)
         self.assertIn(r"User=ubuntu\nSession=plasma.desktop\nRelogin=false", build)
