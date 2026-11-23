@@ -162,7 +162,7 @@ chroot "$ROOTFS" /bin/bash -euxc '
     /home/ubuntu/Desktop /home/ubuntu/.config/autostart /home/ubuntu/.config/ifba-ai \
     /home/ubuntu/.local/share/ifba-ai /home/ubuntu/.cache/ifba-ai
   printf "[General]\nDisplayServer=x11\n\n[Autologin]\nUser=ubuntu\nSession=plasma.desktop\nRelogin=false\n" > /etc/sddm.conf.d/10-ifba-os.conf
-  # The greeter may stay on X11 independently of the user's session.
+  # The greeter may stay on X11 independently of the user session.
   # Casper selects plasma.desktop in the Live overlay. Calamares unpacks
   # the SquashFS, so the installed greeter starts with this X11 selection.
   getent group sddm >/dev/null || groupadd --system sddm

@@ -495,6 +495,8 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("apt-get install -y --no-install-recommends firefox locales", build)
         self.assertIn("locale-gen pt_BR.UTF-8", build)
         self.assertIn("test -x /usr/bin/firefox", build)
+        rootfs_setup = build.split('chroot "$ROOTFS" /bin/bash -euxc \'', 1)[1].split("\n'", 1)[0]
+        self.assertNotIn("'", rootfs_setup)
         self.assertIn(r"User=ubuntu\nSession=plasma.desktop\nRelogin=false", build)
         sddm_directories = next(line for line in build.splitlines() if line.strip().startswith("mkdir -p /etc/sddm.conf.d"))
         self.assertIn("/var/lib/sddm", sddm_directories)
