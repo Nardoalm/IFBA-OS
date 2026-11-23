@@ -5,7 +5,9 @@ import gzip
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
+import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
@@ -36,8 +38,28 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('/work/assets/animations/boot animation.mp4', build)
         self.assertTrue((ROOT / "assets/animations/boot animation.mp4").is_file())
         plymouth_script = (ROOT / "packaging/plymouth/ifba-os.script").read_text()
-        self.assertIn("Plymouth.SetRefreshFunction", plymouth_script)
+        self.assertIn("Plymouth.SetBootProgressFunction", plymouth_script)
         self.assertIn("frame-", plymouth_script)
+        self.assertIn("boot=casper quiet splash ---", build)
+        self.assertIn('lsinitramfs /boot/initrd.img', build)
+        self.assertIn('cmp -s "$ISO/casper/initrd" "$VERIFY_DIR/casper/initrd"', build)
+
+    @unittest.skipUnless(shutil.which("ffmpeg"), "requires FFmpeg to package the boot theme")
+    def test_plymouth_packaging_decodes_video_and_records_the_whole_sequence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            theme = Path(directory) / "theme"
+            subprocess.run(["bash", str(ROOT / "scripts/install-plymouth-theme.sh"), str(theme)],
+                           check=True)
+            frames = sorted(theme.glob("frame-*.png"))
+            self.assertGreaterEqual(len(frames), 120)
+            self.assertLessEqual(len(frames), 121)
+            self.assertEqual(frames, [theme / f"frame-{index:03d}.png"
+                                      for index in range(1, len(frames) + 1)])
+            self.assertNotEqual(frames[0].read_bytes(), frames[len(frames) // 2].read_bytes())
+            script = (theme / "ifba-os.script").read_text()
+            self.assertIn(f"frame_count = {len(frames)};", script)
+            self.assertIn("frame_rate = 12;", script)
+            self.assertNotIn("@FRAME_", script)
 
     def test_dolphin_and_systemsettings_defaults_are_packaged(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
@@ -628,6 +650,9 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertLess(sequence.index("shellprocess"), sequence.index("initramfs"))
         self.assertLess(sequence.index("shellprocess"), sequence.index("users"))
         self.assertLess(sequence.index("users"), sequence.index("displaymanager"))
+        self.assertLess(sequence.index("grubcfg"), sequence.index("bootloader"))
+        self.assertIn("/work/packaging/calamares/grubcfg.conf",
+                      (ROOT / "scripts/build-iso-container.sh").read_text())
 
     def test_ifba_welcome_is_packaged_as_a_kde_first_session_app(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()

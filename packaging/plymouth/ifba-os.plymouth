@@ -1,6 +1,6 @@
 [Plymouth Theme]
 Name=IFBA OS
-Description=IFBA OS startup image
+Description=IFBA OS boot animation
 ModuleName=script
 
 [script]

@@ -15,3 +15,9 @@ The build includes the native Qt 6 IFBA Welcome app, which autostarts for KDE se
 The build removes the container's systemd-resolved stub before SquashFS creation so the live guest can configure DNS itself. It does not embed host Wi-Fi credentials; UTM Shared networking uses the host uplink through virtual NAT. Never put credentials, API keys, cookies, student data, or personal files in the build context.
 
 Desktop palette, typography and visual tokens are defined in `packaging/design-system/tokens.json`; run `python3 tools/generate_design_system.py` to regenerate the KDE color scheme, Konsole colors, GTK 3/4 CSS/settings and IFBA AI stylesheet. `scripts/build-iso.sh` rejects stale generated assets before starting a release build. System GTK defaults and the new-user skeleton are packaged alongside the Plasma/KDE scheme; existing home-directory GTK and KDE settings are kept. See [`DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md). These file contracts are automated; GTK/Qt appearance and contrast still require screenshots from a real guest session.
+
+## Boot animation
+
+The builder converts `assets/animations/boot animation.mp4` to 12 FPS PNG frames for Plymouth and selects the IFBA OS theme before rebuilding the initramfs. The video supplies the imagery. The runtime theme advances from Plymouth's boot timer and holds the final frame if startup continues. A fast boot may leave the splash before the clip ends. Plymouth uses a static image outside the boot animation, and retains the boot message and disk-unlock prompts.
+
+The Live GRUB entry passes `quiet splash`. Calamares runs its `grubcfg` module before writing the installed bootloader so it can enable the same Plymouth splash on the target. The build checks that every theme file is present in the initramfs and verifies the copy extracted from the ISO.

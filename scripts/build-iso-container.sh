@@ -327,7 +327,8 @@ cp /work/packaging/calamares/partition.conf /work/packaging/calamares/unpackfs.c
   /work/packaging/calamares/removeuser.conf /work/packaging/calamares/shellprocess.conf \
   /work/packaging/calamares/locale.conf /work/packaging/calamares/keyboard.conf \
   /work/packaging/calamares/users.conf /work/packaging/calamares/displaymanager.conf \
-  /work/packaging/calamares/initramfs.conf /work/packaging/calamares/bootloader.conf \
+  /work/packaging/calamares/initramfs.conf /work/packaging/calamares/grubcfg.conf \
+  /work/packaging/calamares/bootloader.conf \
   "$ROOTFS/etc/calamares/modules/"
 cp /work/packaging/calamares/branding.desc "$ROOTFS/etc/calamares/branding/ifba-os/branding.desc"
 cp /work/packaging/ifba-os-installer "$ROOTFS/usr/bin/ifba-os-installer"
@@ -453,18 +454,25 @@ rm -f "$ROOTFS/home/ubuntu/.config/autostart/ifba-os-plasma-session-setup.deskto
 chroot "$ROOTFS" chown -R ubuntu:ubuntu /home/ubuntu
 chmod 0700 "$ROOTFS/home/ubuntu/.config/ifba-ai" "$ROOTFS/home/ubuntu/.local/share/ifba-ai" "$ROOTFS/home/ubuntu/.cache/ifba-ai" \
   "$ROOTFS/etc/skel/.config/ifba-ai" "$ROOTFS/etc/skel/.local/share/ifba-ai" "$ROOTFS/etc/skel/.cache/ifba-ai"
-mkdir -p "$ROOTFS/usr/share/plymouth/themes/ifba-os"
-cp /work/assets/plymouth/ifba-os-startup.png /work/packaging/plymouth/ifba-os.plymouth /work/packaging/plymouth/ifba-os.script "$ROOTFS/usr/share/plymouth/themes/ifba-os/"
-if [[ -s "/work/assets/animations/boot animation.mp4" ]]; then
-  cp "/work/assets/animations/boot animation.mp4" "$ROOTFS/tmp/ifba-boot-animation.mp4"
-  chroot "$ROOTFS" ffmpeg -y -loglevel error -i /tmp/ifba-boot-animation.mp4 \
-    -vf "fps=12,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" \
-    /usr/share/plymouth/themes/ifba-os/frame-%03d.png
-  rm -f "$ROOTFS/tmp/ifba-boot-animation.mp4"
-fi
+PLYMOUTH_BUILD_DIR="$ROOTFS/tmp/ifba-plymouth-build"
+install -D -m 0755 /work/scripts/install-plymouth-theme.sh "$PLYMOUTH_BUILD_DIR/scripts/install-plymouth-theme.sh"
+install -D -m 0644 "/work/assets/animations/boot animation.mp4" "$PLYMOUTH_BUILD_DIR/assets/animations/boot animation.mp4"
+install -D -m 0644 /work/assets/plymouth/ifba-os-startup.png "$PLYMOUTH_BUILD_DIR/assets/plymouth/ifba-os-startup.png"
+install -D -m 0644 /work/packaging/plymouth/ifba-os.script "$PLYMOUTH_BUILD_DIR/packaging/plymouth/ifba-os.script"
+install -m 0644 /work/packaging/plymouth/ifba-os.plymouth "$PLYMOUTH_BUILD_DIR/packaging/plymouth/"
+chroot "$ROOTFS" /tmp/ifba-plymouth-build/scripts/install-plymouth-theme.sh /usr/share/plymouth/themes/ifba-os
+rm -r "$PLYMOUTH_BUILD_DIR"
 chroot "$ROOTFS" update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/ifba-os/ifba-os.plymouth 120
 chroot "$ROOTFS" update-alternatives --set default.plymouth /usr/share/plymouth/themes/ifba-os/ifba-os.plymouth
 chroot "$ROOTFS" update-initramfs -u -k all
+chroot "$ROOTFS" lsinitramfs /boot/initrd.img > /tmp/ifba-initrd-entries.txt
+for theme_file in "$ROOTFS"/usr/share/plymouth/themes/{default.plymouth,ifba-os/*}; do
+  if ! grep -Fxq "${theme_file#"$ROOTFS"/}" /tmp/ifba-initrd-entries.txt; then
+    printf 'Plymouth theme file missing from initramfs: %s\n' "${theme_file#"$ROOTFS"/}" >&2
+    exit 1
+  fi
+done
+rm /tmp/ifba-initrd-entries.txt
 umount "$RESOLV_TARGET" 2>/dev/null || true
 umount -R "$ROOTFS/dev" 2>/dev/null || true
 umount "$ROOTFS/proc" 2>/dev/null || true
@@ -585,7 +593,7 @@ cat > "$ISO/boot/grub/grub.cfg" <<'GRUB'
 set timeout=5
 set default=0
 menuentry "IFBA OS prototype (live)" {
-  linux /casper/vmlinuz boot=casper splash ---
+  linux /casper/vmlinuz boot=casper quiet splash ---
   initrd /casper/initrd
 }
 GRUB
@@ -611,6 +619,7 @@ for file in "${casper_payload[@]}" md5sum.txt; do
   test -s "$VERIFY_DIR/$file"
 done
 cmp -s "$ISO/md5sum.txt" "$VERIFY_DIR/md5sum.txt"
+cmp -s "$ISO/casper/initrd" "$VERIFY_DIR/casper/initrd"
 (cd "$VERIFY_DIR" && md5sum --check --strict md5sum.txt)
 unsquashfs -cat "$VERIFY_DIR/casper/filesystem.squashfs" usr/share/ifba-os/build-info.json \
   > "$VERIFY_DIR/build-info.json"
