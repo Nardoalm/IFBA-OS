@@ -12,7 +12,7 @@ from .ui import (
 )
 
 STYLE = Path("/usr/share/ifba-os/ifba-ai-preview.css")
-LOGO = Path("/usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")
+LOGO = Path("/usr/share/ifba-os/assets/icons/ai-assistant-orb.png")
 
 
 def box(spacing=0):

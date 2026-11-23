@@ -340,9 +340,13 @@ class DesktopPackagingTests(unittest.TestCase):
                        "org.kde.plasma.panelspacer"):
             self.assertIn(widget, layout)
         dock = layout.split("var dock = new Panel", 1)[1]
-        self.assertEqual(re.findall(r'dock\.addWidget\("([^"]+)"\)', dock),
-                         ["org.kde.plasma.icontasks", "org.kde.plasma.trash"])
-        self.assertEqual(layout.count('.addWidget("org.kde.plasma.kickoff")'), 1)
+        self.assertEqual(re.findall(r'dock(?:Launcher)?\.addWidget\("([^"]+)"\)', dock),
+                         ["org.kde.plasma.kickoff", "org.kde.plasma.icontasks", "org.kde.plasma.trash"])
+        self.assertEqual(layout.count('.addWidget("org.kde.plasma.kickoff")'), 2)
+        ai_desktop = (ROOT / "packaging/ifba-ai.desktop").read_text()
+        ai_preview = (ROOT / "ai/ifba_ai/ui_preview.py").read_text()
+        self.assertIn("ai-assistant-orb.png", ai_desktop)
+        self.assertIn("ai-assistant-orb.png", ai_preview)
         launcher_line = re.search(r'tasks\.writeConfig\("launchers", \[(.*?)\]', dock, re.S)
         self.assertIsNotNone(launcher_line)
         self.assertEqual(

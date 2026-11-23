@@ -65,7 +65,19 @@ dock.floating = true
 dock.opacity = "translucent"
 dock.hiding = "none"
 
-// Only the native task manager is added to new profiles.
+var dockLauncher = dock.addWidget("org.kde.plasma.kickoff")
+dockLauncher.currentConfigGroup = ["General"]
+dockLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")
+dockLauncher.writeConfig("favorites", "applications:ifba-ai.desktop,applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:systemsettings.desktop,applications:suap-ifba.desktop,applications:ava-ifba.desktop")
+dockLauncher.writeConfig("systemApplications", "systemsettings.desktop,org.kde.kinfocenter.desktop,org.kde.discover.desktop")
+dockLauncher.writeConfig("systemFavorites", "suspend,logout,reboot,shutdown")
+dockLauncher.writeConfig("primaryActions", "3")
+dockLauncher.writeConfig("showActionButtonCaptions", "true")
+dockLauncher.writeConfig("favoritesDisplay", 0)
+dockLauncher.writeConfig("applicationsDisplay", 0)
+dockLauncher.writeConfig("appNameFormat", 0)
+dockLauncher.writeConfig("alphaSort", true)
+
 var tasks = dock.addWidget("org.kde.plasma.icontasks")
 tasks.currentConfigGroup = ["General"]
 tasks.writeConfig("launchers", [
