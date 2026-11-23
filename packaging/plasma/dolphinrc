@@ -1,0 +1,16 @@
+[General]
+ShowFullPath=false
+ShowSelectionToggle=false
+RememberOpenedTabs=false
+
+[MainWindow]
+MenuBar=Disabled
+ToolBarsMovable=Disabled
+
+[IconsMode]
+IconSize=64
+PreviewSize=64
+MaximumTextLines=2
+
+[PlacesPanel]
+IconSize=22

@@ -88,16 +88,12 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, out_signature="a(sss)")
     def ListConversations(self):
-        if self.service.live_demo:
-            return []
         rows = self.service.storage.list_conversations()
         return [(dbus.String(row["id"]), dbus.String(row["title"]),
                  dbus.String(row["updated_at"])) for row in rows]
 
     @dbus.service.method(INTERFACE, in_signature="s", out_signature="a(sss)")
     def ListMessages(self, conversation_id):
-        if self.service.live_demo:
-            return []
         rows = self.service.storage.list_messages(str(conversation_id))
         return [(dbus.String(row["role"]), dbus.String(row["content"]),
                  dbus.String(row["created_at"])) for row in rows]
@@ -138,8 +134,6 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, out_signature="s")
     def ListMemories(self):
-        if self.service.live_demo:
-            return "[]"
         return json.dumps(self.service.storage.list_memories(), ensure_ascii=False)
 
     @dbus.service.method(INTERFACE, in_signature="ssb", out_signature="u")
@@ -155,8 +149,6 @@ class AssistantObject(dbus.service.Object):
 
     @dbus.service.method(INTERFACE, in_signature="u", out_signature="b")
     def DeleteMemory(self, memory_id):
-        if self.service.live_demo:
-            return dbus.Boolean(False)
         return dbus.Boolean(self.service.storage.delete_memory(int(memory_id)))
 
     @dbus.service.method(INTERFACE, out_signature="u")

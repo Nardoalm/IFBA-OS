@@ -7,7 +7,7 @@ for (const desktop of desktops()) {
 
 var topPanel = new Panel
 topPanel.location = "top"
-topPanel.height = 32
+topPanel.height = 36
 topPanel.lengthMode = "fill"
 topPanel.alignment = "left"
 topPanel.floating = false
@@ -39,6 +39,8 @@ var spacer = topPanel.addWidget("org.kde.plasma.panelspacer")
 spacer.currentConfigGroup = ["General"]
 spacer.writeConfig("expanding", true)
 
+topPanel.addWidget("org.kde.milou")
+
 var tray = topPanel.addWidget("org.kde.plasma.systemtray")
 tray.currentConfigGroup = ["General"]
 tray.writeConfig("extraItems", "org.kde.plasma.notifications,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.bluetooth")
@@ -56,19 +58,29 @@ clock.writeConfig("dateDisplayFormat", "1")
 
 var dock = new Panel
 dock.location = "bottom"
-dock.height = 56
+dock.height = 68
 dock.lengthMode = "fit"
 dock.alignment = "center"
 dock.floating = true
 dock.opacity = "translucent"
-dock.hiding = "dodgewindows"
+dock.hiding = "none"
 
 // Only the native task manager is added to new profiles.
 var tasks = dock.addWidget("org.kde.plasma.icontasks")
 tasks.currentConfigGroup = ["General"]
-tasks.writeConfig("launchers", "applications:ifba-ai.desktop,applications:firefox.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:systemsettings.desktop")
+tasks.writeConfig("launchers", [
+    "applications:ifba-ai.desktop",
+    "applications:org.kde.dolphin.desktop",
+    "applications:systemsettings.desktop",
+    "applications:org.kde.konsole.desktop",
+    "applications:com.visualstudio.CodeOSS.desktop",
+    "applications:firefox.desktop",
+    "applications:libreoffice-writer.desktop",
+].join(","))
 tasks.writeConfig("maxStripes", 1)
 tasks.writeConfig("showOnlyCurrentScreen", true)
 tasks.writeConfig("showToolTips", true)
 tasks.writeConfig("groupingStrategy", 1)
 tasks.writeConfig("sortingStrategy", 1)
+
+dock.addWidget("org.kde.plasma.trash")

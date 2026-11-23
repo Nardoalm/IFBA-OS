@@ -1,2 +1,6 @@
 #!/bin/sh
-exec /usr/bin/python3 -m ifba_ai.ui "$@"
+if [ "${1:-}" = "--interface-classica" ]; then
+    shift
+    exec /usr/bin/python3 -m ifba_ai.ui "$@"
+fi
+exec /usr/bin/python3 -m ifba_ai.ui_preview "$@"

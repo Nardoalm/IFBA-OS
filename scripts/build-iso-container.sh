@@ -231,7 +231,17 @@ install -D -m 0644 /work/packaging/ifba-visual-profile.desktop \
   "$ROOTFS/usr/share/applications/ifba-visual-profile.desktop"
 install -D -m 0644 /work/packaging/konsole/IFBA\ Glass.colorscheme \
   "$ROOTFS/usr/share/konsole/IFBA Glass.colorscheme"
+install -D -m 0644 /work/packaging/konsole/fastfetch.jsonc \
+  "$ROOTFS/usr/share/ifba-os/fastfetch.jsonc"
+install -D -m 0644 /work/packaging/plasma/dolphinrc "$ROOTFS/etc/xdg/dolphinrc"
+install -D -m 0644 /work/packaging/plasma/systemsettingsrc "$ROOTFS/etc/xdg/systemsettingsrc"
 for home_root in "$ROOTFS/etc/skel" "$ROOTFS/home/ubuntu"; do
+  if [[ "$home_root" == "$ROOTFS/etc/skel" || ! -e "$home_root/.config/dolphinrc" ]]; then
+    install -D -m 0644 /work/packaging/plasma/dolphinrc "$home_root/.config/dolphinrc"
+  fi
+  if [[ "$home_root" == "$ROOTFS/etc/skel" || ! -e "$home_root/.config/systemsettingsrc" ]]; then
+    install -D -m 0644 /work/packaging/plasma/systemsettingsrc "$home_root/.config/systemsettingsrc"
+  fi
   if [[ "$home_root" == "$ROOTFS/etc/skel" || ! -e "$home_root/.local/share/konsole/IFBA Terminal.profile" ]]; then
     install -D -m 0644 /work/packaging/konsole/IFBA\ Terminal.profile \
       "$home_root/.local/share/konsole/IFBA Terminal.profile"
@@ -245,6 +255,12 @@ for home_root in "$ROOTFS/etc/skel" "$ROOTFS/home/ubuntu"; do
     cat > "$home_root/.config/konsolerc" <<'KONSOLE'
 [Desktop Entry]
 DefaultProfile=IFBA Terminal.profile
+
+[KonsoleWindow]
+ShowMenuBarByDefault=false
+
+[MainWindow]
+MenuBar=Disabled
 KONSOLE
   fi
   if [[ ! -e "$home_root/.bashrc" ]]; then
@@ -317,26 +333,6 @@ cp /work/packaging/calamares/branding.desc "$ROOTFS/etc/calamares/branding/ifba-
 cp /work/packaging/ifba-os-installer "$ROOTFS/usr/bin/ifba-os-installer"
 chmod 0755 "$ROOTFS/usr/bin/ifba-os-installer"
 cp /work/packaging/ifba-os-installer.desktop "$ROOTFS/usr/share/applications/"
-if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop" ]]; then
-  cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop"
-  chmod +x "$ROOTFS/home/ubuntu/Desktop/SUAP.desktop"
-fi
-if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop" ]]; then
-  cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
-  chmod +x "$ROOTFS/home/ubuntu/Desktop/AVA-IFBA.desktop"
-fi
-cp /work/packaging/suap-ifba-link.desktop "$ROOTFS/etc/skel/Desktop/SUAP.desktop"
-cp /work/packaging/ava-ifba-link.desktop "$ROOTFS/etc/skel/Desktop/AVA-IFBA.desktop"
-if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop" ]]; then
-  cp /work/packaging/ifba-ai.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop"
-  chmod +x "$ROOTFS/home/ubuntu/Desktop/IFBA-AI.desktop"
-fi
-if [[ ! -e "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop" ]]; then
-  cp /work/packaging/ifba-os-installer.desktop "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop"
-  chmod +x "$ROOTFS/home/ubuntu/Desktop/IFBA-OS-Installer.desktop"
-fi
-cp /work/packaging/ifba-ai.desktop "$ROOTFS/etc/skel/Desktop/IFBA-AI.desktop"
-chmod +x "$ROOTFS/etc/skel/Desktop/"*.desktop
 install -D -m 0644 /work/packaging/color-schemes/IFBA-OS-Dark.colors \
   "$ROOTFS/usr/share/color-schemes/IFBA-OS-Dark.colors"
 install -D -m 0644 /work/packaging/gtk/gtk.css "$ROOTFS/etc/gtk-3.0/gtk.css"
@@ -360,6 +356,8 @@ done
 cat > "$ROOTFS/etc/skel/.config/kdeglobals" <<'KDEGLOBALS'
 [General]
 ColorScheme=IFBA-OS-Dark
+AccentColor=38,160,77
+accentColorFromWallpaper=false
 Name=IFBA OS Dark
 Font=Inter,10,-1,5,50,0,0,0,0,0
 [Icons]
@@ -468,6 +466,13 @@ chmod 0700 "$ROOTFS/home/ubuntu/.config/ifba-ai" "$ROOTFS/home/ubuntu/.local/sha
   "$ROOTFS/etc/skel/.config/ifba-ai" "$ROOTFS/etc/skel/.local/share/ifba-ai" "$ROOTFS/etc/skel/.cache/ifba-ai"
 mkdir -p "$ROOTFS/usr/share/plymouth/themes/ifba-os"
 cp /work/assets/plymouth/ifba-os-startup.png /work/packaging/plymouth/ifba-os.plymouth /work/packaging/plymouth/ifba-os.script "$ROOTFS/usr/share/plymouth/themes/ifba-os/"
+if [[ -s "/work/assets/animations/boot animation.mp4" ]]; then
+  cp "/work/assets/animations/boot animation.mp4" "$ROOTFS/tmp/ifba-boot-animation.mp4"
+  chroot "$ROOTFS" ffmpeg -y -loglevel error -i /tmp/ifba-boot-animation.mp4 \
+    -vf "fps=12,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" \
+    /usr/share/plymouth/themes/ifba-os/frame-%03d.png
+  rm -f "$ROOTFS/tmp/ifba-boot-animation.mp4"
+fi
 chroot "$ROOTFS" update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/ifba-os/ifba-os.plymouth 120
 chroot "$ROOTFS" update-alternatives --set default.plymouth /usr/share/plymouth/themes/ifba-os/ifba-os.plymouth
 chroot "$ROOTFS" update-initramfs -u -k all
@@ -503,6 +508,7 @@ for file in /etc/NetworkManager/conf.d/10-globally-managed-devices.conf \
   /usr/bin/ifba-visual-profile /usr/bin/ifba-visual-profile-dialog \
   /usr/share/applications/ifba-visual-profile.desktop \
   /usr/share/konsole/IFBA\ Terminal.profile /usr/share/konsole/IFBA\ Glass.colorscheme \
+  /usr/share/ifba-os/fastfetch.jsonc /etc/xdg/dolphinrc /etc/xdg/systemsettingsrc \
   /usr/share/dbus-1/services/org.ifba.OS.AI.service /usr/lib/systemd/user/ifba-ai.service; do
   test -s "$ROOTFS$file"
 done
@@ -548,7 +554,7 @@ find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.taskma
 find "$ROOTFS/usr/lib" -path '*/qt6/plugins/plasma/applets/org.kde.plasma.trash.so' -print -quit | grep -q .
 for launcher in firefox.desktop org.kde.dolphin.desktop org.kde.konsole.desktop ifba-ai.desktop \
   com.visualstudio.CodeOSS.desktop org.kde.gcompris.desktop libreoffice-writer.desktop systemsettings.desktop \
-  suap-ifba.desktop ava-ifba.desktop; do
+  suap-ifba.desktop ava-ifba.desktop ifba-os-installer.desktop; do
   test -s "$ROOTFS/usr/share/applications/$launcher"
 done
 cmp -s /work/packaging/plasma/ifba-os/metadata.json "$ROOTFS/usr/share/plasma/look-and-feel/org.ifbaos.desktop/metadata.json"

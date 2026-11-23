@@ -1,6 +1,7 @@
 [General]
 Name=IFBA OS Dark
 ColorScheme=IFBA-OS-Dark
+AccentColor=38,160,77
 shadeSortColumn=true
 
 [Colors:Window]
@@ -28,7 +29,7 @@ DecorationHover=34,197,94
 DecorationFocus=74,222,128
 
 [Colors:Selection]
-BackgroundNormal=55,69,82
+BackgroundNormal=24,113,54
 BackgroundAlternate=41,47,57
 ForegroundNormal=241,245,242
 ForegroundInactive=148,163,154

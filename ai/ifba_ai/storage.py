@@ -26,12 +26,21 @@ def _timestamp():
 
 
 class ConversationStore:
-    def __init__(self, paths):
+    def __init__(self, paths, in_memory=False):
         self.paths = paths
-        self.paths.prepare()
+        self.in_memory = bool(in_memory)
+        self._memory_connection = None
+        if self.in_memory:
+            self._memory_connection = sqlite3.connect(":memory:", check_same_thread=False)
+            self._memory_connection.row_factory = sqlite3.Row
+            self._memory_connection.execute("PRAGMA foreign_keys = ON")
+        else:
+            self.paths.prepare()
         self._migrate()
 
     def _connect(self):
+        if self.in_memory:
+            return self._memory_connection
         try:
             descriptor = os.open(str(self.paths.database), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
@@ -52,7 +61,8 @@ class ConversationStore:
             with connection:
                 yield connection
         finally:
-            connection.close()
+            if not self.in_memory:
+                connection.close()
 
     def _migrate(self):
         with self._session() as connection:

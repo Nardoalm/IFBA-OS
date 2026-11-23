@@ -2,16 +2,16 @@
 Version=1.0
 Type=Application
 Name=IFBA AI
-StartupWMClass=org.ifba.OS.Assistant
-Comment=Configure o assistente educacional opcional
+StartupWMClass=org.ifba.OS.Assistant.Preview
+Comment=Assistente educacional do IFBA OS
 Exec=/usr/bin/ifba-ai-ui
 TryExec=/usr/bin/ifba-ai-ui
-Icon=/usr/share/ifba-os/assets/icons/ai-assistant-orb.png
+Icon=/usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png
 Terminal=false
 Categories=Education;Utility;
 StartupNotify=true
-Actions=Preview;
+Actions=Classic;
 
-[Desktop Action Preview]
-Name=Abrir prévia da nova interface
-Exec=/usr/bin/ifba-ai-preview
+[Desktop Action Classic]
+Name=Abrir interface clássica
+Exec=/usr/bin/ifba-ai-ui --interface-classica

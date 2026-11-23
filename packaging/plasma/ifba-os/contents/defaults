@@ -1,6 +1,7 @@
 [kdeglobals][General]
 ColorScheme=IFBA-OS-Dark
 Name=IFBA OS Dark
+AccentColor=38,160,77
 Font=Inter,10,-1,5,50,0,0,0,0,0
 
 [kdeglobals][KDE]

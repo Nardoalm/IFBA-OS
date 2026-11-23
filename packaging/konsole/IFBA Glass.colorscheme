@@ -1,10 +1,8 @@
 [Background]
-Color=8,14,11
-Transparency=12
+Color=7,32,26
 
 [BackgroundIntense]
-Color=16,26,21
-Transparency=12
+Color=13,41,33
 
 [Color0]
 Color=25,40,32
@@ -62,5 +60,6 @@ Color=255,255,255
 
 [General]
 Description=IFBA Glass
-Opacity=0.94
+Opacity=0.85
+Blur=true
 Wallpaper=

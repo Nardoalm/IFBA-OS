@@ -1,0 +1,14 @@
+{
+  "logo": {
+    "type": "kitty-direct",
+    "source": "/usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png",
+    "width": 12,
+    "height": 7,
+    "padding": { "top": 1, "left": 1, "right": 3 }
+  },
+  "display": { "color": { "keys": "green", "title": "green" } },
+  "modules": [
+    "title", "separator", "os", "host", "kernel", "de", "wm",
+    "theme", "icons", "terminal", "cpu", "memory", "break", "colors"
+  ]
+}

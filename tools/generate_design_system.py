@@ -36,7 +36,7 @@ def generate(tokens):
     easing = motion["easing"]
     kde = tokens["kde_surfaces"]
     palette = {
-        "[General]": {"Name": "IFBA OS Dark", "ColorScheme": "IFBA-OS-Dark", "shadeSortColumn": "true"},
+        "[General]": {"Name": "IFBA OS Dark", "ColorScheme": "IFBA-OS-Dark", "AccentColor": kde["accent"], "shadeSortColumn": "true"},
         "[Colors:Window]": {"BackgroundNormal": kde["surface"], "BackgroundAlternate": kde["surface_elevated"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"], "DecorationHover": colors["accent"], "DecorationFocus": colors["focus"]},
         "[Colors:View]": {"BackgroundNormal": kde["background"], "BackgroundAlternate": kde["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"], "DecorationHover": colors["accent"], "DecorationFocus": colors["focus"]},
         "[Colors:Button]": {"BackgroundNormal": kde["surface_elevated"], "BackgroundAlternate": kde["surface"], "ForegroundNormal": colors["text_primary"], "ForegroundInactive": colors["text_secondary"], "DecorationHover": colors["accent"], "DecorationFocus": colors["focus"]},
@@ -152,9 +152,10 @@ DurationFastMs={motion['duration_fast_ms']}
 DurationStandardMs={motion['duration_standard_ms']}
 DurationSlowMs={motion['duration_slow_ms']}
 '''
+    terminal = tokens["terminal_surfaces"]
     terminal_colors = {
-        "[Background]": {"Color": colors["background"], "Transparency": "12"},
-        "[BackgroundIntense]": {"Color": colors["surface"], "Transparency": "12"},
+        "[Background]": {"Color": terminal["background"]},
+        "[BackgroundIntense]": {"Color": terminal["surface"]},
         "[Color0]": {"Color": colors["surface_elevated"]}, "[Color0Intense]": {"Color": colors["text_secondary"]},
         "[Color1]": {"Color": colors["danger"]}, "[Color1Intense]": {"Color": "#FB7185"},
         "[Color2]": {"Color": colors["accent"]}, "[Color2Intense]": {"Color": colors["focus"]},
@@ -164,7 +165,7 @@ DurationSlowMs={motion['duration_slow_ms']}
         "[Color6]": {"Color": "#2DD4BF"}, "[Color6Intense]": {"Color": "#5EEAD4"},
         "[Color7]": {"Color": colors["text_secondary"]}, "[Color7Intense]": {"Color": colors["text_primary"]},
         "[Foreground]": {"Color": colors["text_primary"]}, "[ForegroundIntense]": {"Color": "#FFFFFF"},
-        "[General]": {"Description": "IFBA Glass", "Opacity": str(tokens["opacity"]["panel"]), "Wallpaper": ""},
+        "[General]": {"Description": "IFBA Glass", "Opacity": str(tokens["opacity"]["terminal"]), "Blur": "true", "Wallpaper": ""},
     }
     konsole_text = []
     for section, values in terminal_colors.items():

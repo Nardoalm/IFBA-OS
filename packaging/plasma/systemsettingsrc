@@ -1,0 +1,7 @@
+[General]
+ActiveView=systemsettings_sidebar_mode
+ShowToolTips=true
+
+[MainWindow]
+MenuBar=Disabled
+ToolBarsMovable=Disabled

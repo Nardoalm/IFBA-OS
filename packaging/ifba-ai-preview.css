@@ -1,6 +1,6 @@
-@define-color ai_bg #191e25;
-@define-color ai_sidebar #222a34;
-@define-color ai_surface #292f39;
+@define-color ai_bg #1b2025;
+@define-color ai_sidebar #282e37;
+@define-color ai_surface #2a2e34;
 @define-color ai_border #424b58;
 @define-color ai_text #f1f5f2;
 @define-color ai_muted #b3bec8;
@@ -16,11 +16,25 @@
 .ai-preview.preview-dark .preview-content viewport {
   background-image: linear-gradient(to bottom, #202835, #191e25 64%, #1b201f);
 }
-.ai-preview .preview-toolbar { padding: 1px 12px; }
+.ai-preview.preview-dark.preview-translucent {
+  background-color: transparent;
+  background-image: linear-gradient(to bottom, rgba(28, 36, 49, 0.95),
+    rgba(27, 31, 37, 0.94) 60%, rgba(22, 26, 24, 0.94));
+}
+.ai-preview.preview-dark.preview-translucent .preview-content,
+.ai-preview.preview-dark.preview-translucent .preview-content viewport {
+  background-color: transparent;
+  background-image: none;
+}
+.ai-preview.preview-dark.preview-translucent .preview-sidebar {
+  background-color: rgba(255, 255, 255, 0.045);
+  border-right-color: rgba(255, 255, 255, 0.075);
+}
+.ai-preview .preview-toolbar { padding: 2px 13px; }
 .ai-preview .preview-sidebar {
   background-color: @ai_sidebar;
   border-right: 1px solid @ai_border;
-  padding: 14px 14px 12px;
+  padding: 18px 20px 16px;
 }
 .ai-preview .preview-sidebar viewport, .ai-preview .history-list {
   color: @ai_text;
@@ -29,6 +43,20 @@
 .ai-preview .preview-sidebar scrolledwindow viewport { background: transparent; }
 .ai-preview .sidebar-brand { font-size: 17pt; font-weight: 700; }
 .ai-preview .section-label { font-size: 9pt; font-weight: 600; color: @ai_muted; }
+.ai-preview .beta-badge {
+  background-color: @ai_surface;
+  border: 1px solid @ai_border;
+  border-radius: 999px;
+  color: @ai_muted;
+  font-size: 8.5pt;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+.ai-preview .shortcut-hint {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 8.5pt;
+  font-weight: 500;
+}
 .ai-preview .muted, .ai-preview .status-text { color: @ai_muted; font-size: 9pt; }
 .ai-preview .status-error { color: #ffb4ae; }
 .ai-preview.preview-light .status-error { color: #8f231d; }
@@ -72,7 +100,7 @@
 .ai-preview button.send-action { border-radius: 20px; min-width: 28px; }
 .ai-preview .history-list row { border-radius: 7px; padding: 0 7px; }
 .ai-preview .history-list row:hover { background-color: @ai_surface; }
-.ai-preview .hero-title { font-size: 36pt; font-weight: 800; }
+.ai-preview .hero-title { font-size: 38pt; font-weight: 750; }
 .ai-preview .hero-subtitle { font-size: 12pt; color: @ai_muted; }
 .ai-preview .composer {
   background-color: @ai_surface;
@@ -86,7 +114,23 @@
 }
 .ai-preview .composer .prompt { padding: 5px 7px; }
 .ai-preview .placeholder { padding: 5px 7px; color: @ai_muted; }
-.ai-preview button.suggestion { padding: 7px 12px; background-color: @ai_surface; }
+.ai-preview .composer button.flat, .ai-preview .composer button.send-action {
+  min-width: 29px;
+  min-height: 29px;
+  border-radius: 20px;
+  padding: 4px;
+}
+.ai-preview .composer button.flat:not(.send-action) { background-color: shade(@ai_surface, 1.26); }
+.ai-preview .composer button.send-action { background-color: #237e34; }
+.ai-preview button.suggestion {
+  min-height: 48px;
+  padding: 9px 12px;
+  background-color: @ai_surface;
+  border: 1px solid @ai_border;
+  border-radius: 12px;
+}
+.ai-preview .suggestion-title { font-weight: 700; font-size: 9.5pt; color: @ai_text; }
+.ai-preview .suggestion-subtitle { font-size: 8.5pt; color: @ai_muted; }
 .ai-preview .message-user, .ai-preview .message-assistant { padding: 13px 16px; }
 .ai-preview .message-user { background-color: @ai_surface; border-radius: 14px; margin-left: 24px; }
 .ai-preview .message-author { font-weight: 700; }

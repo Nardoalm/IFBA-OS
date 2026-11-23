@@ -35,6 +35,26 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("/work/assets/wallpapers/ifba-os-desktop.png", build)
         self.assertIn("/usr/share/plymouth/themes/ifba-os/", build)
         self.assertIn("/work/assets/plymouth/ifba-os-startup.png", build)
+        self.assertIn('/work/assets/animations/boot animation.mp4', build)
+        self.assertTrue((ROOT / "assets/animations/boot animation.mp4").is_file())
+        plymouth_script = (ROOT / "packaging/plymouth/ifba-os.script").read_text()
+        self.assertIn("Plymouth.SetRefreshFunction", plymouth_script)
+        self.assertIn("frame-", plymouth_script)
+
+    def test_dolphin_and_systemsettings_defaults_are_packaged(self):
+        build = (ROOT / "scripts/build-iso-container.sh").read_text()
+        dolphin = configparser.ConfigParser(interpolation=None)
+        dolphin.read(ROOT / "packaging/plasma/dolphinrc")
+        settings = configparser.ConfigParser(interpolation=None)
+        settings.read(ROOT / "packaging/plasma/systemsettingsrc")
+
+        self.assertEqual(dolphin["MainWindow"]["MenuBar"], "Disabled")
+        self.assertEqual(dolphin["IconsMode"]["IconSize"], "64")
+        self.assertEqual(settings["General"]["ActiveView"], "systemsettings_sidebar_mode")
+        self.assertEqual(settings["MainWindow"]["MenuBar"], "Disabled")
+        self.assertIn("/etc/xdg/dolphinrc", build)
+        self.assertIn("/etc/xdg/systemsettingsrc", build)
+        self.assertIn("accentColorFromWallpaper=false", build)
 
     def test_container_build_script_has_valid_shell_syntax(self):
         subprocess.run(["bash", "-n", str(ROOT / "scripts/build-iso-container.sh")], check=True)
@@ -95,7 +115,7 @@ class DesktopPackagingTests(unittest.TestCase):
         ui = (ROOT / "ai/ifba_ai/ui.py").read_text()
 
         self.assertEqual(entry["Desktop Entry"]["Name"], "IFBA AI")
-        self.assertEqual(entry["Desktop Entry"]["StartupWMClass"], "org.ifba.OS.Assistant")
+        self.assertEqual(entry["Desktop Entry"]["StartupWMClass"], "org.ifba.OS.Assistant.Preview")
         self.assertIn('title="IFBA AI"', ui)
         for selector in ("button:hover", "button:active", "button:focus", "button:disabled"):
             self.assertIn(selector, css)
@@ -173,7 +193,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(service["Service"]["BusName"], "org.ifba.OS.AI")
         self.assertEqual(dbus_service["D-BUS Service"]["SystemdService"], "ifba-ai.service")
 
-    def test_live_demo_blocks_ai_personal_data_and_is_removed_by_installer(self):
+    def test_live_demo_uses_ephemeral_memory_and_is_removed_by_installer(self):
         build = (ROOT / "scripts/build-iso-container.sh").read_text()
         installer = (ROOT / "packaging/calamares/shellprocess.conf").read_text()
         service = (ROOT / "ai/ifba_ai/service.py").read_text()
@@ -182,10 +202,8 @@ class DesktopPackagingTests(unittest.TestCase):
 
         self.assertIn('install -D -m 0644 /dev/null "$ROOTFS/etc/ifba-os/live-demo"', build)
         self.assertIn("/usr/bin/rm -f /etc/ifba-os/live-demo", installer)
-        self.assertIn('self.storage = None if self.live_demo else ConversationStore(self.paths)', service)
-        self.assertIn("self.require_live_ai_data_enabled()", service)
+        self.assertIn('self.storage = ConversationStore(self.paths, in_memory=self.live_demo)', service)
         self.assertIn('out_signature="bbbs"', daemon)
-        self.assertIn("self.service.require_live_ai_data_enabled()", daemon)
         self.assertIn("def _on_service_status(self, configured, store_available, live_demo, _model):", ui)
         self.assertIn("não armazena chaves, conversas, memórias ou capturas", ui)
 
@@ -200,12 +218,16 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertEqual(profile["General"]["Name"], "IFBA Terminal")
         self.assertEqual(profile["Appearance"]["ColorScheme"], "IFBA Glass")
         self.assertEqual(colors["General"]["Description"], "IFBA Glass")
-        self.assertGreater(float(colors["General"]["Opacity"]), 0.9)
-        self.assertEqual(colors["Background"]["Transparency"], "12")
+        self.assertEqual(float(colors["General"]["Opacity"]), 0.85)
+        self.assertTrue(colors["General"].getboolean("Blur"))
+        self.assertEqual(profile["General"].getint("TerminalMargin"), 12)
+        fetch = json.loads((ROOT / "packaging/konsole/fastfetch.jsonc").read_text())
+        self.assertTrue(fetch["logo"]["source"].endswith("/ifba-institutional-symbol.png"))
         self.assertIn("fastfetch", build)
         self.assertIn("! -e \"$home_root/.config/konsolerc\"", build)
         self.assertIn("! -e \"$home_root/.local/share/konsole/IFBA Terminal.profile\"", build)
-        self.assertIn("PROMPT_COMMAND=__ifba_set_prompt", prompt)
+        self.assertIn("alias neofetch=", prompt)
+        self.assertNotIn("PROMPT_COMMAND=", prompt)
         self.assertNotIn("fastfetch\\n", prompt)
 
     def test_plasma_launcher_uses_the_official_institutional_symbol(self):
@@ -275,11 +297,12 @@ class DesktopPackagingTests(unittest.TestCase):
             "org.kde.plasma.kickoff",
             "org.kde.plasma.appmenu",
             "org.kde.plasma.panelspacer",
+            "org.kde.milou",
             "org.kde.plasma.systemtray",
             "org.kde.plasma.digitalclock",
         ])
         self.assertIn('topPanel.location = "top"', top_layout)
-        self.assertIn("topPanel.height = 32", top_layout)
+        self.assertIn("topPanel.height = 36", top_layout)
         self.assertIn("topPanel.floating = false", top_layout)
         self.assertIn('topPanel.opacity = "translucent"', top_layout)
         self.assertIn('topLauncher.writeConfig("icon", "file:///usr/share/ifba-os/assets/icons/ifba-institutional-symbol.png")', layout)
@@ -289,7 +312,6 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn('topLauncher.writeConfig("alphaSort", true)', layout)
         self.assertIn('globalMenu.writeConfig("compactView", false)', top_layout)
         self.assertNotIn("org.kde.plasma.kicker", top_layout)
-        self.assertNotIn("org.kde.milou", top_layout)
         for tray_item in (
             "org.kde.plasma.notifications",
             "org.kde.plasma.networkmanagement",
@@ -302,12 +324,13 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("ddd d 'de' MMM yyyy", top_layout)
         self.assertIn('clock.writeConfig("use24hFormat", "2")', top_layout)
         self.assertIn('dock.location = "bottom"', layout)
-        self.assertIn('dock.height = 56', layout)
+        self.assertIn('dock.height = 68', layout)
+        self.assertIn('dock.addWidget("org.kde.plasma.trash")', layout)
         self.assertIn('dock.opacity = "translucent"', layout)
         self.assertIn('dock.lengthMode = "fit"', layout)
         self.assertIn('dock.alignment = "center"', layout)
         self.assertIn('dock.floating = true', layout)
-        self.assertIn('dock.hiding = "dodgewindows"', layout)
+        self.assertIn('dock.hiding = "none"', layout)
         self.assertNotIn('com.github.mattanis.macosdock', layout)
         for favorite in ("firefox.desktop", "org.kde.dolphin.desktop", "org.kde.konsole.desktop",
                          "ifba-ai.desktop", "systemsettings.desktop"):
@@ -317,18 +340,21 @@ class DesktopPackagingTests(unittest.TestCase):
                        "org.kde.plasma.panelspacer"):
             self.assertIn(widget, layout)
         dock = layout.split("var dock = new Panel", 1)[1]
-        self.assertEqual(re.findall(r'dock\.addWidget\("([^"]+)"\)', dock), ["org.kde.plasma.icontasks"])
+        self.assertEqual(re.findall(r'dock\.addWidget\("([^"]+)"\)', dock),
+                         ["org.kde.plasma.icontasks", "org.kde.plasma.trash"])
         self.assertEqual(layout.count('.addWidget("org.kde.plasma.kickoff")'), 1)
-        launcher_line = re.search(r'tasks\.writeConfig\("launchers", "([^"]+)"\)', dock)
+        launcher_line = re.search(r'tasks\.writeConfig\("launchers", \[(.*?)\]', dock, re.S)
         self.assertIsNotNone(launcher_line)
         self.assertEqual(
-            launcher_line.group(1).split(","),
+            re.findall(r'"(applications:[^"]+)"', launcher_line.group(1)),
             [
                 "applications:ifba-ai.desktop",
-                "applications:firefox.desktop",
                 "applications:org.kde.dolphin.desktop",
-                "applications:org.kde.konsole.desktop",
                 "applications:systemsettings.desktop",
+                "applications:org.kde.konsole.desktop",
+                "applications:com.visualstudio.CodeOSS.desktop",
+                "applications:firefox.desktop",
+                "applications:libreoffice-writer.desktop",
             ],
         )
         self.assertIn('tasks.writeConfig("showToolTips", true)', dock)

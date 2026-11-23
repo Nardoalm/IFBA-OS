@@ -6,6 +6,7 @@ Font=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
 Command=/bin/bash -l
 Name=IFBA Terminal
 Parent=FALLBACK/
+TerminalMargin=12
 
 [Scrolling]
 HistoryMode=2

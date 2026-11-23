@@ -26,7 +26,9 @@ class AssistantService:
         self.paths = paths or AppPaths()
         self.live_demo = Path(live_demo_marker).is_file()
         self.settings = SettingsStore(self.paths)
-        self.storage = None if self.live_demo else ConversationStore(self.paths)
+        self.storage = ConversationStore(self.paths, in_memory=self.live_demo)
+        self._ephemeral_settings = dict(DEFAULTS)
+        self._ephemeral_api_key = None
         self.secrets = secret_store or SecretStore()
         self.client = nvidia_client or NvidiaClient()
         from .tools import SystemTools
@@ -37,8 +39,10 @@ class AssistantService:
 
     def status(self):
         if self.live_demo:
-            return {"api_key_configured": False, "credential_store_available": False,
-                    "live_demo": True, "settings": dict(DEFAULTS)}
+            return {"api_key_configured": bool(self._ephemeral_api_key),
+                    "credential_store_available": True,
+                    "live_demo": True,
+                    "settings": dict(self._ephemeral_settings)}
         try:
             configured = bool(self.secrets.get())
             store_available = True
@@ -50,29 +54,41 @@ class AssistantService:
 
     def get_settings(self):
         if self.live_demo:
-            return dict(DEFAULTS)
+            return dict(self._ephemeral_settings)
         return self.settings.read()
 
     def require_live_ai_data_enabled(self):
-        if self.live_demo:
-            raise ValueError(LIVE_DEMO_NOTICE)
+        return None
 
     def save_settings(self, serialized):
-        self.require_live_ai_data_enabled()
         try:
             values = json.loads(serialized)
         except (TypeError, ValueError) as error:
             raise ValueError("As configurações recebidas não são válidas.") from error
         if not isinstance(values, dict):
             raise ValueError("As configurações precisam ser um objeto.")
+        if self.live_demo:
+            updated = dict(self._ephemeral_settings)
+            for key, default_val in DEFAULTS.items():
+                if key in values:
+                    updated[key] = values[key]
+            self._ephemeral_settings = updated
+            return dict(self._ephemeral_settings)
         return self.settings.write(values)
 
     def store_api_key(self, secret):
-        self.require_live_ai_data_enabled()
+        if self.live_demo:
+            cleaned = (secret or "").strip()
+            if not cleaned:
+                raise CredentialStoreError("Informe uma chave da API NVIDIA válida.")
+            self._ephemeral_api_key = cleaned
+            return
         self.secrets.store(secret)
 
     def delete_api_key(self):
-        self.require_live_ai_data_enabled()
+        if self.live_demo:
+            self._ephemeral_api_key = None
+            return
         self.secrets.delete()
 
     def start_generation(self, conversation_id, prompt):
@@ -133,10 +149,15 @@ class AssistantService:
         token = CancellationToken()
         self._generation = token
         try:
-            settings = self.settings.read()
+            settings = self.get_settings()
             if visual_context is not None and settings["model_id"] not in MULTIMODAL_MODELS:
                 raise ValueError("Selecione o modelo multimodal documentado para enviar uma captura.")
-            api_key = self.secrets.get()
+            use_demo_reply = False
+            if self.live_demo:
+                api_key = self._ephemeral_api_key
+                use_demo_reply = not bool(api_key)
+            else:
+                api_key = self.secrets.get()
             self.storage.add_message(conversation_id, "user", prompt.strip())
             history = self.storage.build_bounded_context(
                 conversation_id,
@@ -152,14 +173,21 @@ class AssistantService:
             answer = []
             answer_bytes = 0
             try:
-                for chunk in self.client.stream_chat(
-                    api_key, settings["model_id"], history, settings["max_tokens"], token,
-                    settings["education_level"], image_data_url=image_data_url,
-                    visual_context=visual_context,
-                    reasoning_level=settings["reasoning_level"],
-                    educational_context=self._educational_context(
-                        prompt, conversation_id, include_memories=settings["memory_enabled"]),
-                ):
+                stream = (
+                    self._stream_demo_reply(prompt.strip(), settings)
+                    if use_demo_reply
+                    else self.client.stream_chat(
+                        api_key, settings["model_id"], history, settings["max_tokens"], token,
+                        settings["education_level"], image_data_url=image_data_url,
+                        visual_context=visual_context,
+                        reasoning_level=settings["reasoning_level"],
+                        educational_context=self._educational_context(
+                            prompt, conversation_id, include_memories=settings["memory_enabled"]),
+                    )
+                )
+                for chunk in stream:
+                    if token.is_set():
+                        raise GenerationCancelled("Geração interrompida.")
                     if not isinstance(chunk, str) or len(chunk) > MAX_RESPONSE_BYTES:
                         raise NvidiaError("A resposta excedeu o limite permitido.")
                     chunk_bytes = len(chunk.encode("utf-8"))
@@ -219,3 +247,46 @@ class AssistantService:
             return ""
         return "Memórias que o estudante pode revisar/corrigir: " + json.dumps(payload,
             ensure_ascii=False, separators=(",", ":"))
+
+    def _stream_demo_reply(self, prompt, settings):
+        lower = prompt.lower()
+        if any(word in lower for word in ("código", "codigo", "python", "bug", "erro", "programar")):
+            reply = (
+                "### Análise em Modo Demonstração (IFBA AI)\n\n"
+                "Recebi sua solicitação de programação. No IFBA OS você pode depurar e testar código diretamente no **Terminal** ou no **VSCodium**:\n\n"
+                "```python\n"
+                "def saudacao_ifba(nome: str) -> str:\n"
+                "    return f\"Olá, {nome}! Bem-vindo ao IFBA OS.\"\n"
+                "```\n\n"
+                "Se quiser testar modelos NVIDIA NIM na nuvem durante a sessão Live, informe uma chave temporária em **Configurações** (ela fica apenas na memória desta sessão)."
+            )
+        elif any(word in lower for word in ("resuma", "resumir", "texto", "documento")):
+            reply = (
+                "### Resumo em Modo Demonstração (IFBA AI)\n\n"
+                "Posso organizar textos, destacar pontos-chave e estruturar tópicos de estudo:\n\n"
+                "- **Ideia central:** síntese objetiva do conteúdo enviado\n"
+                "- **Pontos principais:** conceitos e definições essenciais\n"
+                "- **Próximo passo:** revisão rápida ou geração de perguntas\n\n"
+                "Para respostas completas via nuvem NVIDIA NIM, adicione uma chave temporária em **Configurações** ou instale o sistema."
+            )
+        elif any(word in lower for word in ("plano", "estudo", "estudar", "prova")):
+            reply = (
+                "### Plano de Estudo (Modo Demonstração)\n\n"
+                "Sugestão de roteiro em 3 blocos:\n"
+                "1. **Fundamentos (25 min):** leitura ativa e anotações dos conceitos centrais.\n"
+                "2. **Prática (30 min):** resolução de exercícios no caderno ou no VSCodium.\n"
+                "3. **Revisão (15 min):** resumo com suas próprias palavras.\n\n"
+                "Você pode salvar preferências de estudo em **Memórias** nesta sessão de demonstração."
+            )
+        else:
+            reply = (
+                f"### IFBA AI · Modo Demonstração (Live)\n\n"
+                f"Sua pergunta foi recebida: *\"{prompt[:180]}\"*\n\n"
+                f"- **Modelo selecionado:** `{settings.get('model_id', '')}`\n"
+                f"- **Nível educacional:** `{settings.get('education_level', 'medio')}`\n\n"
+                "Nesta sessão Live, suas conversas e memórias funcionam apenas em memória RAM para proteger sua privacidade. "
+                "Para usar os modelos completos da NVIDIA NIM agora mesmo, você pode inserir uma chave temporária em **Configurações**."
+            )
+        words = reply.split(" ")
+        for index, word in enumerate(words):
+            yield word if index == 0 else " " + word

@@ -36,12 +36,15 @@ class PreviewCatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "NVIDIA indisponível"):
             available_models(disconnected)
 
-    def test_preview_keeps_current_launcher_as_default(self):
+    def test_current_launcher_opens_redesign_with_explicit_classic_action(self):
         root = Path(__file__).resolve().parents[1]
         desktop = (root / "packaging/ifba-ai.desktop").read_text()
         self.assertIn("\nExec=/usr/bin/ifba-ai-ui\n", desktop)
-        self.assertIn("[Desktop Action Preview]\n", desktop)
-        self.assertIn("\nExec=/usr/bin/ifba-ai-preview\n", desktop)
+        self.assertIn("[Desktop Action Classic]\n", desktop)
+        self.assertIn("\nExec=/usr/bin/ifba-ai-ui --interface-classica\n", desktop)
+        launcher = (root / "packaging/ifba-ai-ui").read_text()
+        self.assertIn('-m ifba_ai.ui "$@"', launcher)
+        self.assertTrue(launcher.strip().endswith('-m ifba_ai.ui_preview "$@"'))
 
 
 @unittest.skipUnless(
@@ -81,15 +84,15 @@ class PreviewGtkTests(unittest.TestCase):
         self.assertNotIn("<b>literal", markup)
         self.assertIn("&lt;", code_markup("print('x < y')", "python", True))
 
-    def test_live_disables_generation_and_does_not_persist_appearance(self):
+    def test_live_allows_interactive_demo_and_does_not_persist_appearance(self):
         window = self.window
         with patch.object(window, "_refresh_catalog") as refresh:
-            window._on_service_status(False, False, True, DEFAULT_MODEL)
+            window._on_service_status(False, True, True, DEFAULT_MODEL)
             refresh.assert_not_called()
-        self.assertFalse(window.input.get_sensitive())
-        self.assertFalse(window.send_button.get_sensitive())
+        self.assertTrue(window.input.get_sensitive())
+        self.assertTrue(window.suggestions.get_sensitive())
+        self.assertTrue(window.data_button.get_sensitive())
         self.assertFalse(window.visual_button.get_sensitive())
-        self.assertFalse(window.data_button.get_sensitive())
         window.appearance_control.set_active_id("light")
         self.assertFalse(window.dark)
         self.assertFalse(window.appearance_file.exists())

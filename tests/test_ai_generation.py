@@ -52,39 +52,45 @@ class OversizedStreamingClient(FakeStreamingClient):
 
 
 class GenerationTests(unittest.TestCase):
-    def test_live_demo_disables_personal_ai_data_and_does_not_create_history_db(self):
+    def test_live_demo_runs_ephemerally_in_memory_without_persisting_to_disk(self):
         with tempfile.TemporaryDirectory() as home:
             marker = Path(home, "live-demo")
             marker.touch()
             paths = AppPaths(home=home, env={"HOME": home})
             secret_store = FakeSecretStore()
+            events = []
+            done = threading.Event()
+
+            def emit(event, conversation_id, value):
+                events.append((event, conversation_id, value))
+                if event in ("finished", "failed"):
+                    done.set()
+
             service = AssistantService(paths=paths, secret_store=secret_store,
-                                       live_demo_marker=marker)
+                                       emit=emit, live_demo_marker=marker)
 
             status = service.status()
             self.assertTrue(status["live_demo"])
             self.assertFalse(status["api_key_configured"])
-            self.assertFalse(status["credential_store_available"])
+            self.assertTrue(status["credential_store_available"])
             self.assertEqual(service.get_settings(), status["settings"])
-            self.assertIsNone(service.storage)
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.store_api_key("test-only-key")
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.delete_api_key()
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.save_settings('{"model_id":"test-model"}')
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.start_generation("conversation-id", "Não persistir")
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.start_visual_generation("conversation-id", "Não capturar", "", "{}")
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.capture_visual_preview(1)
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.get_active_window_context()
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.get_accessible_control_bounds(1, "control")
-            with self.assertRaisesRegex(ValueError, "sessão Live compartilhada"):
-                service.list_visible_windows()
+            self.assertTrue(service.storage.in_memory)
+
+            conversation_id = service.storage.create_conversation("Teste Live")
+            service.start_generation(conversation_id, "Explique o conceito de algoritmo")
+            self.assertTrue(done.wait(timeout=3))
+            self.assertEqual(events[-1][0], "finished")
+            self.assertTrue(any(event == "delta" for event, _, _ in events))
+            messages = service.storage.list_messages(conversation_id)
+            self.assertEqual([m["role"] for m in messages], ["user", "assistant"])
+
+            service.store_api_key("test-only-key")
+            self.assertTrue(service.status()["api_key_configured"])
+            service.delete_api_key()
+            self.assertFalse(service.status()["api_key_configured"])
+            service.save_settings('{"education_level":"superior"}')
+            self.assertEqual(service.get_settings()["education_level"], "superior")
+
             self.assertEqual(secret_store.get_calls, 0)
             self.assertEqual(secret_store.store_calls, 0)
             self.assertEqual(secret_store.delete_calls, 0)

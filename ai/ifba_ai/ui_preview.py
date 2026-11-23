@@ -1,4 +1,4 @@
-"""Opt-in GTK 3 frontend for the existing IFBA AI D-Bus service."""
+"""GTK 3 frontend for the existing IFBA AI D-Bus service."""
 
 import json
 from pathlib import Path
@@ -59,9 +59,14 @@ class ComposerInput(Gtk.TextView):
 
 class PreviewWindow(AssistantWindow):
     def _build(self):
-        self.set_default_size(1140, 680)
+        self.set_default_size(1050, 640)
         self.set_size_request(530, 450)
         styled(self, "ai-preview")
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual is not None and screen.is_composited():
+            self.set_visual(visual)
+            styled(self, "preview-translucent")
         self.catalog = ()
         self.catalog_pending = False
         self.catalog_error = ""
@@ -127,17 +132,24 @@ class PreviewWindow(AssistantWindow):
         self._sync_actions()
 
     def _build_sidebar(self):
-        sidebar = styled(box(13), "preview-sidebar")
-        sidebar.set_size_request(250, -1)
-        brand = Gtk.Box(spacing=11)
-        mark = logo(35)
+        sidebar = styled(box(11), "preview-sidebar")
+        sidebar.set_size_request(264, -1)
+        brand = Gtk.Box(spacing=10)
+        mark = logo(34)
         brand.pack_start(mark, False, False, 0)
-        brand.pack_start(label("IFBA AI", "sidebar-brand"), True, True, 0)
-        sidebar.pack_start(brand, False, False, 3)
+        brand.pack_start(label("IFBA AI", "sidebar-brand"), False, False, 0)
+        brand.pack_start(label("Beta", "beta-badge"), False, False, 0)
+        sidebar.pack_start(brand, False, False, 4)
 
-        self.new_chat = self._nav_button("list-add-symbolic", "Nova conversa", self._new_conversation)
+        self.new_chat = styled(Gtk.Button(), "primary-action")
+        new_row = Gtk.Box(spacing=8)
+        new_row.pack_start(Gtk.Image.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON), False, False, 0)
+        new_row.pack_start(Gtk.Label(label="Nova conversa", xalign=0), True, True, 0)
+        new_row.pack_end(label("Ctrl+N", "shortcut-hint"), False, False, 0)
+        self.new_chat.add(new_row)
+        self.new_chat.connect("clicked", self._new_conversation)
         self.new_chat.set_tooltip_text("Nova conversa (Ctrl+N)")
-        sidebar.pack_start(styled(self.new_chat, "primary-action"), False, False, 0)
+        sidebar.pack_start(self.new_chat, False, False, 0)
         navigation = box(3)
         self.nav_home = self._nav_button("go-home-symbolic", "Início", self._new_conversation)
         navigation.pack_start(self.nav_home, False, False, 0)
@@ -180,7 +192,19 @@ class PreviewWindow(AssistantWindow):
         button = styled(Gtk.Button(), "nav-item")
         row = Gtk.Box(spacing=10)
         row.pack_start(Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.BUTTON), False, False, 0)
-        row.pack_start(Gtk.Label(label=title, xalign=0), True, True, 0)
+        row.pack_start(Gtk.Label(label=title, xalign=0, wrap=True), True, True, 0)
+        button.add(row)
+        button.connect("clicked", callback)
+        return button
+
+    def _suggestion_button(self, icon, title, subtitle_text, callback):
+        button = styled(Gtk.Button(), "nav-item")
+        row = Gtk.Box(spacing=10)
+        row.pack_start(Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.BUTTON), False, False, 0)
+        text_col = box(1)
+        text_col.pack_start(label(title, "suggestion-title"), False, False, 0)
+        text_col.pack_start(label(subtitle_text, "suggestion-subtitle"), False, False, 0)
+        row.pack_start(text_col, True, True, 0)
         button.add(row)
         button.connect("clicked", callback)
         return button
@@ -197,7 +221,7 @@ class PreviewWindow(AssistantWindow):
         self.home.set_margin_end(36)
         self.home.set_margin_top(12)
         self.home.set_margin_bottom(40)
-        mark = logo(87)
+        mark = logo(90)
         mark.set_margin_bottom(6)
         self.home.pack_start(mark, False, False, 0)
         self.home.pack_start(styled(Gtk.Label(label="IFBA AI"), "hero-title"), False, False, 0)
@@ -236,7 +260,7 @@ class PreviewWindow(AssistantWindow):
 
         controls = Gtk.Box(spacing=6)
         self.composer.pack_end(controls, False, False, 0)
-        self.composer_tools = icon_button("tools-symbolic", "Ferramentas", self._open_tools)
+        self.composer_tools = icon_button("preferences-system-symbolic", "Ferramentas", self._open_tools)
         self.visual_button = icon_button("camera-photo-symbolic", "Orientação visual", self._capture_visual)
         self.highlight_button = Gtk.Button(label="Destacar controle")
         self.highlight_button.set_no_show_all(True)
@@ -247,7 +271,7 @@ class PreviewWindow(AssistantWindow):
         self.quick_model = Gtk.ComboBoxText()
         self.quick_model.get_accessible().set_name("Modelo NVIDIA")
         self.quick_model.connect("changed", self._quick_model_changed)
-        self.send_button = styled(icon_button("go-up-symbolic", "Enviar mensagem (Enter)",
+        self.send_button = styled(icon_button("mail-send-symbolic", "Enviar mensagem (Enter)",
                                               self._send_message), "send-action")
         self.stop_button = styled(icon_button("process-stop-symbolic", "Interromper geração",
                                               self._cancel_generation), "send-action")
@@ -260,14 +284,17 @@ class PreviewWindow(AssistantWindow):
         self.send_button.show()
         self.stop_button.get_child().show()
 
-        self.suggestions = Gtk.FlowBox(max_children_per_line=2, min_children_per_line=1,
+        self.suggestions = Gtk.FlowBox(max_children_per_line=4, min_children_per_line=2,
                                        selection_mode=Gtk.SelectionMode.NONE,
-                                       column_spacing=10, row_spacing=7, homogeneous=True)
-        for icon, title, prompt in (
-            ("applications-development-symbolic", "Programar e depurar", "Ajude-me a entender este código:\n"),
-            ("help-whatsthis-symbolic", "Explicar um conceito", "Explique de forma simples o conceito de "),
+                                       column_spacing=10, row_spacing=8, homogeneous=True)
+        for icon, title, subtitle_text, prompt in (
+            ("applications-development-symbolic", "Programar", "e depurar código", "Ajude-me a entender este código:\n"),
+            ("text-x-generic-symbolic", "Analisar", "documentos", "Analise e destaque os pontos principais deste texto:\n"),
+            ("view-list-symbolic", "Planejar", "um estudo", "Ajude-me a organizar um plano de estudo para "),
+            ("help-whatsthis-symbolic", "Explicar", "um conceito", "Explique de forma simples o conceito de "),
         ):
-            suggestion = self._nav_button(icon, title, lambda _button, value=prompt: self._suggest(value))
+            suggestion = self._suggestion_button(icon, title, subtitle_text,
+                                                 lambda _button, value=prompt: self._suggest(value))
             self.suggestions.add(styled(suggestion, "suggestion"))
         self.composer_area.pack_start(self.suggestions, False, False, 0)
 
@@ -463,19 +490,29 @@ class PreviewWindow(AssistantWindow):
         self.store_available = bool(store_available)
         self.saved_model = str(model)
         self.service_ready = True
-        self._sync_actions()
         if self.live_demo:
-            self._set_status("Sessão Live de demonstração. Instale o IFBA OS para conversar e salvar dados em uma conta individual.")
+            if not self.catalog:
+                self.catalog = tuple(MODELS)
+            self._sync_actions()
+            self._set_status("Modo demonstração (Live) ativo · Respostas locais para teste (Enter para enviar)")
             self.catalog_retry.set_sensitive(False)
             self._update_models()
+            self.proxy.GetSettings(reply_handler=self._on_settings_loaded,
+                                   error_handler=self._on_service_error, timeout=5)
             return
+        self._sync_actions()
         self._ready_status()
         self._refresh_catalog()
         self.proxy.GetSettings(reply_handler=self._on_settings_loaded,
                                error_handler=self._on_service_error, timeout=5)
 
     def _ready_status(self):
-        if not self.store_available:
+        if self.live_demo:
+            if self.configured:
+                self._set_status("Modo demonstração (Live) com chave temporária · Enter para enviar")
+            else:
+                self._set_status("Modo demonstração (Live) ativo · Respostas locais para teste (Enter para enviar)")
+        elif not self.store_available:
             self._set_status("Cofre indisponível. Desbloqueie o cofre de credenciais da sessão.")
         elif not self.configured:
             self._set_status("Configure sua chave NVIDIA para iniciar uma conversa.")
@@ -550,11 +587,11 @@ class PreviewWindow(AssistantWindow):
         selection = self.model.get_active_id()
         metadata = MODELS.get(selection)
         for button in self.reasoning_buttons.values():
-            button.set_sensitive(bool(metadata and metadata.get("reasoning")) and not self.live_demo)
+            button.set_sensitive(bool(metadata and metadata.get("reasoning")))
         if metadata:
             self.model_hint.set_text(metadata["subtitle"])
         elif self.live_demo:
-            self.model_hint.set_text("O catálogo fica indisponível durante a sessão Live.")
+            self.model_hint.set_text("Modo demonstração ativo; escolha um modelo para testar.")
         else:
             self.model_hint.set_text(self.catalog_error or "Escolha um modelo do catálogo NVIDIA.")
 
@@ -574,7 +611,7 @@ class PreviewWindow(AssistantWindow):
         self._update_models()
 
     def _save_settings(self, *_):
-        if not self.service_ready or self.live_demo or self.generating:
+        if not self.service_ready or self.generating:
             return
         values = self._settings_values()
         values["model_id"] = self.model.get_active_id() or self.saved_model
@@ -590,12 +627,12 @@ class PreviewWindow(AssistantWindow):
             self.configured, self.store_available = bool(configured), bool(store_available)
             self._load_conversations()
             self._update_models()
-            self._set_status("Configurações salvas neste usuário.")
+            self._set_status("Configurações salvas nesta sessão Live." if self.live_demo else "Configurações salvas neste usuário.")
         except Exception:
             self._set_status("Não foi possível concluir o salvamento. Confira o cofre e o serviço local.")
 
     def _remove_key(self, *_):
-        if not self.service_ready or self.live_demo or self.generating:
+        if not self.service_ready or self.generating:
             return
         super()._remove_key()
         try:
@@ -606,19 +643,20 @@ class PreviewWindow(AssistantWindow):
         self._sync_actions()
 
     def _sync_actions(self):
-        normal = self.service_ready and not self.live_demo
+        normal = self.service_ready
         idle = normal and not self.generating
-        ready = idle and self.configured and self.saved_model in self.catalog and not self.catalog_pending
+        demo_ready = self.live_demo and idle
+        ready = demo_ready or (idle and self.configured and self.saved_model in self.catalog and not self.catalog_pending)
         self.new_chat.set_sensitive(not self.generating)
         self.nav_home.set_sensitive(not self.generating)
         self.data_button.set_sensitive(idle)
         self.tools_button.set_sensitive(idle)
         self.composer_tools.set_sensitive(idle)
-        self.visual_button.set_sensitive(ready and bool(MODELS[self.saved_model]["image"]))
-        self.input.set_sensitive(not self.live_demo)
+        self.visual_button.set_sensitive(idle and not self.live_demo and ready and bool(MODELS.get(self.saved_model, {}).get("image")))
+        self.input.set_sensitive(True)
         self.input.set_editable(not self.request_pending)
-        self.suggestions.set_sensitive(not self.live_demo and not self.generating)
-        self.open_key.set_visible(idle and not self.configured)
+        self.suggestions.set_sensitive(not self.generating)
+        self.open_key.set_visible(idle and not self.configured and not self.live_demo)
         self.send_button.set_sensitive(ready and bool(self.input.get_text().strip()))
         self.send_button.set_visible(not self.generating)
         self.stop_button.set_visible(self.generating)
@@ -663,7 +701,7 @@ class PreviewWindow(AssistantWindow):
         self.input.grab_focus()
 
     def _select_conversation(self, _list, row):
-        if not self.generating and self.service_ready and not self.live_demo:
+        if not self.generating and self.service_ready:
             self.current_conversation = row.get_name()
             self._display_history()
             self._show_page("chat")
@@ -720,17 +758,18 @@ class PreviewWindow(AssistantWindow):
         self._submit(self.input.get_text().strip())
 
     def _submit(self, prompt, *, context=None, image=None, title=""):
-        if not self.service_ready or self.live_demo or self.generating or not prompt:
+        if not self.service_ready or self.generating or not prompt:
             return
         if len(prompt) > 20000:
             self._set_status("A mensagem ultrapassa o limite de 20 mil caracteres.")
             return
-        if not self.configured:
-            self._open_settings()
-            return
-        if self.saved_model not in self.catalog or self.catalog_pending:
-            self._ready_status()
-            return
+        if not self.live_demo:
+            if not self.configured:
+                self._open_settings()
+                return
+            if self.saved_model not in self.catalog or self.catalog_pending:
+                self._ready_status()
+                return
         self.request_pending = True
         self.generating = True
         self._sync_actions()
