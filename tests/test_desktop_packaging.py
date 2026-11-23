@@ -497,6 +497,8 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("/var/lib/sddm", sddm_directories)
         self.assertLess(build.index(sddm_directories), build.index(r'printf "[Last]\nSession=plasmax11.desktop\n"'))
         self.assertIn("systemd-sysusers", build)
+        self.assertIn("getent group sddm >/dev/null || groupadd --system sddm", build)
+        self.assertIn("getent passwd sddm >/dev/null || useradd --system --gid sddm --home-dir /var/lib/sddm --shell /usr/sbin/nologin sddm", build)
         self.assertIn("install -d -m 0755 -o sddm -g sddm /var/lib/sddm", build)
         self.assertIn(r'printf "[Last]\nSession=plasmax11.desktop\n" > /var/lib/sddm/state.conf', build)
         self.assertIn("chown sddm:sddm /var/lib/sddm/state.conf", build)
